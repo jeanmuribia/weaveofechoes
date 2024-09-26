@@ -102,22 +102,22 @@ class SystemGenerator {
   /**
    * Replace file contents.
    *
-   * Replace refercnes to 'boilerplate', 'Boilerplate', and 'BOILERPLATE'
+   * Replace refercnes to 'woe', 'Boilerplate', and 'WOE'
    * in files copied over to the build directory.
    */
   replaceFileContents() {
     // Set patterns to iterate over later.
     const replacements = [
       {
-        pattern: new RegExp(/game\.boilerplate/g),
+        pattern: new RegExp(/game\.woe/g),
         replacement: `game.${this.propName}`
       },
       {
-        pattern: new RegExp(/flags\.boilerplate/g),
+        pattern: new RegExp(/flags\.woe/g),
         replacement: `flags.${this.propName}`
       },
       {
-        pattern: 'boilerplate',
+        pattern: 'woe',
         replacement: this.packageName
       },
       {
@@ -125,7 +125,7 @@ class SystemGenerator {
         replacement: this.className
       },
       {
-        pattern: 'BOILERPLATE',
+        pattern: 'WOE',
         replacement: this.constantName
       }
     ];
@@ -158,15 +158,15 @@ class SystemGenerator {
   /**
    * Rename files.
    *
-   * Rename files that had boilerplate in their name, such as
-   * css/boilerplate.css.
+   * Rename files that had woe in their name, such as
+   * css/woe.css.
    */
   renameFiles() {
-    glob(`build/${this.packageName}/**/*boilerplate*.*`).then(files => {
+    glob(`build/${this.packageName}/**/*woe*.*`).then(files => {
       files.forEach(oldPath => {
         const file = path.basename(oldPath);
         const directory = path.dirname(oldPath);
-        fs.rename(oldPath, `${directory}/${file.replaceAll('boilerplate', this.packageName)}`, (err) => {
+        fs.rename(oldPath, `${directory}/${file.replaceAll('woe', this.packageName)}`, (err) => {
           if (err) throw err;
         });
       })
@@ -183,7 +183,7 @@ class SystemGenerator {
    */
   cleanPackageJson() {
     // Remove unneeded files.
-    fs.rmSync(`build/${this.packageName}/src/generate-boilerplate-system.mjs`);
+    fs.rmSync(`build/${this.packageName}/src/generate-woe-system.mjs`);
     fs.rmSync(`build/${this.packageName}/package-lock.json`);
 
     // Load package.json so that we can remove dev dependencies.
@@ -258,9 +258,9 @@ inquirer
     glob('*', {ignore: ['node_modules/**'] }).then(files => {
       // Copy all files into the build dir.
       generator.copyFiles(files);
-      // Replace boilerplate name mentions in files.
+      // Replace woe name mentions in files.
       generator.replaceFileContents();
-      // Rename files that had boilerplate in their name.
+      // Rename files that had woe in their name.
       generator.renameFiles();
       // Remove generator files and update package.json.
       generator.cleanPackageJson();

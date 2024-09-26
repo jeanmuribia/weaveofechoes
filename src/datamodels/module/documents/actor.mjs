@@ -2,7 +2,7 @@
  * Extend the base Actor document by defining a custom roll data structure which is ideal for the Simple system.
  * @extends {Actor}
  */
-export class BoilerplateActor extends Actor {
+export class WoeActor extends Actor {
   /** @override */
   prepareData() {
     // Prepare data for the actor. Calling the super version of this executes
@@ -27,7 +27,7 @@ export class BoilerplateActor extends Actor {
    */
   prepareDerivedData() {
     const actorData = this;
-    const flags = actorData.flags.boilerplate || {};
+    const flags = actorData.flags.woe || {};
   }
 
   /**

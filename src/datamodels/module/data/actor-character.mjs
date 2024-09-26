@@ -1,6 +1,6 @@
-import BoilerplateActorBase from "./base-actor.mjs";
+import WoeActorBase from "./base-actor.mjs";
 
-export default class BoilerplateCharacter extends BoilerplateActorBase {
+export default class WoeCharacter extends WoeActorBase {
 
   static defineSchema() {
     const fields = foundry.data.fields;
@@ -14,7 +14,7 @@ export default class BoilerplateCharacter extends BoilerplateActorBase {
     });
 
     // Iterate over ability names and create a new SchemaField for each.
-    schema.abilities = new fields.SchemaField(Object.keys(CONFIG.BOILERPLATE.abilities).reduce((obj, ability) => {
+    schema.abilities = new fields.SchemaField(Object.keys(CONFIG.WOE.abilities).reduce((obj, ability) => {
       obj[ability] = new fields.SchemaField({
         value: new fields.NumberField({ ...requiredInteger, initial: 10, min: 0 }),
       });
@@ -30,7 +30,7 @@ export default class BoilerplateCharacter extends BoilerplateActorBase {
       // Calculate the modifier using d20 rules.
       this.abilities[key].mod = Math.floor((this.abilities[key].value - 10) / 2);
       // Handle ability label localization.
-      this.abilities[key].label = game.i18n.localize(CONFIG.BOILERPLATE.abilities[key]) ?? key;
+      this.abilities[key].label = game.i18n.localize(CONFIG.WOE.abilities[key]) ?? key;
     }
   }
 

@@ -1,5 +1,5 @@
 {
-  "BOILERPLATE": {
+  "WOE": {
     "Ability": {
       "Str": { "long": "Strength", "abbr": "str" },
       "Con": { "long": "Constitution", "abbr": "con" },
@@ -9,8 +9,8 @@
       "Cha": { "long": "Charisma", "abbr": "cha" }
     },
     "SheetLabels": {
-      "Actor": "Boilerplate Actor Sheet",
-      "Item": "Boilerplate Item Sheet"
+      "Actor": "Weave of Echoes Actor Sheet",
+      "Item": "Weave of Echoes Item Sheet"
     },
     "Item": {
       "Spell": {

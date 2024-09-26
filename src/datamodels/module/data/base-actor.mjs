@@ -1,6 +1,6 @@
-import BoilerplateDataModel from "./base-model.mjs";
+import WoeDataModel from "./base-model.mjs";
 
-export default class BoilerplateActorBase extends BoilerplateDataModel {
+export default class WoeActorBase extends WoeDataModel {
 
   static defineSchema() {
     const fields = foundry.data.fields;

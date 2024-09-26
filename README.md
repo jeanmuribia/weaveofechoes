@@ -1,12 +1,12 @@
-# Boilerplate System
+# Woe System
 
 ![Foundry v11](https://img.shields.io/badge/foundry-v11-green)
 
-This system is a boilerplate system that you can use as a starting point for building your own custom systems. It's similar to Simple World-building, but has examples of creating attributes in code rather than dynamically through the UI.
+This system is a woe system that you can use as a starting point for building your own custom systems. It's similar to Simple World-building, but has examples of creating attributes in code rather than dynamically through the UI.
 
 ## Usage
 
-There are two ways to get started: using the Boilerplate system generator command or manually renaming and updating files.
+There are two ways to get started: using the Woe system generator command or manually renaming and updating files.
 
 Regardless of which method you choose, think carefully about your system's name. Your system's package name when submitted to Foundry must be formatted like `alphanumeric-lowercase`, and it must be unique. Check the Foundry systems package list for conflicts before committing to a name!
 
@@ -20,7 +20,7 @@ This system includes a generator CLI in `package.json`. To use it, you must have
 
 > **Python Generator**
 > 
-> If you would rather use Python than node, there’s an excellent Python-based generator created by Cussa at https://github.com/Cussa/fvtt-boilerplate-initializator. Give it a shot!
+> If you would rather use Python than node, there’s an excellent Python-based generator created by Cussa at https://github.com/Cussa/fvtt-woe-initializator. Give it a shot!
 
 Once you have npm installed, you can run the following in your terminal or command prompt:
 
@@ -37,17 +37,17 @@ Copy this directory over to your Foundry systems directory and start coding!
 
 ### Manual Replacement
 
-Before installing this system, you should rename any files that have `boilerplate` in their filename to use whatever machine-safe name your system needs, such as `adnd2e` if you were building a system for 2nd edition Advanced Dungeons & Dragons. In addition, you should search through the files for `boilerplate` and `Boilerplate` and do the same for those, replacing them with appropriate names for your system.
+Before installing this system, you should rename any files that have `woe` in their filename to use whatever machine-safe name your system needs, such as `adnd2e` if you were building a system for 2nd edition Advanced Dungeons & Dragons. In addition, you should search through the files for `woe` and `Woe` and do the same for those, replacing them with appropriate names for your system.
 
 The `name` property in your `system.json` file is your system's package name. This need to be formatted `alphanumeric-lowercase`, and it must also match the foldername you use for your system.
 
-### Vue 3 Boilerplate
+### Vue 3 Woe
 
 **NOTE: The Vue 3 version is currently outdated and considered an advanced usage of Foundry due to it being a custom renderer. Only try it out if you _really_ like Vue and are feeling dangerous!**
 
 Alternatively, there's another build of this system that supports using Vue 3 components (ES module build target) for character sheet templates.
 
-Head over to the [Vue3Boilerplate System](https://gitlab.com/asacolips-projects/foundry-mods/vue3boilerplate) repo if you're interested in using Vue!
+Head over to the [Vue3Woe System](https://gitlab.com/asacolips-projects/foundry-mods/vue3woe) repo if you're interested in using Vue!
 
 ### Getting Help
 
@@ -79,4 +79,4 @@ This system includes a handful of helper CSS classes to help you lay out your sh
 
 This repo includes both CSS for the theme and SCSS source files. If you're new to CSS, it's probably easier to just work in those files directly and delete the SCSS directory. If you're interested in using a CSS preprocessor to add support for nesting, variables, and more, you can run `npm install` in this directory to install the dependencies for the scss compiler. After that, just run `npm run build` to compile the SCSS and start a process that watches for new changes.
 
-![image](http://mattsmith.in/images/boilerplate.png)
+![image](http://mattsmith.in/images/woe.png)

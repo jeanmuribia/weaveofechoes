@@ -1,6 +1,6 @@
-import BoilerplateActorBase from "./base-actor.mjs";
+import WoeActorBase from "./base-actor.mjs";
 
-export default class BoilerplateNPC extends BoilerplateActorBase {
+export default class WoeNPC extends WoeActorBase {
 
   static defineSchema() {
     const fields = foundry.data.fields;

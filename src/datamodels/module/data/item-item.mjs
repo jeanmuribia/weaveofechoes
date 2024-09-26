@@ -1,6 +1,6 @@
-import BoilerplateItemBase from "./base-item.mjs";
+import WoeItemBase from "./base-item.mjs";
 
-export default class BoilerplateItem extends BoilerplateItemBase {
+export default class WoeItem extends WoeItemBase {
 
   static defineSchema() {
     const fields = foundry.data.fields;
