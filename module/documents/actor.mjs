@@ -3,23 +3,35 @@ export class WoeActor extends Actor {
     super.prepareData();
     const systemData = this.system;
 
-    // Vérification pour le nom
+    // Check for name
     if (!systemData.name) {
       systemData.name = { value: "Unnamed" };
     }
 
-    // Vérification pour l'élément
+    // Check for element
     if (!systemData.element) {
-      systemData.element = { value: "Pas de maîtrise élémentaire" }; // Valeur par défaut
+      systemData.element = { value: "none" }; // Default value
     }
 
-    // Initialiser les tempéraments
-    if (!systemData.temperaments) {
-      systemData.temperaments = {
-        fire: { value: "neutre" },
-        water: { value: "neutre" },
-        earth: { value: "neutre" },
-        air: { value: "neutre" }
+    // Initialize tempers
+    if (!systemData.tempers) {
+      systemData.tempers = {
+        fire: { value: "neutral" },
+        water: { value: "neutral" },
+        earth: { value: "neutral" },
+        air: { value: "neutral" }
+      };
+    }
+
+    // Initialize attributes
+    if (!systemData.attributes) {
+      systemData.attributes = {
+        body: { value: "neutral" },
+        soul: { value: "neutral" },
+        spirit: { value: "neutral" },
+        martial: { value: "neutral" },
+        elemental: { value: "neutral" },
+        rhetoric: { value: "neutral" }
       };
     }
   }

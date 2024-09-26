@@ -7,20 +7,40 @@
           "value": ""
         },
         "element": {
-          "value": "none"  // Valeur par défaut
+          "value": "none"  
         },
-        "temperaments": {
+        "tempers": {
           "fire": {
-            "value": "neutre"  // Valeur par défaut
+            "value": "neutral"  
           },
           "water": {
-            "value": "neutre"  // Valeur par défaut
+            "value": "neutral"  
           },
           "earth": {
-            "value": "neutre"  // Valeur par défaut
+            "value": "neutral"  
           },
           "air": {
-            "value": "neutre"  // Valeur par défaut
+            "value": "neutral"  
+          }
+        },
+        "attributes": {
+          "body": {
+            "value": "neutral"  
+          },
+          "soul": {
+            "value": "neutral"  
+          },
+          "spirit": {
+            "value": "neutral"  
+          },
+          "martial": {
+            "value": "neutral"  
+          },
+          "elemental": {
+            "value": "neutral"  
+          },
+          "rhetoric": {
+            "value": "neutral"  
           }
         }
       }

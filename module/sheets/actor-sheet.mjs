@@ -30,7 +30,7 @@ export class WoeActorSheet extends ActorSheet {
   async getData() {
     const context = super.getData();
     const actorData = this.document.toObject(false);
-    context.system = actorData.system; // Contient les données de l'acteur
+    context.system = actorData.system; // Contains actor data
     return context;
   }
 
@@ -38,43 +38,56 @@ export class WoeActorSheet extends ActorSheet {
   activateListeners(html) {
     super.activateListeners(html);
 
-    // Gérer les pertes de focus sur le nom
+    // Handle losing focus on the name
     html.find('#name').on('blur', async (event) => {
       await this.updateActorData(html);
     });
 
-    // Gérer le changement d'élément
+    // Handle changing element
     html.find('#element').on('change', async (event) => {
       await this.updateActorData(html);
     });
 
-    // Gérer le changement de tempérament
-    html.find('select[name^="temperament-"]').on('change', async (event) => {
+    // Handle changing tempers
+    html.find('select[name^="temper-"]').on('change', async (event) => {
+      await this.updateActorData(html);
+    });
+
+    // Handle changing attributes
+    html.find('select[name^="attributes-"]').on('change', async (event) => {
       await this.updateActorData(html);
     });
   }
 
-  // Fonction pour mettre à jour les données de l'acteur
+  // Function to update actor data
   async updateActorData(html) {
     const name = html.find('#name').val();
     const element = html.find('#element').val();
 
-    // Prépare l'objet de mise à jour pour les tempéraments
-    const temperaments = {
-      fire: { value: html.find('select[name="temperament-fire"]').val() },
-      water: { value: html.find('select[name="temperament-water"]').val() },
-      earth: { value: html.find('select[name="temperament-earth"]').val() },
-      air: { value: html.find('select[name="temperament-air"]').val() }
+    // Prepare the update object for tempers
+    const tempers = {
+      fire: { value: html.find('select[name="temper-fire"]').val() },
+      water: { value: html.find('select[name="temper-water"]').val() },
+      earth: { value: html.find('select[name="temper-earth"]').val() },
+      air: { value: html.find('select[name="temper-air"]').val() }
     };
 
-    // Met à jour l'acteur avec les nouvelles données
+    // Prepare the update object for attributes
+    const attributes = {
+      body: { value: html.find('select[name="attributes-body"]').val() },
+      soul: { value: html.find('select[name="attributes-soul"]').val() },
+      spirit: { value: html.find('select[name="attributes-spirit"]').val() },
+      martial: { value: html.find('select[name="attributes-martial"]').val() },
+      elemental: { value: html.find('select[name="attributes-elemental"]').val() },
+      rhetoric: { value: html.find('select[name="attributes-rhetoric"]').val() }
+    };
+
+    // Update the actor with the new data
     await this.actor.update({
       "system.name.value": name,
       "system.element.value": element,
-      "system.temperaments": temperaments
+      "system.tempers": tempers,
+      "system.attributes": attributes
     });
-
-    // Affiche une notification pour indiquer que les changements ont été enregistrés
-    ui.notifications.info("Changes saved!");
   }
 }

@@ -17,45 +17,107 @@
     </select>
   </div>
 
-  <h2>Temperaments</h2>
+  <h2>Tempers</h2>
 
   <div>
     <label for="fire">Fire:</label>
-    <select id="fire" name="temperament-fire">
-      <option value="malus" {{#if (eq system.temperaments.fire.value "malus")}}selected{{/if}}>Malus</option>
-      <option value="neutre" {{#if (eq system.temperaments.fire.value "neutre")}}selected{{/if}}>Neutre</option>
-      <option value="bonus" {{#if (eq system.temperaments.fire.value "bonus")}}selected{{/if}}>Bonus</option>
-      <option value="critique" {{#if (eq system.temperaments.fire.value "critique")}}selected{{/if}}>Critique</option>
+    <select id="fire" name="temper-fire">
+      <option value="malus" {{#if (eq system.tempers.fire.value "malus")}}selected{{/if}}>Malus</option>
+      <option value="neutral" {{#if (eq system.tempers.fire.value "neutral")}}selected{{/if}}>Neutral</option>
+      <option value="bonus" {{#if (eq system.tempers.fire.value "bonus")}}selected{{/if}}>Bonus</option>
+      <option value="critique" {{#if (eq system.tempers.fire.value "critique")}}selected{{/if}}>Critical</option>
     </select>
   </div>
 
   <div>
     <label for="water">Water:</label>
-    <select id="water" name="temperament-water">
-      <option value="malus" {{#if (eq system.temperaments.water.value "malus")}}selected{{/if}}>Malus</option>
-      <option value="neutre" {{#if (eq system.temperaments.water.value "neutre")}}selected{{/if}}>Neutre</option>
-      <option value="bonus" {{#if (eq system.temperaments.water.value "bonus")}}selected{{/if}}>Bonus</option>
-      <option value="critique" {{#if (eq system.temperaments.water.value "critique")}}selected{{/if}}>Critique</option>
+    <select id="water" name="temper-water">
+      <option value="malus" {{#if (eq system.tempers.water.value "malus")}}selected{{/if}}>Malus</option>
+      <option value="neutral" {{#if (eq system.tempers.water.value "neutral")}}selected{{/if}}>Neutral</option>
+      <option value="bonus" {{#if (eq system.tempers.water.value "bonus")}}selected{{/if}}>Bonus</option>
+      <option value="critique" {{#if (eq system.tempers.water.value "critique")}}selected{{/if}}>Critical</option>
     </select>
   </div>
 
   <div>
     <label for="earth">Earth:</label>
-    <select id="earth" name="temperament-earth">
-      <option value="malus" {{#if (eq system.temperaments.earth.value "malus")}}selected{{/if}}>Malus</option>
-      <option value="neutre" {{#if (eq system.temperaments.earth.value "neutre")}}selected{{/if}}>Neutre</option>
-      <option value="bonus" {{#if (eq system.temperaments.earth.value "bonus")}}selected{{/if}}>Bonus</option>
-      <option value="critique" {{#if (eq system.temperaments.earth.value "critique")}}selected{{/if}}>Critique</option>
+    <select id="earth" name="temper-earth">
+      <option value="malus" {{#if (eq system.tempers.earth.value "malus")}}selected{{/if}}>Malus</option>
+      <option value="neutral" {{#if (eq system.tempers.earth.value "neutral")}}selected{{/if}}>Neutral</option>
+      <option value="bonus" {{#if (eq system.tempers.earth.value "bonus")}}selected{{/if}}>Bonus</option>
+      <option value="critique" {{#if (eq system.tempers.earth.value "critique")}}selected{{/if}}>Critical</option>
     </select>
   </div>
 
   <div>
     <label for="air">Air:</label>
-    <select id="air" name="temperament-air">
-      <option value="malus" {{#if (eq system.temperaments.air.value "malus")}}selected{{/if}}>Malus</option>
-      <option value="neutre" {{#if (eq system.temperaments.air.value "neutre")}}selected{{/if}}>Neutre</option>
-      <option value="bonus" {{#if (eq system.temperaments.air.value "bonus")}}selected{{/if}}>Bonus</option>
-      <option value="critique" {{#if (eq system.temperaments.air.value "critique")}}selected{{/if}}>Critique</option>
+    <select id="air" name="temper-air">
+      <option value="malus" {{#if (eq system.tempers.air.value "malus")}}selected{{/if}}>Malus</option>
+      <option value="neutral" {{#if (eq system.tempers.air.value "neutral")}}selected{{/if}}>Neutral</option>
+      <option value="bonus" {{#if (eq system.tempers.air.value "bonus")}}selected{{/if}}>Bonus</option>
+      <option value="critique" {{#if (eq system.tempers.air.value "critique")}}selected{{/if}}>Critical</option>
+    </select>
+  </div>
+
+  <h2>Attributes</h2>
+
+  <div>
+    <label for="body">Body:</label>
+    <select id="body" name="attributes-body">
+      <option value="malus" {{#if (eq system.attributes.body.value "malus")}}selected{{/if}}>Malus</option>
+      <option value="neutral" {{#if (eq system.attributes.body.value "neutral")}}selected{{/if}}>Neutral</option>
+      <option value="bonus" {{#if (eq system.attributes.body.value "bonus")}}selected{{/if}}>Bonus</option>
+      <option value="critique" {{#if (eq system.attributes.body.value "critique")}}selected{{/if}}>Critical</option>
+    </select>
+  </div>
+
+  <div>
+    <label for="soul">Soul:</label>
+    <select id="soul" name="attributes-soul">
+      <option value="malus" {{#if (eq system.attributes.soul.value "malus")}}selected{{/if}}>Malus</option>
+      <option value="neutral" {{#if (eq system.attributes.soul.value "neutral")}}selected{{/if}}>Neutral</option>
+      <option value="bonus" {{#if (eq system.attributes.soul.value "bonus")}}selected{{/if}}>Bonus</option>
+      <option value="critique" {{#if (eq system.attributes.soul.value "critique")}}selected{{/if}}>Critical</option>
+    </select>
+  </div>
+
+  <div>
+    <label for="spirit">Spirit:</label>
+    <select id="spirit" name="attributes-spirit">
+      <option value="malus" {{#if (eq system.attributes.spirit.value "malus")}}selected{{/if}}>Malus</option>
+      <option value="neutral" {{#if (eq system.attributes.spirit.value "neutral")}}selected{{/if}}>Neutral</option>
+      <option value="bonus" {{#if (eq system.attributes.spirit.value "bonus")}}selected{{/if}}>Bonus</option>
+      <option value="critique" {{#if (eq system.attributes.spirit.value "critique")}}selected{{/if}}>Critical</option>
+    </select>
+  </div>
+
+  <div>
+    <label for="martial">Martial:</label>
+    <select id="martial" name="attributes-martial">
+      <option value="malus" {{#if (eq system.attributes.martial.value "malus")}}selected{{/if}}>Malus</option>
+      <option value="neutral" {{#if (eq system.attributes.martial.value "neutral")}}selected{{/if}}>Neutral</option>
+      <option value="bonus" {{#if (eq system.attributes.martial.value "bonus")}}selected{{/if}}>Bonus</option>
+      <option value="critique" {{#if (eq system.attributes.martial.value "critique")}}selected{{/if}}>Critical</option>
+    </select>
+  </div>
+
+  <div>
+    <label for="elemental">Elemental:</label>
+    <select id="elemental" name="attributes-elemental">
+      <option value="malus" {{#if (eq system.attributes.elemental.value "malus")}}selected{{/if}}>Malus</option>
+      <option value="neutral" {{#if (eq system.attributes.elemental.value "neutral")}}selected{{/if}}>Neutral</option>
+      <option value="bonus" {{#if (eq system.attributes.elemental.value "bonus")}}selected{{/if}}>Bonus</option>
+      <option value="critique" {{#if (eq system.attributes.elemental.value "critique")}}selected{{/if}}>Critical</option>
+    </select>
+  </div>
+
+  <div>
+    <label for="rhetoric">Rhetoric:</label>
+    <select id="rhetoric" name="attributes-rhetoric">
+      <option value="malus" {{#if (eq system.attributes.rhetoric.value "malus")}}selected{{/if}}>Malus</option>
+      <option value="neutral" {{#if (eq system.attributes.rhetoric.value "neutral")}}selected{{/if}}>Neutral</option>
+      <option value="bonus" {{#if (eq system.attributes.rhetoric.value "bonus")}}selected{{/if}}>Bonus</option>
+      <option value="critique" {{#if (eq system.attributes.rhetoric.value "critique")}}selected{{/if}}>Critical</option>
     </select>
   </div>
 </form>
