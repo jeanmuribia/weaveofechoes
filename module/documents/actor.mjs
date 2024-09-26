@@ -12,5 +12,15 @@ export class WoeActor extends Actor {
     if (!systemData.element) {
       systemData.element = { value: "Pas de maîtrise élémentaire" }; // Valeur par défaut
     }
+
+    // Initialiser les tempéraments
+    if (!systemData.temperaments) {
+      systemData.temperaments = {
+        fire: { value: "neutre" },
+        water: { value: "neutre" },
+        earth: { value: "neutre" },
+        air: { value: "neutre" }
+      };
+    }
   }
 }

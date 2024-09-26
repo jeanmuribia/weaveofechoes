@@ -9,7 +9,7 @@
   <div>
     <label for="element">Element:</label>
     <select id="element" name="element">
-      <option value="Pas de maîtrise élémentaire" {{#if (eq system.element.value "Pas de maîtrise élémentaire")}}selected{{/if}}>Pas de maîtrise élémentaire</option>
+      <option value="none" {{#if (eq system.element.value "none")}}selected{{/if}}>None</option>
       <option value="Fire" {{#if (eq system.element.value "Fire")}}selected{{/if}}>Fire</option>
       <option value="Water" {{#if (eq system.element.value "Water")}}selected{{/if}}>Water</option>
       <option value="Earth" {{#if (eq system.element.value "Earth")}}selected{{/if}}>Earth</option>
@@ -17,4 +17,45 @@
     </select>
   </div>
 
+  <h2>Temperaments</h2>
+
+  <div>
+    <label for="fire">Fire:</label>
+    <select id="fire" name="temperament-fire">
+      <option value="malus" {{#if (eq system.temperaments.fire.value "malus")}}selected{{/if}}>Malus</option>
+      <option value="neutre" {{#if (eq system.temperaments.fire.value "neutre")}}selected{{/if}}>Neutre</option>
+      <option value="bonus" {{#if (eq system.temperaments.fire.value "bonus")}}selected{{/if}}>Bonus</option>
+      <option value="critique" {{#if (eq system.temperaments.fire.value "critique")}}selected{{/if}}>Critique</option>
+    </select>
+  </div>
+
+  <div>
+    <label for="water">Water:</label>
+    <select id="water" name="temperament-water">
+      <option value="malus" {{#if (eq system.temperaments.water.value "malus")}}selected{{/if}}>Malus</option>
+      <option value="neutre" {{#if (eq system.temperaments.water.value "neutre")}}selected{{/if}}>Neutre</option>
+      <option value="bonus" {{#if (eq system.temperaments.water.value "bonus")}}selected{{/if}}>Bonus</option>
+      <option value="critique" {{#if (eq system.temperaments.water.value "critique")}}selected{{/if}}>Critique</option>
+    </select>
+  </div>
+
+  <div>
+    <label for="earth">Earth:</label>
+    <select id="earth" name="temperament-earth">
+      <option value="malus" {{#if (eq system.temperaments.earth.value "malus")}}selected{{/if}}>Malus</option>
+      <option value="neutre" {{#if (eq system.temperaments.earth.value "neutre")}}selected{{/if}}>Neutre</option>
+      <option value="bonus" {{#if (eq system.temperaments.earth.value "bonus")}}selected{{/if}}>Bonus</option>
+      <option value="critique" {{#if (eq system.temperaments.earth.value "critique")}}selected{{/if}}>Critique</option>
+    </select>
+  </div>
+
+  <div>
+    <label for="air">Air:</label>
+    <select id="air" name="temperament-air">
+      <option value="malus" {{#if (eq system.temperaments.air.value "malus")}}selected{{/if}}>Malus</option>
+      <option value="neutre" {{#if (eq system.temperaments.air.value "neutre")}}selected{{/if}}>Neutre</option>
+      <option value="bonus" {{#if (eq system.temperaments.air.value "bonus")}}selected{{/if}}>Bonus</option>
+      <option value="critique" {{#if (eq system.temperaments.air.value "critique")}}selected{{/if}}>Critique</option>
+    </select>
+  </div>
 </form>

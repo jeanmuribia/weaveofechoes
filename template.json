@@ -7,7 +7,21 @@
           "value": ""
         },
         "element": {
-          "value": "Pas de maîtrise élémentaire" 
+          "value": "none"  // Valeur par défaut
+        },
+        "temperaments": {
+          "fire": {
+            "value": "neutre"  // Valeur par défaut
+          },
+          "water": {
+            "value": "neutre"  // Valeur par défaut
+          },
+          "earth": {
+            "value": "neutre"  // Valeur par défaut
+          },
+          "air": {
+            "value": "neutre"  // Valeur par défaut
+          }
         }
       }
     },
