@@ -30,9 +30,8 @@ export class WoeActorSheet extends ActorSheet {
   async getData() {
     const context = super.getData();
     const actorData = this.document.toObject(false);
-    console.log("Actor Data:", actorData); // Vérifie les données dans la console
     context.system = actorData.system;
-    context.actorName = this.actor.name; // Assigne le nom de l'acteur au contexte
+    context.actorName = this.actor.name;
     return context;
   }
 
@@ -40,74 +39,71 @@ export class WoeActorSheet extends ActorSheet {
   activateListeners(html) {
     super.activateListeners(html);
 
-    // Quand on clique sur "Edit"
-    html.find('#edit-button').on('click', (event) => {
-        console.log("Edit button clicked");
-
-        // Masque les champs de lecture et affiche les champs d'édition
-        html.find('#actor-name').hide();
-        html.find('#name-edit').val(this.actor.name).show();
-        html.find('#edit-button').hide();
-        html.find('#save-button').show();
-
-        // Masque les champs de lecture et affiche les sélecteurs
-        html.find('span[id$="-view"]').hide();
-        html.find('select[id$="-edit"]').show();
+    // Activer l'édition au clic pour le nom
+    html.find('#actor-name').on('click', (event) => {
+      html.find('#actor-name').hide();
+      html.find('#name-edit').prop('disabled', false).show().focus(); // Activer et afficher le champ d'édition du nom
     });
 
-    // Quand on clique sur "Save"
-    html.find('#save-button').on('click', async (event) => {
-        event.preventDefault(); // Empêche la soumission par défaut
+    // Sauvegarder lors de la perte de focus sur le nom
+    html.find('#name-edit').on('blur', async (event) => {
+      const newName = html.find('#name-edit').val();
 
-        console.log("Save button clicked");
+      // Mise à jour de la valeur dans l'acteur
+      await this.actor.update({
+        "name": newName // Mise à jour du nom
+      });
 
-        // Récupère les nouvelles valeurs des champs
-        const newName = html.find('#name-edit').val();
-        const element = html.find('#element-edit').val();
-        const fire = html.find('#fire-edit').val();
-        const water = html.find('#water-edit').val();
-        const earth = html.find('#earth-edit').val();
-        const air = html.find('#air-edit').val();
-        const body = html.find('#body-edit').val();
-        const soul = html.find('#soul-edit').val();
-        const spirit = html.find('#spirit-edit').val();
-        const martial = html.find('#martial-edit').val();
-        const elemental = html.find('#elemental-edit').val();
-        const rhetoric = html.find('#rhetoric-edit').val();
+      // Afficher la nouvelle valeur et cacher l'édition
+      html.find('#actor-name').text(newName).show();
+      html.find('#name-edit').hide();
+    });
 
-        // Vérifie si le nom est vide
-        if (!newName.trim()) {
-            ui.notifications.error("Name cannot be empty.");
-            return;
-        }
+    // Activer l'édition au clic pour les éléments
+    this.enableEditOnClick(html, 'element');
 
-        // Met à jour l'acteur avec les nouvelles données
-        await this.actor.update({
-            "name": newName,
-            "system.element.value": element,
-            "system.tempers.fire.value": fire,
-            "system.tempers.water.value": water,
-            "system.tempers.earth.value": earth,
-            "system.tempers.air.value": air,
-            "system.attributes.body.value": body,
-            "system.attributes.soul.value": soul,
-            "system.attributes.spirit.value": spirit,
-            "system.attributes.martial.value": martial,
-            "system.attributes.elemental.value": elemental,
-            "system.attributes.rhetoric.value": rhetoric
-        });
+    // Activer l'édition pour les tempers et attributs
+    this.enableEditOnClick(html, 'fire');
+    this.enableEditOnClick(html, 'water');
+    this.enableEditOnClick(html, 'earth');
+    this.enableEditOnClick(html, 'air');
+    this.enableEditOnClick(html, 'body');
+    this.enableEditOnClick(html, 'soul');
+    this.enableEditOnClick(html, 'spirit');
+    this.enableEditOnClick(html, 'martial');
+    this.enableEditOnClick(html, 'elemental');
+    this.enableEditOnClick(html, 'rhetoric');
+  }
 
-        // Rafraîchit l'affichage du nom
-        html.find('#actor-name').text(newName).show();
-        html.find('#name-edit').hide();
+  // Fonction pour activer l'édition d'un champ au clic
+  enableEditOnClick(html, field) {
+    const viewSelector = `#${field}-view`;
+    const editSelector = `#${field}-edit`;
+    
+    // Quand on clique sur le champ en mode lecture
+    html.find(viewSelector).on('click', (event) => {
+      html.find(viewSelector).hide();
+      html.find(editSelector).prop('disabled', false).show().focus();
+    });
 
-        // Masque les sélecteurs et affiche les champs de lecture
-        html.find('select[id$="-edit"]').hide();
-        html.find('span[id$="-view"]').show();
+    // Sauvegarder lors de la perte de focus
+    html.find(editSelector).on('blur', async (event) => {
+      const newValue = html.find(editSelector).val();
 
-        // Masque le bouton Save et réaffiche le bouton Edit
-        html.find('#save-button').hide();
-        html.find('#edit-button').show();
+      // Mise à jour de la valeur dans l'acteur
+      let updateData = {};
+      if (field === 'element') {
+        updateData[`system.element.value`] = newValue;
+      } else if (['fire', 'water', 'earth', 'air'].includes(field)) {
+        updateData[`system.tempers.${field}.value`] = newValue;
+      } else {
+        updateData[`system.attributes.${field}.value`] = newValue;
+      }
+      await this.actor.update(updateData);
+
+      // Afficher la nouvelle valeur et cacher l'édition
+      html.find(viewSelector).text(newValue).show();
+      html.find(editSelector).hide();
     });
   }
 }
