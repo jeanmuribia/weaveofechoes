@@ -27,7 +27,7 @@ export class WoeActor extends Actor {
     // Initialise attributes
     if (!systemData.attributes) {
       systemData.attributes = {
-        corp: { value: "neutral" },
+        body: { value: "neutral" },
         soul: { value: "neutral" },
         spirit: { value: "neutral" },
         martial: { value: "neutral" },
@@ -56,7 +56,7 @@ export class WoeActor extends Actor {
           air: { value: "neutral" }
         },
         attributes: {
-          corp: { value: "neutral" },
+          body: { value: "neutral" },
           soul: { value: "neutral" },
           spirit: { value: "neutral" },
           martial: { value: "neutral" },
@@ -73,14 +73,14 @@ export class WoeActor extends Actor {
   // Sépare la méthode enableEditing
   enableEditing(html) {
     console.log("Editing mode enabled");
-
+  
     // Masque le nom actuel et affiche le champ de texte pour l'édition
     html.find('#actor-name').hide();
-    html.find('#name-edit').val(this.name).show(); // Utilise `this.name` pour récupérer le nom de l'acteur
-
+    html.find('#name-edit').val(this.actor.name).show(); // Utilise `this.actor.name` pour récupérer le nom de l'acteur
+  
     // Active tous les champs qui sont désactivés (ex: select, input)
     html.find('input, select').prop('disabled', false); // Active tous les champs et listes déroulantes
-
+  
     // Gestion des boutons
     html.find('#edit-button').hide();
     html.find('#save-button').show();

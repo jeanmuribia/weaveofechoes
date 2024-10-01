@@ -42,68 +42,72 @@ export class WoeActorSheet extends ActorSheet {
 
     // Quand on clique sur "Edit"
     html.find('#edit-button').on('click', (event) => {
-        // Masque le nom statique et affiche le champ d'édition
-        html.find('#actor-name').hide();
-        html.find('#name-edit').val(this.actor.name).show(); // Préremplit et affiche le champ de texte avec le nom actuel
-        html.find('#edit-button').hide(); // Masque le bouton Edit
-        html.find('#save-button').show(); // Affiche le bouton Save
+        console.log("Edit button clicked");
 
-        // Active tous les champs pour qu'ils soient modifiables
-        html.find('input, select').prop('disabled', false); // Active tous les champs et listes déroulantes
+        // Masque les champs de lecture et affiche les champs d'édition
+        html.find('#actor-name').hide();
+        html.find('#name-edit').val(this.actor.name).show();
+        html.find('#edit-button').hide();
+        html.find('#save-button').show();
+
+        // Masque les champs de lecture et affiche les sélecteurs
+        html.find('span[id$="-view"]').hide();
+        html.find('select[id$="-edit"]').show();
     });
 
     // Quand on clique sur "Save"
     html.find('#save-button').on('click', async (event) => {
-      // Récupère la nouvelle valeur du nom et des autres champs
-      const newName = html.find('#name-edit').val(); // Champ du nom
-      const element = html.find('#element').val();  // Liste déroulante pour l'élément
-  
-      // Récupérer les valeurs des tempers
-      const fire = html.find('#fire').val();
-      const water = html.find('#water').val();
-      const earth = html.find('#earth').val();
-      const air = html.find('#air').val();
+        event.preventDefault(); // Empêche la soumission par défaut
 
-      // Récupérer les valeurs des attributes
-      const corp = html.find('#corp').val();
-      const soul = html.find('#soul').val();
-      const spirit = html.find('#spirit').val();
-      const martial = html.find('#martial').val();
-      const elemental = html.find('#elemental').val();
-      const rhetoric = html.find('#rhetoric').val();
+        console.log("Save button clicked");
 
-      // Vérifie si le nom est vide
-      if (!newName.trim()) {
-          ui.notifications.error("Name cannot be empty.");
-          return;
-      }
-  
-      // Met à jour l'acteur avec les nouvelles données
-      await this.actor.update({
-          "name": newName, // Met à jour le nom
-          "system.element.value": element, // Met à jour l'élément
-          "system.tempers.fire.value": fire, // Met à jour les tempers
-          "system.tempers.water.value": water,
-          "system.tempers.earth.value": earth,
-          "system.tempers.air.value": air,
-          "system.attributes.corp.value": corp, // Met à jour les attributs
-          "system.attributes.soul.value": soul,
-          "system.attributes.spirit.value": spirit,
-          "system.attributes.martial.value": martial,
-          "system.attributes.elemental.value": elemental,
-          "system.attributes.rhetoric.value": rhetoric
-      });
-  
-      // Rafraîchit l'affichage du nom
-      html.find('#actor-name').text(newName).show(); // Affiche le nouveau nom
-      html.find('#name-edit').hide(); // Masque le champ d'édition
-  
-      // Désactive les champs après sauvegarde (lecture seule)
-      html.find('input, select').prop('disabled', true); 
-  
-      // Masque le bouton Save et réaffiche le bouton Edit
-      html.find('#save-button').hide(); 
-      html.find('#edit-button').show(); 
-  });
+        // Récupère les nouvelles valeurs des champs
+        const newName = html.find('#name-edit').val();
+        const element = html.find('#element-edit').val();
+        const fire = html.find('#fire-edit').val();
+        const water = html.find('#water-edit').val();
+        const earth = html.find('#earth-edit').val();
+        const air = html.find('#air-edit').val();
+        const body = html.find('#body-edit').val();
+        const soul = html.find('#soul-edit').val();
+        const spirit = html.find('#spirit-edit').val();
+        const martial = html.find('#martial-edit').val();
+        const elemental = html.find('#elemental-edit').val();
+        const rhetoric = html.find('#rhetoric-edit').val();
+
+        // Vérifie si le nom est vide
+        if (!newName.trim()) {
+            ui.notifications.error("Name cannot be empty.");
+            return;
+        }
+
+        // Met à jour l'acteur avec les nouvelles données
+        await this.actor.update({
+            "name": newName,
+            "system.element.value": element,
+            "system.tempers.fire.value": fire,
+            "system.tempers.water.value": water,
+            "system.tempers.earth.value": earth,
+            "system.tempers.air.value": air,
+            "system.attributes.body.value": body,
+            "system.attributes.soul.value": soul,
+            "system.attributes.spirit.value": spirit,
+            "system.attributes.martial.value": martial,
+            "system.attributes.elemental.value": elemental,
+            "system.attributes.rhetoric.value": rhetoric
+        });
+
+        // Rafraîchit l'affichage du nom
+        html.find('#actor-name').text(newName).show();
+        html.find('#name-edit').hide();
+
+        // Masque les sélecteurs et affiche les champs de lecture
+        html.find('select[id$="-edit"]').hide();
+        html.find('span[id$="-view"]').show();
+
+        // Masque le bouton Save et réaffiche le bouton Edit
+        html.find('#save-button').hide();
+        html.find('#edit-button').show();
+    });
   }
 }
