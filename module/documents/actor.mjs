@@ -14,6 +14,13 @@ export class WoeActor extends Actor {
       systemData.element = { value: "none" }; // Valeur par défaut pour l'élément
     }
 
+    if (!systemData.stamina) {
+      systemData.stamina = {
+        max: 4,// Valeur par défaut pour la Stamina Max
+        current: 4 
+      };
+    }
+
     // Initialise tempers
     if (!systemData.tempers) {
       systemData.tempers = {

@@ -18,12 +18,35 @@
     
     <!-- Mode édition -->
     <select id="element-edit" name="element" style="display: none;">
-      <option value="fire" {{#if (eq system.element.value "fire")}}selected{{/if}}>Fire</option>
+      <option value="fire" {{#if (eq system.element.value "Fire")}}selected{{/if}}>Fire</option>
       <option value="water" {{#if (eq system.element.value "water")}}selected{{/if}}>Water</option>
       <option value="earth" {{#if (eq system.element.value "earth")}}selected{{/if}}>Earth</option>
       <option value="air" {{#if (eq system.element.value "air")}}selected{{/if}}>Air</option>
+      <option value="none" {{#if (eq system.element.value "none")}}selected{{/if}}>None</option>
     </select>
   </div>
+
+  <!-- Stamina Max -->
+<div style="display: flex; align-items: center;">
+  <label for="stamina-max">Stamina Max:</label>
+  <span id="stamina-max-view" style="margin-left: 10px;">{{system.stamina.max}}</span> <!-- Mode lecture pour Stamina Max -->
+  <select id="stamina-max-edit" name="stamina-max" style="display: none;"> <!-- Mode édition avec une liste de chiffres -->
+    <option value="1" {{#if (eq system.stamina.max "1")}}selected{{/if}}>1</option>
+    <option value="2" {{#if (eq system.stamina.max "2")}}selected{{/if}}>2</option>
+    <option value="3" {{#if (eq system.stamina.max "3")}}selected{{/if}}>3</option>
+    <option value="4" {{#if (eq system.stamina.max "4")}}selected{{/if}}>4</option>
+    <option value="5" {{#if (eq system.stamina.max "5")}}selected{{/if}}>5</option>
+    <option value="6" {{#if (eq system.stamina.max "6")}}selected{{/if}}>6</option>
+  </select>
+</div>
+
+<!-- Current Stamina -->
+<div style="display: flex; align-items: center; margin-top: 10px;">
+  <label for="current-stamina">Current Stamina:</label>
+  <span id="current-stamina-view" style="margin-left: 10px;">{{system.stamina.current}}</span> <!-- Mode lecture pour Current Stamina -->
+  <button id="stamina-decrease" type="button" style="margin-left: 10px;">-</button>
+  <button id="stamina-increase" type="button" style="margin-left: 5px;">+</button>
+</div>
 
   <!-- Section Tempers -->
   <h2>Tempers</h2>
