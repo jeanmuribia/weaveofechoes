@@ -1,14 +1,14 @@
 <form id="actor-sheet-form">
   <h1>Character Sheet</h1>
 
-  <div>
-    <label for="name">Name:</label>
-    <input type="text" id="name" name="name" value="{{system.name.value}}" required />
-  </div>
-
+<div>
+    <h2><label for="name">Name:</label></h2>
+    <p id="actor-name">{{actorName}}</p> <!-- Nom affiché en mode lecture -->
+    <input type="text" id="name-edit" name="name" value="{{actorName}}" style="display: none;" /> <!-- Champ d'édition masqué -->
+</div>
   <div>
     <label for="element">Element:</label>
-    <select id="element" name="element">
+    <select id="element" name="element" disabled>
       <option value="none" {{#if (eq system.element.value "none")}}selected{{/if}}>None</option>
       <option value="Fire" {{#if (eq system.element.value "Fire")}}selected{{/if}}>Fire</option>
       <option value="Water" {{#if (eq system.element.value "Water")}}selected{{/if}}>Water</option>
@@ -21,7 +21,7 @@
 
   <div>
     <label for="fire">Fire:</label>
-    <select id="fire" name="temper-fire">
+    <select id="fire" name="temper-fire" disabled>
       <option value="malus" {{#if (eq system.tempers.fire.value "malus")}}selected{{/if}}>Malus</option>
       <option value="neutral" {{#if (eq system.tempers.fire.value "neutral")}}selected{{/if}}>Neutral</option>
       <option value="bonus" {{#if (eq system.tempers.fire.value "bonus")}}selected{{/if}}>Bonus</option>
@@ -31,7 +31,7 @@
 
   <div>
     <label for="water">Water:</label>
-    <select id="water" name="temper-water">
+    <select id="water" name="temper-water" disabled>
       <option value="malus" {{#if (eq system.tempers.water.value "malus")}}selected{{/if}}>Malus</option>
       <option value="neutral" {{#if (eq system.tempers.water.value "neutral")}}selected{{/if}}>Neutral</option>
       <option value="bonus" {{#if (eq system.tempers.water.value "bonus")}}selected{{/if}}>Bonus</option>
@@ -41,7 +41,7 @@
 
   <div>
     <label for="earth">Earth:</label>
-    <select id="earth" name="temper-earth">
+    <select id="earth" name="temper-earth" disabled>
       <option value="malus" {{#if (eq system.tempers.earth.value "malus")}}selected{{/if}}>Malus</option>
       <option value="neutral" {{#if (eq system.tempers.earth.value "neutral")}}selected{{/if}}>Neutral</option>
       <option value="bonus" {{#if (eq system.tempers.earth.value "bonus")}}selected{{/if}}>Bonus</option>
@@ -51,7 +51,7 @@
 
   <div>
     <label for="air">Air:</label>
-    <select id="air" name="temper-air">
+    <select id="air" name="temper-air" disabled>
       <option value="malus" {{#if (eq system.tempers.air.value "malus")}}selected{{/if}}>Malus</option>
       <option value="neutral" {{#if (eq system.tempers.air.value "neutral")}}selected{{/if}}>Neutral</option>
       <option value="bonus" {{#if (eq system.tempers.air.value "bonus")}}selected{{/if}}>Bonus</option>
@@ -62,18 +62,18 @@
   <h2>Attributes</h2>
 
   <div>
-    <label for="body">Body:</label>
-    <select id="body" name="attributes-body">
-      <option value="malus" {{#if (eq system.attributes.body.value "malus")}}selected{{/if}}>Malus</option>
-      <option value="neutral" {{#if (eq system.attributes.body.value "neutral")}}selected{{/if}}>Neutral</option>
-      <option value="bonus" {{#if (eq system.attributes.body.value "bonus")}}selected{{/if}}>Bonus</option>
-      <option value="critique" {{#if (eq system.attributes.body.value "critique")}}selected{{/if}}>Critical</option>
+    <label for="corp">Corp:</label>
+    <select id="corp" name="attributes-corp" disabled>
+      <option value="malus" {{#if (eq system.attributes.corp.value "malus")}}selected{{/if}}>Malus</option>
+      <option value="neutral" {{#if (eq system.attributes.corp.value "neutral")}}selected{{/if}}>Neutral</option>
+      <option value="bonus" {{#if (eq system.attributes.corp.value "bonus")}}selected{{/if}}>Bonus</option>
+      <option value="critique" {{#if (eq system.attributes.corp.value "critique")}}selected{{/if}}>Critical</option>
     </select>
   </div>
 
   <div>
     <label for="soul">Soul:</label>
-    <select id="soul" name="attributes-soul">
+    <select id="soul" name="attributes-soul" disabled>
       <option value="malus" {{#if (eq system.attributes.soul.value "malus")}}selected{{/if}}>Malus</option>
       <option value="neutral" {{#if (eq system.attributes.soul.value "neutral")}}selected{{/if}}>Neutral</option>
       <option value="bonus" {{#if (eq system.attributes.soul.value "bonus")}}selected{{/if}}>Bonus</option>
@@ -83,7 +83,7 @@
 
   <div>
     <label for="spirit">Spirit:</label>
-    <select id="spirit" name="attributes-spirit">
+    <select id="spirit" name="attributes-spirit" disabled>
       <option value="malus" {{#if (eq system.attributes.spirit.value "malus")}}selected{{/if}}>Malus</option>
       <option value="neutral" {{#if (eq system.attributes.spirit.value "neutral")}}selected{{/if}}>Neutral</option>
       <option value="bonus" {{#if (eq system.attributes.spirit.value "bonus")}}selected{{/if}}>Bonus</option>
@@ -93,7 +93,7 @@
 
   <div>
     <label for="martial">Martial:</label>
-    <select id="martial" name="attributes-martial">
+    <select id="martial" name="attributes-martial" disabled>
       <option value="malus" {{#if (eq system.attributes.martial.value "malus")}}selected{{/if}}>Malus</option>
       <option value="neutral" {{#if (eq system.attributes.martial.value "neutral")}}selected{{/if}}>Neutral</option>
       <option value="bonus" {{#if (eq system.attributes.martial.value "bonus")}}selected{{/if}}>Bonus</option>
@@ -103,7 +103,7 @@
 
   <div>
     <label for="elemental">Elemental:</label>
-    <select id="elemental" name="attributes-elemental">
+    <select id="elemental" name="attributes-elemental" disabled>
       <option value="malus" {{#if (eq system.attributes.elemental.value "malus")}}selected{{/if}}>Malus</option>
       <option value="neutral" {{#if (eq system.attributes.elemental.value "neutral")}}selected{{/if}}>Neutral</option>
       <option value="bonus" {{#if (eq system.attributes.elemental.value "bonus")}}selected{{/if}}>Bonus</option>
@@ -113,11 +113,14 @@
 
   <div>
     <label for="rhetoric">Rhetoric:</label>
-    <select id="rhetoric" name="attributes-rhetoric">
+    <select id="rhetoric" name="attributes-rhetoric" disabled>
       <option value="malus" {{#if (eq system.attributes.rhetoric.value "malus")}}selected{{/if}}>Malus</option>
       <option value="neutral" {{#if (eq system.attributes.rhetoric.value "neutral")}}selected{{/if}}>Neutral</option>
       <option value="bonus" {{#if (eq system.attributes.rhetoric.value "bonus")}}selected{{/if}}>Bonus</option>
       <option value="critique" {{#if (eq system.attributes.rhetoric.value "critique")}}selected{{/if}}>Critical</option>
     </select>
   </div>
+
+  <button id="edit-button">Edit</button>
+  <button id="save-button" style="display: none;">Save</button>
 </form>
