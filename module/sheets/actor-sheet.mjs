@@ -31,12 +31,12 @@ export class WoeActorSheet extends ActorSheet {
   activateListeners(html) {
     super.activateListeners(html);
 
-    // Initialiser Stamina Max à 4 si elle est absente ou indéfinie
+    // Initialize Stamina Max to 4 if undefined
     if (!this.actor.system.stamina.max || isNaN(this.actor.system.stamina.max)) {
       this.actor.update({ "system.stamina.max": 4 });
     }
 
-    // Gérer l'édition du nom
+    // Handle name editing
     html.find('#actor-name').on('click', (event) => {
       html.find('#actor-name').hide();
       html.find('#name-edit').prop('disabled', false).show().focus();
@@ -53,7 +53,7 @@ export class WoeActorSheet extends ActorSheet {
       html.find('#name-edit').hide();
     });
 
-    // Gérer les boutons + et - pour la Current Stamina
+    // Handle Current Stamina increment and decrement
     html.find('#stamina-decrease').on('click', async (event) => {
       let currentStamina = parseInt(html.find('#current-stamina-view').text());
       let maxStamina = this.actor.system.stamina.max || 4;
@@ -76,31 +76,29 @@ export class WoeActorSheet extends ActorSheet {
       }
     });
 
-    // Gérer l'édition de Stamina Max
+    // Handle editing of Stamina Max
     html.find('#stamina-max-view').on('click', (event) => {
       html.find('#stamina-max-view').hide();
-      html.find('#stamina-max-edit').show().focus(); // Afficher le champ d'édition
+      html.find('#stamina-max-edit').show().focus();
     });
 
     html.find('#stamina-max-edit').on('blur', async (event) => {
       let newStaminaMax = parseInt(html.find('#stamina-max-edit').val());
-
-      // Si la nouvelle Stamina Max est invalide, utiliser une valeur par défaut
       if (!newStaminaMax || isNaN(newStaminaMax)) {
-        newStaminaMax = 4; // Par exemple, valeur par défaut 4
+        newStaminaMax = 4;
       }
 
       await this.actor.update({
         "system.stamina.max": newStaminaMax,
-        "system.stamina.current": Math.min(this.actor.system.stamina.current, newStaminaMax) // Ajuster la current si elle dépasse la max
+        "system.stamina.current": Math.min(this.actor.system.stamina.current, newStaminaMax)
       });
 
-      html.find('#stamina-max-view').text(newStaminaMax).show(); // Réafficher la Stamina Max mise à jour
-      html.find('#current-stamina-view').text(this.actor.system.stamina.current).show(); // Afficher la valeur actuelle ajustée
-      html.find('#stamina-max-edit').hide(); // Cacher le champ d'édition après validation
+      html.find('#stamina-max-view').text(newStaminaMax).show();
+      html.find('#current-stamina-view').text(this.actor.system.stamina.current).show();
+      html.find('#stamina-max-edit').hide();
     });
 
-    // Activer l'édition pour les tempers et attributs
+    // Enable temper and attributes edit
     this.enableEditOnClick(html, 'element');
     this.enableEditOnClick(html, 'fire');
     this.enableEditOnClick(html, 'water');
@@ -113,7 +111,7 @@ export class WoeActorSheet extends ActorSheet {
     this.enableEditOnClick(html, 'elementary');
     this.enableEditOnClick(html, 'rhetoric');
 
-    // Logique pour gérer les blessures (wounds)
+    // Manage wounds for all attributes
     this.manageWoundsListeners(html, 'body');
     this.manageWoundsListeners(html, 'mind');
     this.manageWoundsListeners(html, 'soul');
@@ -136,69 +134,56 @@ export class WoeActorSheet extends ActorSheet {
       let updateData = {};
       if (field === 'element') {
         updateData[`system.element.value`] = newValue;
-      } else if (['fire'].includes(field)) {
+      } else if (['fire', 'water', 'earth', 'air'].includes(field)) {
         updateData[`system.tempers.${field}.value`] = newValue;
       } else {
         updateData[`system.attributes.${field}.baseValue`] = newValue;
-        updateData[`system.attributes.${field}.wounds`] = { wound1: false, wound2: false, wound3: false }; // Réinitialiser les wounds
+        updateData[`system.attributes.${field}.wounds`] = { wound1: false, wound2: false, wound3: false };
       }
       await this.actor.update(updateData);
-      this.updateAttributeCurrentValue(field); // Recalcule la currentValue après la modification
+      this.updateAttributeCurrentValue(field);
       html.find(viewSelector).text(newValue).show();
       html.find(editSelector).hide();
     });
   }
 
-  // Gestion des listeners et mise à jour des wounds
   manageWoundsListeners(html, attribute) {
     const attr = this.actor.system.attributes[attribute];
-
     const wound1 = html.find(`#${attribute}-wound1`);
     const wound2 = html.find(`#${attribute}-wound2`);
     const wound3 = html.find(`#${attribute}-wound3`);
 
-    // Apply wound logic for attribute
-    this.manageWoundCheckboxes(attribute, html, wound1, wound2, wound3);
+    // Initial checkbox management
+    this.manageWoundCheckboxes(attribute, wound1, wound2, wound3);
 
     wound1.on('change', async (event) => {
       const checked = event.target.checked;
-      await this.actor.update({
-        [`system.attributes.${attribute}.wounds.wound1`]: checked
-      });
-      this.updateAttributeCurrentValue(attribute, html);
+      await this.actor.update({ [`system.attributes.${attribute}.wounds.wound1`]: checked });
+      this.updateAttributeCurrentValue(attribute);
     });
 
     wound2.on('change', async (event) => {
       const checked = event.target.checked;
-      await this.actor.update({
-        [`system.attributes.${attribute}.wounds.wound2`]: checked
-      });
-      this.updateAttributeCurrentValue(attribute, html);
+      await this.actor.update({ [`system.attributes.${attribute}.wounds.wound2`]: checked });
+      this.updateAttributeCurrentValue(attribute);
     });
 
     wound3.on('change', async (event) => {
       const checked = event.target.checked;
-      await this.actor.update({
-        [`system.attributes.${attribute}.wounds.wound3`]: checked
-      });
-      this.updateAttributeCurrentValue(attribute, html);
+      await this.actor.update({ [`system.attributes.${attribute}.wounds.wound3`]: checked });
+      this.updateAttributeCurrentValue(attribute);
     });
   }
 
-  // Updated to manage specific wounds for each attribute separately
-  manageWoundCheckboxes(attribute, html, wound1, wound2, wound3) {
+  manageWoundCheckboxes(attribute, wound1, wound2, wound3) {
     const attr = this.actor.system.attributes[attribute];
     const wounds = attr.wounds;
 
-    // Check the state of each attribute's wound system and disable or enable accordingly
-    if (attr.baseValue === "malus") {
+    if (attr.baseValue === 'malus') {
       wound1.prop('disabled', true);
       wound2.prop('disabled', true);
       wound3.prop('disabled', true);
-      return;
-    }
-
-    if (attr.currentValue === "malus") {
+    } else if (attr.currentValue === 'malus') {
       if (wounds.wound3) {
         wound1.prop('disabled', true);
         wound2.prop('disabled', true);
@@ -233,8 +218,7 @@ export class WoeActorSheet extends ActorSheet {
     }
   }
 
-  // Call manageWoundCheckboxes separately for each attribute
-  async updateAttributeCurrentValue(attribute, html) {
+  async updateAttributeCurrentValue(attribute) {
     const attr = this.actor.system.attributes[attribute];
     let currentValue = attr.baseValue;
 
@@ -242,28 +226,25 @@ export class WoeActorSheet extends ActorSheet {
     if (attr.wounds.wound2) currentValue = this.degradeAttributeValue(currentValue);
     if (attr.wounds.wound3) currentValue = this.degradeAttributeValue(currentValue);
 
-    await this.actor.update({
-      [`system.attributes.${attribute}.currentValue`]: currentValue
-    });
+    await this.actor.update({ [`system.attributes.${attribute}.currentValue`]: currentValue });
 
-    // Manage the wound checkboxes for the specific attribute
-    const wound1 = html.find(`#${attribute}-wound1`);
-    const wound2 = html.find(`#${attribute}-wound2`);
-    const wound3 = html.find(`#${attribute}-wound3`);
+    const wound1 = $(`#${attribute}-wound1`);
+    const wound2 = $(`#${attribute}-wound2`);
+    const wound3 = $(`#${attribute}-wound3`);
 
-    this.manageWoundCheckboxes(attribute, html, wound1, wound2, wound3);
+    this.manageWoundCheckboxes(attribute, wound1, wound2, wound3);
   }
 
   degradeAttributeValue(value) {
     switch (value) {
-      case "critical":
-        return "bonus";
-      case "bonus":
-        return "neutral";
-      case "neutral":
-        return "malus";
-      case "malus":
-        return "malus";
+      case 'critical':
+        return 'bonus';
+      case 'bonus':
+        return 'neutral';
+      case 'neutral':
+        return 'malus';
+      case 'malus':
+        return 'malus';
       default:
         return value;
     }
