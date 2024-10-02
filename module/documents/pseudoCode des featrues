@@ -1,0 +1,43 @@
+Voici la version mise à jour du pseudo code avec la correction pour le point 3 :
+
+Si baseValue = malus :
+
+Toutes les cases de wounds (wound1, wound2, wound3) sont inactives (non cochables).
+Si baseValue n'est pas malus :
+
+Wound 1 est cochable.
+Wound 2 et Wound 3 sont inactives (non cochables).
+Si on coche wound 1 :
+
+currentValue devient malus (ou se dégrade d'un cran).
+Wound 1 reste décochable.
+Wound 2 devient cochable uniquement si currentValue n'est pas malus.
+Wound 3 reste inactive.
+Si on coche wound 2 :
+
+currentValue devient malus (ou se dégrade d'un cran).
+Wound 1 devient inactive mais reste cochée.
+Wound 2 reste décochable.
+Wound 3 devient cochable uniquement si currentValue n'est pas malus.
+Si on coche wound 3 :
+
+currentValue devient malus (ou se dégrade d'un cran).
+Wound 1 et Wound 2 deviennent inactives mais restent cochées.
+Wound 3 reste décochable.
+Si on décoche wound 3 :
+
+currentValue monte d'un cran.
+Wound 3 devient décochée et cochable.
+Wound 2 devient décochable.
+Wound 1 reste inactive.
+Si on décoche wound 2 :
+
+currentValue monte d'un cran.
+Wound 2 devient décochée mais cochable.
+Wound 1 devient décochable et cochée.
+Wound 3 devient inactive.
+Si on décoche wound 1 :
+
+currentValue monte d'un cran.
+Wound 1 devient décochée et cochable.
+Wound 2 et Wound 3 deviennent inactives et décochées.

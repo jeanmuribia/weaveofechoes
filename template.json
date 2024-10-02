@@ -7,40 +7,76 @@
           "value": ""
         },
         "element": {
-          "value": "none"  
+          "value": "none"
         },
         "tempers": {
           "fire": {
-            "value": "neutral"  
+            "value": "neutral"
           },
           "water": {
-            "value": "neutral"  
+            "value": "neutral"
           },
           "earth": {
-            "value": "neutral"  
+            "value": "neutral"
           },
           "air": {
-            "value": "neutral"  
+            "value": "neutral"
           }
         },
         "attributes": {
           "body": {
-            "value": "neutral"  
+            "baseValue": "neutral",  
+            "currentValue": "neutral",  
+            "wounds": {
+              "wound1": false,
+              "wound2": false,
+              "wound3": false
+            }
           },
           "soul": {
-            "value": "neutral"  
+            "baseValue": "neutral",
+            "currentValue": "neutral",
+            "wounds": {
+              "wound1": false,
+              "wound2": false,
+              "wound3": false
+            }
           },
-          "spirit": {
-            "value": "neutral"  
+          "mind": {
+            "baseValue": "neutral",
+            "currentValue": "neutral",
+            "wounds": {
+              "wound1": false,
+              "wound2": false,
+              "wound3": false
+            }
           },
           "martial": {
-            "value": "neutral"  
+            "baseValue": "neutral",
+            "currentValue": "neutral",
+            "wounds": {
+              "wound1": false,
+              "wound2": false,
+              "wound3": false
+            }
           },
-          "elemental": {
-            "value": "neutral"  
+          "elementary": {
+            "baseValue": "neutral",
+            "currentValue": "neutral",
+            "wounds": {
+              "wound1": false,
+              "wound2": false,
+              "wound3": false
+            }
           },
           "rhetoric": {
-            "value": "neutral"  
+            "baseValue": "neutral",
+            "currentValue": "neutral",
+            "wounds": {
+              "wound1": false,
+              "wound2": false,
+              "wound3": false
+            }
           }
         }
       }
