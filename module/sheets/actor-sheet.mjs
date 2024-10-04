@@ -9,8 +9,8 @@ export class WoeActorSheet extends ActorSheet {
       tabs: [
         {
           navSelector: '.sheet-tabs',
-          contentSelector: '.sheet-body',
-          initial: 'features',
+          contentSelector: '.tab-content',
+          initial: 'profile' // Default tab is the Profile tab
         },
       ],
     });
@@ -30,6 +30,20 @@ export class WoeActorSheet extends ActorSheet {
 
   activateListeners(html) {
     super.activateListeners(html);
+
+    // Built-in tab navigation (Foundry's system will handle the tab changes)
+    
+    // Save Biography
+    html.find('#biography').on('blur', async (event) => {
+      const biography = html.find('#biography').val();
+      await this.actor.update({ 'system.biography': biography });
+    });
+
+    // Save Private Notes
+    html.find('#private-notes').on('blur', async (event) => {
+      const privateNotes = html.find('#private-notes').val();
+      await this.actor.update({ 'system.privateNotes': privateNotes });
+    });
 
     // Initialize Stamina Max to 4 if undefined
     if (!this.actor.system.stamina.max || isNaN(this.actor.system.stamina.max)) {
@@ -119,6 +133,7 @@ export class WoeActorSheet extends ActorSheet {
     this.manageWoundsListeners(html, 'elementary');
     this.manageWoundsListeners(html, 'rhetoric');
   }
+
   enableEditOnClick(html, field) {
     const labelSelector = `#${field}-label`;
     const viewSelector = `#${field}-view`;

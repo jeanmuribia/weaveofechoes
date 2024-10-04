@@ -1,137 +1,150 @@
 <form>
-  <!-- Section identité de l'acteur -->
- <div>
-    <h2><label for="identity">Identity</label></h2>
-    
-    <!-- Nom de l'acteur -->
-    <label for="actor-name" style="display: inline;">Name:</label>
-    <span id="actor-name" style="cursor: pointer; margin-left: 10px;">{{actorName}}</span> <!-- Mode lecture du nom -->
-    <input type="text" id="name-edit" name="name" value="{{actorName}}" style="display: none;" /> <!-- Champ d'édition masqué pour le nom -->
-  </div>
+  <div class="sheet-container">
+    <header class="sheet-header">
+      <h1>{{actorName}}</h1>
+    </header>
 
-  <!-- Sélection de l'élément -->
-  <div>
-    <label for="element">Element:</label>
-    
-    <!-- Mode lecture -->
-    <span id="element-view">{{system.element.value}}</span>
-    
-    <!-- Mode édition -->
-    <select id="element-edit" name="element" style="display: none;">
-      <option value="fire" {{#if (eq system.element.value "Fire")}}selected{{/if}}>Fire</option>
-      <option value="water" {{#if (eq system.element.value "water")}}selected{{/if}}>Water</option>
-      <option value="earth" {{#if (eq system.element.value "earth")}}selected{{/if}}>Earth</option>
-      <option value="air" {{#if (eq system.element.value "air")}}selected{{/if}}>Air</option>
-      <option value="none" {{#if (eq system.element.value "none")}}selected{{/if}}>None</option>
-    </select>
-  </div>
+    <!-- Tabs -->
+    <nav class="sheet-tabs tabs" data-group="primary-tabs">
+      <a class="item" data-tab="profile">Profile</a>
+      <a class="item" data-tab="relationships">Relationships</a>
+      <a class="item" data-tab="biography">Biography</a>
+      <a class="item" data-tab="private-notes">Private Notes</a>
+    </nav>
 
-  <!-- Stamina Max -->
-<div style="display: flex; align-items: center;">
-  <label for="stamina-max">Stamina Max:</label>
-  <span id="stamina-max-view" style="margin-left: 10px;">{{system.stamina.max}}</span> <!-- Mode lecture pour Stamina Max -->
-  <select id="stamina-max-edit" name="stamina-max" style="display: none;"> <!-- Mode édition avec une liste de chiffres -->
-    <option value="1" {{#if (eq system.stamina.max "1")}}selected{{/if}}>1</option>
-    <option value="2" {{#if (eq system.stamina.max "2")}}selected{{/if}}>2</option>
-    <option value="3" {{#if (eq system.stamina.max "3")}}selected{{/if}}>3</option>
-    <option value="4" {{#if (eq system.stamina.max "4")}}selected{{/if}}>4</option>
-    <option value="5" {{#if (eq system.stamina.max "5")}}selected{{/if}}>5</option>
-    <option value="6" {{#if (eq system.stamina.max "6")}}selected{{/if}}>6</option>
-  </select>
-</div>
+    <!-- Tab contents -->
+    <section class="tab-content">
+      
+      <!-- Profile Tab -->
+      <section class="tab active" data-tab="profile">
+        <!-- Profile tab content -->
+        <div>
+          <h2><label for="identity">Identity</label></h2>
 
-<!-- Current Stamina -->
-<div style="display: flex; align-items: center; margin-top: 10px;">
-  <label for="current-stamina">Current Stamina:</label>
-  <span id="current-stamina-view" style="margin-left: 10px;">{{system.stamina.current}}</span> <!-- Mode lecture pour Current Stamina -->
-  <button id="stamina-decrease" type="button" style="margin-left: 10px;">-</button>
-  <button id="stamina-increase" type="button" style="margin-left: 5px;">+</button>
-</div>
+          <!-- Actor Name -->
+          <label for="actor-name" style="display: inline;">Name:</label>
+          <span id="actor-name" style="cursor: pointer; margin-left: 10px;">{{actorName}}</span> <!-- Display actor name -->
+          <input type="text" id="name-edit" name="name" value="{{actorName}}" style="display: none;" /> <!-- Hidden field for name editing -->
+        </div>
 
-  <!-- Section Tempers -->
-  <h2>Tempers</h2>
+        <!-- Element -->
+        <div>
+          <label for="element">Element:</label>
+          <span id="element-view">{{system.element.value}}</span> <!-- Display current element -->
+          <select id="element-edit" name="element" style="display: none;"> <!-- Dropdown for element editing -->
+            <option value="fire" {{#if (eq system.element.value "Fire")}}selected{{/if}}>Fire</option>
+            <option value="water" {{#if (eq system.element.value "water")}}selected{{/if}}>Water</option>
+            <option value="earth" {{#if (eq system.element.value "earth")}}selected{{/if}}>Earth</option>
+            <option value="air" {{#if (eq system.element.value "air")}}selected{{/if}}>Air</option>
+            <option value="none" {{#if (eq system.element.value "none")}}selected{{/if}}>None</option>
+          </select>
+        </div>
 
-  {{!-- Fire Temper --}}
-<div style="display: flex; align-items: center;">
-  <label id="fire-label" style="cursor: pointer;">Fire Temper:</label>
-  <span id="fire-view" class="temper {{system.tempers.fire.value}}" style="margin-left: 10px;">
-    {{system.tempers.fire.value}}
-  </span>
-  <select id="fire-edit" name="fire" style="display: none;">
-    <option value="malus" {{#if (eq system.tempers.fire.value "malus")}}selected{{/if}}>Malus</option>
-    <option value="neutral" {{#if (eq system.tempers.fire.value "neutral")}}selected{{/if}}>Neutral</option>
-    <option value="bonus" {{#if (eq system.tempers.fire.value "bonus")}}selected{{/if}}>Bonus</option>
-    <option value="critical" {{#if (eq system.tempers.fire.value "critical")}}selected{{/if}}>Critical</option>
-  </select>
-</div>
+        <!-- Stamina Max -->
+        <div style="display: flex; align-items: center;">
+          <label for="stamina-max">Stamina Max:</label>
+          <span id="stamina-max-view" style="margin-left: 10px;">{{system.stamina.max}}</span>
+          <select id="stamina-max-edit" name="stamina-max" style="display: none;">
+            <option value="1" {{#if (eq system.stamina.max "1")}}selected{{/if}}>1</option>
+            <option value="2" {{#if (eq system.stamina.max "2")}}selected{{/if}}>2</option>
+            <option value="3" {{#if (eq system.stamina.max "3")}}selected{{/if}}>3</option>
+            <option value="4" {{#if (eq system.stamina.max "4")}}selected{{/if}}>4</option>
+            <option value="5" {{#if (eq system.stamina.max "5")}}selected{{/if}}>5</option>
+            <option value="6" {{#if (eq system.stamina.max "6")}}selected{{/if}}>6</option>
+          </select>
+        </div>
 
-<!-- Water Temper -->
-<div style="display: flex; align-items: center;">
-  <label id="water-label" style="cursor: pointer;">Water Temper:</label>
-  <span id="water-view" class="temper {{system.tempers.water.value}}" style="margin-left: 10px;">
-    {{system.tempers.water.value}}
-  </span>
-  <select id="water-edit" name="water" style="display: none;">
-    <option value="malus" {{#if (eq system.tempers.water.value "malus")}}selected{{/if}}>Malus</option>
-    <option value="neutral" {{#if (eq system.tempers.water.value "neutral")}}selected{{/if}}>Neutral</option>
-    <option value="bonus" {{#if (eq system.tempers.water.value "bonus")}}selected{{/if}}>Bonus</option>
-    <option value="critical" {{#if (eq system.tempers.water.value "critical")}}selected{{/if}}>Critical</option>
-  </select>
-</div>
+        <!-- Current Stamina -->
+        <div style="display: flex; align-items: center; margin-top: 10px;">
+          <label for="current-stamina">Current Stamina:</label>
+          <span id="current-stamina-view" style="margin-left: 10px;">{{system.stamina.current}}</span>
+          <button id="stamina-decrease" type="button" style="margin-left: 10px;">-</button>
+          <button id="stamina-increase" type="button" style="margin-left: 5px;">+</button>
+        </div>
 
- <!-- Earth Temper -->
-<div style="display: flex; align-items: center;">
-  <label id="earth-label" style="cursor: pointer;">Earth Temper:</label>
-  <span id="earth-view" class="temper {{system.tempers.earth.value}}" style="margin-left: 10px;">
-    {{system.tempers.earth.value}}
-  </span>
-  <select id="earth-edit" name="earth" style="display: none;">
-    <option value="malus" {{#if (eq system.tempers.earth.value "malus")}}selected{{/if}}>Malus</option>
-    <option value="neutral" {{#if (eq system.tempers.earth.value "neutral")}}selected{{/if}}>Neutral</option>
-    <option value="bonus" {{#if (eq system.tempers.earth.value "bonus")}}selected{{/if}}>Bonus</option>
-    <option value="critical" {{#if (eq system.tempers.earth.value "critical")}}selected{{/if}}>Critical</option>
-  </select>
-</div>
+        <!-- Tempers Section -->
+        <h2>Tempers</h2>
 
- <!-- Air Temper -->
-<div style="display: flex; align-items: center;">
-  <label id="air-label" style="cursor: pointer;">Air Temper:</label>
-  <span id="air-view" class="temper {{system.tempers.air.value}}" style="margin-left: 10px;">
-    {{system.tempers.air.value}}
-  </span>
-  <select id="air-edit" name="air" style="display: none;">
-    <option value="malus" {{#if (eq system.tempers.air.value "malus")}}selected{{/if}}>Malus</option>
-    <option value="neutral" {{#if (eq system.tempers.air.value "neutral")}}selected{{/if}}>Neutral</option>
-    <option value="bonus" {{#if (eq system.tempers.air.value "bonus")}}selected{{/if}}>Bonus</option>
-    <option value="critical" {{#if (eq system.tempers.air.value "critical")}}selected{{/if}}>Critical</option>
-  </select>
-</div>
+        <!-- Fire Temper -->
+        <div style="display: flex; align-items: center;">
+          <label id="fire-label" style="cursor: pointer;">Fire Temper:</label>
+          <span id="fire-view" class="temper {{system.tempers.fire.value}}" style="margin-left: 10px;">
+            {{system.tempers.fire.value}}
+          </span>
+          <select id="fire-edit" name="fire" style="display: none;">
+            <option value="malus" {{#if (eq system.tempers.fire.value "malus")}}selected{{/if}}>Malus</option>
+            <option value="neutral" {{#if (eq system.tempers.fire.value "neutral")}}selected{{/if}}>Neutral</option>
+            <option value="bonus" {{#if (eq system.tempers.fire.value "bonus")}}selected{{/if}}>Bonus</option>
+            <option value="critical" {{#if (eq system.tempers.fire.value "critical")}}selected{{/if}}>Critical</option>
+          </select>
+        </div>
 
- <!-- Section Attributes -->
-<h2>Attributes</h2>
+        <!-- Water Temper -->
+        <div style="display: flex; align-items: center;">
+          <label id="water-label" style="cursor: pointer;">Water Temper:</label>
+          <span id="water-view" class="temper {{system.tempers.water.value}}" style="margin-left: 10px;">
+            {{system.tempers.water.value}}
+          </span>
+          <select id="water-edit" name="water" style="display: none;">
+            <option value="malus" {{#if (eq system.tempers.water.value "malus")}}selected{{/if}}>Malus</option>
+            <option value="neutral" {{#if (eq system.tempers.water.value "neutral")}}selected{{/if}}>Neutral</option>
+            <option value="bonus" {{#if (eq system.tempers.water.value "bonus")}}selected{{/if}}>Bonus</option>
+            <option value="critical" {{#if (eq system.tempers.water.value "critical")}}selected{{/if}}>Critical</option>
+          </select>
+        </div>
 
-<!-- Body Attribute -->
-<div style="display: flex; align-items: center;">
-  <label id="body-label" style="cursor: pointer;">Body:</label>
-  <span id="body-view" class="attribute {{system.attributes.body.currentValue}}" style="margin-left: 10px;">
-    {{system.attributes.body.currentValue}}
-  </span>
-  <select id="body-edit" name="body" style="display: none;">
-    <option value="malus" {{#if (eq system.attributes.body.baseValue "malus")}}selected{{/if}}>Malus</option>
-    <option value="neutral" {{#if (eq system.attributes.body.baseValue "neutral")}}selected{{/if}}>Neutral</option>
-    <option value="bonus" {{#if (eq system.attributes.body.baseValue "bonus")}}selected{{/if}}>Bonus</option>
-    <option value="critical" {{#if (eq system.attributes.body.baseValue "critical")}}selected{{/if}}>Critical</option>
-  </select>
-</div>
+        <!-- Earth Temper -->
+        <div style="display: flex; align-items: center;">
+          <label id="earth-label" style="cursor: pointer;">Earth Temper:</label>
+          <span id="earth-view" class="temper {{system.tempers.earth.value}}" style="margin-left: 10px;">
+            {{system.tempers.earth.value}}
+          </span>
+          <select id="earth-edit" name="earth" style="display: none;">
+            <option value="malus" {{#if (eq system.tempers.earth.value "malus")}}selected{{/if}}>Malus</option>
+            <option value="neutral" {{#if (eq system.tempers.earth.value "neutral")}}selected{{/if}}>Neutral</option>
+            <option value="bonus" {{#if (eq system.tempers.earth.value "bonus")}}selected{{/if}}>Bonus</option>
+            <option value="critical" {{#if (eq system.tempers.earth.value "critical")}}selected{{/if}}>Critical</option>
+          </select>
+        </div>
 
-  <!-- Wound system for Body -->
-  <div class="wounds">
-    <input type="checkbox" id="body-wound1" {{#if system.attributes.body.wounds.wound1}}checked{{/if}} />
-    <input type="checkbox" id="body-wound2" {{#if system.attributes.body.wounds.wound2}}checked{{/if}} {{#unless system.attributes.body.wounds.wound1}}disabled{{/unless}} />
-    <input type="checkbox" id="body-wound3" {{#if system.attributes.body.wounds.wound3}}checked{{/if}} {{#unless system.attributes.body.wounds.wound2}}disabled{{/unless}} />
-  </div>
-</div>
+        <!-- Air Temper -->
+        <div style="display: flex; align-items: center;">
+          <label id="air-label" style="cursor: pointer;">Air Temper:</label>
+          <span id="air-view" class="temper {{system.tempers.air.value}}" style="margin-left: 10px;">
+            {{system.tempers.air.value}}
+          </span>
+          <select id="air-edit" name="air" style="display: none;">
+            <option value="malus" {{#if (eq system.tempers.air.value "malus")}}selected{{/if}}>Malus</option>
+            <option value="neutral" {{#if (eq system.tempers.air.value "neutral")}}selected{{/if}}>Neutral</option>
+            <option value="bonus" {{#if (eq system.tempers.air.value "bonus")}}selected{{/if}}>Bonus</option>
+            <option value="critical" {{#if (eq system.tempers.air.value "critical")}}selected{{/if}}>Critical</option>
+          </select>
+        </div>
 
+        <!-- Attributes Section -->
+        <h2>Attributes</h2>
+
+        <!-- Body Attribute -->
+        <div style="display: flex; align-items: center;">
+          <label id="body-label" style="cursor: pointer;">Body:</label>
+          <span id="body-view" class="attribute {{system.attributes.body.currentValue}}" style="margin-left: 10px;">
+            {{system.attributes.body.currentValue}}
+          </span>
+          <select id="body-edit" name="body" style="display: none;">
+            <option value="malus" {{#if (eq system.attributes.body.baseValue "malus")}}selected{{/if}}>Malus</option>
+            <option value="neutral" {{#if (eq system.attributes.body.baseValue "neutral")}}selected{{/if}}>Neutral</option>
+            <option value="bonus" {{#if (eq system.attributes.body.baseValue "bonus")}}selected{{/if}}>Bonus</option>
+            <option value="critical" {{#if (eq system.attributes.body.baseValue "critical")}}selected{{/if}}>Critical</option>
+          </select>
+        </div>
+
+        <!-- Wound System for Body -->
+        <div class="wounds">
+          <input type="checkbox" id="body-wound1" {{#if system.attributes.body.wounds.wound1}}checked{{/if}} />
+          <input type="checkbox" id="body-wound2" {{#if system.attributes.body.wounds.wound2}}checked{{/if}} {{#unless system.attributes.body.wounds.wound1}}disabled{{/unless}} />
+          <input type="checkbox" id="body-wound3" {{#if system.attributes.body.wounds.wound3}}checked{{/if}} {{#unless system.attributes.body.wounds.wound2}}disabled{{/unless}} />
+        </div>
+        
 <!-- Soul Attribute -->
 <div style="display: flex; align-items: center;">
   <label id="soul-label" style="cursor: pointer;">Soul:</label>
@@ -243,6 +256,19 @@
   </div>
 </div>
 
-  <!-- Bouton pour sauvegarder les modifications -->
-  <button type="button" id="save-button" style="display: none;">Save</button>
+  </section>
+
+  <section class="tab" data-tab="biography">
+        <h2>Biography</h2>
+        <textarea id="biography" name="biography">{{system.biography}}</textarea>
+      </section>
+
+      <!-- Private Notes Tab -->
+      <section class="tab" data-tab="private-notes">
+        <h2>Private Notes</h2>
+        <textarea id="private-notes" name="private-notes">{{system.privateNotes}}</textarea>
+      </section>
+
+    </section>
+  </div>
 </form>
