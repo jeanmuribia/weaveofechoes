@@ -52,68 +52,68 @@
   <h2>Tempers</h2>
 
   {{!-- Fire Temper --}}
-  <div style="display: flex; align-items: center;">
-    <label for="fire">Fire Temper:</label>
-    <span id="fire-view" class="temper {{system.tempers.fire.value}}" style="cursor: pointer; margin-left: 10px;">
-      {{system.tempers.fire.value}}
-    </span>
-    <select id="fire-edit" name="fire" style="display: none;">
-      <option value="malus" {{#if (eq system.tempers.fire.value "malus")}}selected{{/if}}>Malus</option>
-      <option value="neutral" {{#if (eq system.tempers.fire.value "neutral")}}selected{{/if}}>Neutral</option>
-      <option value="bonus" {{#if (eq system.tempers.fire.value "bonus")}}selected{{/if}}>Bonus</option>
-      <option value="critical" {{#if (eq system.tempers.fire.value "critical")}}selected{{/if}}>Critical</option>
-    </select>
-  </div>
+<div style="display: flex; align-items: center;">
+  <label id="fire-label" style="cursor: pointer;">Fire Temper:</label>
+  <span id="fire-view" class="temper {{system.tempers.fire.value}}" style="margin-left: 10px;">
+    {{system.tempers.fire.value}}
+  </span>
+  <select id="fire-edit" name="fire" style="display: none;">
+    <option value="malus" {{#if (eq system.tempers.fire.value "malus")}}selected{{/if}}>Malus</option>
+    <option value="neutral" {{#if (eq system.tempers.fire.value "neutral")}}selected{{/if}}>Neutral</option>
+    <option value="bonus" {{#if (eq system.tempers.fire.value "bonus")}}selected{{/if}}>Bonus</option>
+    <option value="critical" {{#if (eq system.tempers.fire.value "critical")}}selected{{/if}}>Critical</option>
+  </select>
+</div>
 
-  {{!-- Water Temper --}}
-  <div style="display: flex; align-items: center;">
-    <label for="water">Water Temper:</label>
-    <span id="water-view" class="temper {{system.tempers.water.value}}" style="cursor: pointer; margin-left: 10px;">
-      {{system.tempers.water.value}}
-    </span>
-    <select id="water-edit" name="water" style="display: none;">
-      <option value="malus" {{#if (eq system.tempers.water.value "malus")}}selected{{/if}}>Malus</option>
-      <option value="neutral" {{#if (eq system.tempers.water.value "neutral")}}selected{{/if}}>Neutral</option>
-      <option value="bonus" {{#if (eq system.tempers.water.value "bonus")}}selected{{/if}}>Bonus</option>
-      <option value="critical" {{#if (eq system.tempers.water.value "critical")}}selected{{/if}}>Critical</option>
-    </select>
-  </div>
+<!-- Water Temper -->
+<div style="display: flex; align-items: center;">
+  <label id="water-label" style="cursor: pointer;">Water Temper:</label>
+  <span id="water-view" class="temper {{system.tempers.water.value}}" style="margin-left: 10px;">
+    {{system.tempers.water.value}}
+  </span>
+  <select id="water-edit" name="water" style="display: none;">
+    <option value="malus" {{#if (eq system.tempers.water.value "malus")}}selected{{/if}}>Malus</option>
+    <option value="neutral" {{#if (eq system.tempers.water.value "neutral")}}selected{{/if}}>Neutral</option>
+    <option value="bonus" {{#if (eq system.tempers.water.value "bonus")}}selected{{/if}}>Bonus</option>
+    <option value="critical" {{#if (eq system.tempers.water.value "critical")}}selected{{/if}}>Critical</option>
+  </select>
+</div>
 
-  {{!-- Earth Temper --}}
-  <div style="display: flex; align-items: center;">
-    <label for="earth">Earth Temper:</label>
-    <span id="earth-view" class="temper {{system.tempers.earth.value}}" style="cursor: pointer; margin-left: 10px;">
-      {{system.tempers.earth.value}}
-    </span>
-    <select id="earth-edit" name="earth" style="display: none;">
-      <option value="malus" {{#if (eq system.tempers.earth.value "malus")}}selected{{/if}}>Malus</option>
-      <option value="neutral" {{#if (eq system.tempers.earth.value "neutral")}}selected{{/if}}>Neutral</option>
-      <option value="bonus" {{#if (eq system.tempers.earth.value "bonus")}}selected{{/if}}>Bonus</option>
-      <option value="critical" {{#if (eq system.tempers.earth.value "critical")}}selected{{/if}}>Critical</option>
-    </select>
-  </div>
+ <!-- Earth Temper -->
+<div style="display: flex; align-items: center;">
+  <label id="earth-label" style="cursor: pointer;">Earth Temper:</label>
+  <span id="earth-view" class="temper {{system.tempers.earth.value}}" style="margin-left: 10px;">
+    {{system.tempers.earth.value}}
+  </span>
+  <select id="earth-edit" name="earth" style="display: none;">
+    <option value="malus" {{#if (eq system.tempers.earth.value "malus")}}selected{{/if}}>Malus</option>
+    <option value="neutral" {{#if (eq system.tempers.earth.value "neutral")}}selected{{/if}}>Neutral</option>
+    <option value="bonus" {{#if (eq system.tempers.earth.value "bonus")}}selected{{/if}}>Bonus</option>
+    <option value="critical" {{#if (eq system.tempers.earth.value "critical")}}selected{{/if}}>Critical</option>
+  </select>
+</div>
 
-  {{!-- Air Temper --}}
-  <div style="display: flex; align-items: center;">
-    <label for="air">Air Temper:</label>
-    <span id="air-view" class="temper {{system.tempers.air.value}}" style="cursor: pointer; margin-left: 10px;">
-      {{system.tempers.air.value}}
-    </span>
-    <select id="air-edit" name="air" style="display: none;">
-      <option value="malus" {{#if (eq system.tempers.air.value "malus")}}selected{{/if}}>Malus</option>
-      <option value="neutral" {{#if (eq system.tempers.air.value "neutral")}}selected{{/if}}>Neutral</option>
-      <option value="bonus" {{#if (eq system.tempers.air.value "bonus")}}selected{{/if}}>Bonus</option>
-      <option value="critical" {{#if (eq system.tempers.air.value "critical")}}selected{{/if}}>Critical</option>
-    </select>
-  </div>
+ <!-- Air Temper -->
+<div style="display: flex; align-items: center;">
+  <label id="air-label" style="cursor: pointer;">Air Temper:</label>
+  <span id="air-view" class="temper {{system.tempers.air.value}}" style="margin-left: 10px;">
+    {{system.tempers.air.value}}
+  </span>
+  <select id="air-edit" name="air" style="display: none;">
+    <option value="malus" {{#if (eq system.tempers.air.value "malus")}}selected{{/if}}>Malus</option>
+    <option value="neutral" {{#if (eq system.tempers.air.value "neutral")}}selected{{/if}}>Neutral</option>
+    <option value="bonus" {{#if (eq system.tempers.air.value "bonus")}}selected{{/if}}>Bonus</option>
+    <option value="critical" {{#if (eq system.tempers.air.value "critical")}}selected{{/if}}>Critical</option>
+  </select>
+</div>
 
  <!-- Section Attributes -->
 <h2>Attributes</h2>
 
 <!-- Body Attribute -->
 <div style="display: flex; align-items: center;">
-  <label for="body">Body:</label>
-  <span id="body-view" class="attribute {{system.attributes.body.currentValue}}" style="cursor: pointer; margin-left: 10px;">
+  <label id="body-label" style="cursor: pointer;">Body:</label>
+  <span id="body-view" class="attribute {{system.attributes.body.currentValue}}" style="margin-left: 10px;">
     {{system.attributes.body.currentValue}}
   </span>
   <select id="body-edit" name="body" style="display: none;">
@@ -122,6 +122,7 @@
     <option value="bonus" {{#if (eq system.attributes.body.baseValue "bonus")}}selected{{/if}}>Bonus</option>
     <option value="critical" {{#if (eq system.attributes.body.baseValue "critical")}}selected{{/if}}>Critical</option>
   </select>
+</div>
 
   <!-- Wound system for Body -->
   <div class="wounds">
@@ -133,8 +134,8 @@
 
 <!-- Soul Attribute -->
 <div style="display: flex; align-items: center;">
-  <label for="soul">Soul:</label>
-  <span id="soul-view" class="attribute {{system.attributes.soul.currentValue}}" style="cursor: pointer; margin-left: 10px;">
+  <label id="soul-label" style="cursor: pointer;">Soul:</label>
+  <span id="soul-view" class="attribute {{system.attributes.soul.currentValue}}" style="margin-left: 10px;">
     {{system.attributes.soul.currentValue}}
   </span>
   <select id="soul-edit" name="soul" style="display: none;">
@@ -143,6 +144,7 @@
     <option value="bonus" {{#if (eq system.attributes.soul.baseValue "bonus")}}selected{{/if}}>Bonus</option>
     <option value="critical" {{#if (eq system.attributes.soul.baseValue "critical")}}selected{{/if}}>Critical</option>
   </select>
+</div>
 
   <!-- Wound system for Soul -->
   <div class="wounds">
@@ -154,8 +156,8 @@
 
   <!-- Mind (Equivalent to Spirit) -->
 <div style="display: flex; align-items: center;">
-  <label for="mind">Mind:</label>
-  <span id="mind-view" class="attribute {{system.attributes.mind.currentValue}}" style="cursor: pointer; margin-left: 10px;">
+  <label id="mind-label" style="cursor: pointer;">Mind:</label>
+  <span id="mind-view" class="attribute {{system.attributes.mind.currentValue}}" style="margin-left: 10px;">
     {{system.attributes.mind.currentValue}}
   </span>
   <select id="mind-edit" name="mind" style="display: none;">
@@ -164,6 +166,7 @@
     <option value="bonus" {{#if (eq system.attributes.mind.baseValue "bonus")}}selected{{/if}}>Bonus</option>
     <option value="critical" {{#if (eq system.attributes.mind.baseValue "critical")}}selected{{/if}}>Critical</option>
   </select>
+</div>
 
   <!-- Gestion des wounds -->
   <div class="wounds">
@@ -176,8 +179,8 @@
 
   <!-- Martial -->
 <div style="display: flex; align-items: center;">
-  <label for="martial">Martial:</label>
-  <span id="martial-view" class="attribute {{system.attributes.martial.currentValue}}" style="cursor: pointer; margin-left: 10px;">
+  <label id="martial-label" style="cursor: pointer;">Martial:</label>
+  <span id="martial-view" class="attribute {{system.attributes.martial.currentValue}}" style="margin-left: 10px;">
     {{system.attributes.martial.currentValue}}
   </span>
   <select id="martial-edit" name="martial" style="display: none;">
@@ -186,6 +189,7 @@
     <option value="bonus" {{#if (eq system.attributes.martial.baseValue "bonus")}}selected{{/if}}>Bonus</option>
     <option value="critical" {{#if (eq system.attributes.martial.baseValue "critical")}}selected{{/if}}>Critical</option>
   </select>
+</div>
 
   <!-- Gestion des wounds -->
   <div class="wounds">
@@ -194,10 +198,11 @@
     <input type="checkbox" id="martial-wound3" {{#if system.attributes.martial.wounds.wound3}}checked{{/if}} {{#unless system.attributes.martial.wounds.wound2}}disabled{{/unless}} />
   </div>
 </div>
+
 <!-- Elementary -->
 <div style="display: flex; align-items: center;">
-  <label for="elementary">Elementary:</label>
-  <span id="elementary-view" class="attribute {{system.attributes.elementary.currentValue}}" style="cursor: pointer; margin-left: 10px;">
+  <label id="elementary-label" style="cursor: pointer;">Elementary:</label>
+  <span id="elementary-view" class="attribute {{system.attributes.elementary.currentValue}}" style="margin-left: 10px;">
     {{system.attributes.elementary.currentValue}}
   </span>
   <select id="elementary-edit" name="elementary" style="display: none;">
@@ -206,6 +211,7 @@
     <option value="bonus" {{#if (eq system.attributes.elementary.baseValue "bonus")}}selected{{/if}}>Bonus</option>
     <option value="critical" {{#if (eq system.attributes.elementary.baseValue "critical")}}selected{{/if}}>Critical</option>
   </select>
+</div>
 
   <!-- Gestion des wounds -->
   <div class="wounds">
@@ -217,8 +223,8 @@
 
   <!-- Rhetoric -->
 <div style="display: flex; align-items: center;">
-  <label for="rhetoric">Rhetoric:</label>
-  <span id="rhetoric-view" class="attribute {{system.attributes.rhetoric.currentValue}}" style="cursor: pointer; margin-left: 10px;">
+  <label id="rhetoric-label" style="cursor: pointer;">Rhetoric:</label>
+  <span id="rhetoric-view" class="attribute {{system.attributes.rhetoric.currentValue}}" style="margin-left: 10px;">
     {{system.attributes.rhetoric.currentValue}}
   </span>
   <select id="rhetoric-edit" name="rhetoric" style="display: none;">
@@ -227,6 +233,7 @@
     <option value="bonus" {{#if (eq system.attributes.rhetoric.baseValue "bonus")}}selected{{/if}}>Bonus</option>
     <option value="critical" {{#if (eq system.attributes.rhetoric.baseValue "critical")}}selected{{/if}}>Critical</option>
   </select>
+</div>
 
   <!-- Gestion des wounds -->
   <div class="wounds">

@@ -119,12 +119,12 @@ export class WoeActorSheet extends ActorSheet {
     this.manageWoundsListeners(html, 'elementary');
     this.manageWoundsListeners(html, 'rhetoric');
   }
-
   enableEditOnClick(html, field) {
+    const labelSelector = `#${field}-label`;
     const viewSelector = `#${field}-view`;
     const editSelector = `#${field}-edit`;
 
-    html.find(viewSelector).on('click', (event) => {
+    html.find(labelSelector).on('click', (event) => {
       html.find(viewSelector).hide();
       html.find(editSelector).prop('disabled', false).show().focus();
     });
@@ -132,16 +132,23 @@ export class WoeActorSheet extends ActorSheet {
     html.find(editSelector).on('blur', async (event) => {
       const newValue = html.find(editSelector).val();
       let updateData = {};
-      if (field === 'element') {
-        updateData[`system.element.value`] = newValue;
-      } else if (['fire', 'water', 'earth', 'air'].includes(field)) {
+      if (['fire', 'water', 'earth', 'air'].includes(field)) {
         updateData[`system.tempers.${field}.value`] = newValue;
       } else {
+        // Update the baseValue and reset the wounds and current value
         updateData[`system.attributes.${field}.baseValue`] = newValue;
-        updateData[`system.attributes.${field}.wounds`] = { wound1: false, wound2: false, wound3: false };
+        updateData[`system.attributes.${field}.currentValue`] = newValue;
+        updateData[`system.attributes.${field}.wounds`] = {
+          wound1: false,
+          wound2: false,
+          wound3: false
+        };
       }
+
+      // Update the actor data
       await this.actor.update(updateData);
-      this.updateAttributeCurrentValue(field);
+
+      // Update the displayed value
       html.find(viewSelector).text(newValue).show();
       html.find(editSelector).hide();
     });
