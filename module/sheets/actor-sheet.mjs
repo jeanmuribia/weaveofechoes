@@ -146,12 +146,19 @@ export class WoeActorSheet extends ActorSheet {
     this.manageWoundsListeners(html, 'rhetoric');
 
 
-    //Roll button listener
-    html.find('#roll-btn').on('click', () => {
-      let result = rollCustomDice("neutral");  // You can dynamically set the dice type based on user choice
-      console.log("Dice roll result: ", result);
-      displayRollResultsInChat(result);
+    //DiceListeners
+    html.find('#malusDie').on('click', () => {
+      rollDie("malus");  
+     });
+    html.find('#neutralDie').on('click', () => {
+     rollDie("neutral");  
     });
+    html.find('#bonusDie').on('click', () => {
+      rollDie("bonus"); 
+     });
+     html.find('#criticalDie').on('click', () => {
+      rollDie("critical");  
+     });
   }
 
   
@@ -297,44 +304,83 @@ export class WoeActorSheet extends ActorSheet {
   
 }
 
-function rollCustomDice(type) {
-  let diceFormula;
+let rollDie = async (type) => {
+  // Roll a single d12 asynchronously
+  let roll = new Roll("1d12");
+  await roll.evaluate();  // Ensure asynchronous evaluation
 
+  let dieValue = roll.total; // The result of the d12 roll
+  let result;
+
+  // Determine the result based on the dice type and dieValue
   switch (type) {
     case "malus":
-      diceFormula = "7d1 + 4d1 + 1d1";  // Roll dice for malus
+      if (dieValue >= 1 && dieValue <= 7) {
+        result = 1; // Setback
+      } else if (dieValue >= 8 && dieValue <= 11) {
+        result = 2; // Stalemate
+      } else {
+        result = 3; // Gain
+      }
       break;
+
     case "neutral":
-      diceFormula = "3d1 + 6d1 + 3d1";  // Roll dice for neutral
+      if (dieValue >= 1 && dieValue <= 3) {
+        result = 1; // Setback
+      } else if (dieValue >= 4 && dieValue <= 9) {
+        result = 2; // Stalemate
+      } else {
+        result = 3; // Gain
+      }
       break;
+
     case "bonus":
-      diceFormula = "2d1 + 5d1 + 5d1";  // Roll dice for bonus
+      if (dieValue >= 1 && dieValue <= 2) {
+        result = 1; // Setback
+      } else if (dieValue >= 3 && dieValue <= 7) {
+        result = 2; // Stalemate
+      } else {
+        result = 3; // Gain
+      }
       break;
+
     case "critical":
-      diceFormula = "1d1 + 4d1 + 7d1";  // Roll dice for critical
+      if (dieValue === 1) {
+        result = 1; // Setback
+      } else if (dieValue >= 2 && dieValue <= 5) {
+        result = 2; // Stalemate
+      } else {
+        result = 3; // Gain
+      }
       break;
+
     default:
-      diceFormula = "1d12";  // Default die roll if no type is passed
+      console.error("Unknown dice type");
+      return;
   }
 
-  let roll = new Roll(diceFormula);
-  roll.roll();
+  // Display the result in the chat after evaluating the roll
+  displayRollResultsInChat(result);
+};
 
-  // Post-process the results to map numbers to custom labels
-  let results = roll.terms[0].results.map(result => {
-    if (result.result === 1) return "Setback";  // Setback
-    else if (result.result === 0) return "Stalemate";  // Stalemate
-    else return "Gain";  // Gain
-  });
+// Function to display results in the chat based on the roll result
+function displayRollResultsInChat(result) {
+  let resultLabel;
+  
+  // Assign labels based on the result value (1 = Setback, 2 = Stalemate, 3 = Gain)
+  if (result === 1) {
+    resultLabel = "Setback";
+  } else if (result === 2) {
+    resultLabel = "Stalemate";
+  } else if (result === 3) {
+    resultLabel = "Gain";
+  } else {
+    resultLabel = "Unknown";  // Just in case something unexpected happens
+  }
 
-  console.log("Custom dice results with labels:", results);
-  return results;
-}
-
-function displayRollResultsInChat(results) {
-  let chatContent = results.join(" ");
+  // Create the chat message
   ChatMessage.create({
-    content: `<p>${chatContent}</p>`,
+    content: `Roll Result: ${resultLabel}`,
     speaker: ChatMessage.getSpeaker(),
   });
 }
