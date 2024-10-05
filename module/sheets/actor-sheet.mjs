@@ -144,7 +144,17 @@ export class WoeActorSheet extends ActorSheet {
     this.manageWoundsListeners(html, 'martial');
     this.manageWoundsListeners(html, 'elementary');
     this.manageWoundsListeners(html, 'rhetoric');
+
+
+    //Roll button listener
+    html.find('#roll-btn').on('click', () => {
+      let result = rollCustomDice("neutral");  // You can dynamically set the dice type based on user choice
+      console.log("Dice roll result: ", result);
+      displayRollResultsInChat(result);
+    });
   }
+
+  
 
   enableEditOnClick(html, field) {
     const labelSelector = `#${field}-label`;
@@ -283,4 +293,48 @@ export class WoeActorSheet extends ActorSheet {
         return value;
     }
   }
+
+  
+}
+
+function rollCustomDice(type) {
+  let diceFormula;
+
+  switch (type) {
+    case "malus":
+      diceFormula = "7d1 + 4d1 + 1d1";  // Roll dice for malus
+      break;
+    case "neutral":
+      diceFormula = "3d1 + 6d1 + 3d1";  // Roll dice for neutral
+      break;
+    case "bonus":
+      diceFormula = "2d1 + 5d1 + 5d1";  // Roll dice for bonus
+      break;
+    case "critical":
+      diceFormula = "1d1 + 4d1 + 7d1";  // Roll dice for critical
+      break;
+    default:
+      diceFormula = "1d12";  // Default die roll if no type is passed
+  }
+
+  let roll = new Roll(diceFormula);
+  roll.roll();
+
+  // Post-process the results to map numbers to custom labels
+  let results = roll.terms[0].results.map(result => {
+    if (result.result === 1) return "Setback";  // Setback
+    else if (result.result === 0) return "Stalemate";  // Stalemate
+    else return "Gain";  // Gain
+  });
+
+  console.log("Custom dice results with labels:", results);
+  return results;
+}
+
+function displayRollResultsInChat(results) {
+  let chatContent = results.join(" ");
+  ChatMessage.create({
+    content: `<p>${chatContent}</p>`,
+    speaker: ChatMessage.getSpeaker(),
+  });
 }
