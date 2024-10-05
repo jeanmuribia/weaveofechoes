@@ -50,8 +50,8 @@ export class WoeActorSheet extends ActorSheet {
       this.actor.update({ "system.stamina.max": 4 });
     }
 
-    // Handle name editing
-    html.find('#actor-name').on('click', (event) => {
+    // Handle name editing (via label click)
+    html.find('#name-label').on('click', (event) => {
       html.find('#actor-name').hide();
       html.find('#name-edit').prop('disabled', false).show().focus();
     });
@@ -90,8 +90,8 @@ export class WoeActorSheet extends ActorSheet {
       }
     });
 
-    // Handle editing of Stamina Max
-    html.find('#stamina-max-view').on('click', (event) => {
+    // Handle editing of Stamina Max (via label click)
+    html.find('#stamina-label').on('click', (event) => {
       html.find('#stamina-max-view').hide();
       html.find('#stamina-max-edit').show().focus();
     });
@@ -112,8 +112,20 @@ export class WoeActorSheet extends ActorSheet {
       html.find('#stamina-max-edit').hide();
     });
 
+    // Handle element editing (via label click)
+    html.find('#element-label').on('click', (event) => {
+      html.find('#element-view').hide();
+      html.find('#element-edit').show().focus();
+    });
+
+    html.find('#element-edit').on('blur', async (event) => {
+      const newElement = html.find('#element-edit').val();
+      await this.actor.update({ "system.element.value": newElement });
+      html.find('#element-view').text(newElement).show();
+      html.find('#element-edit').hide();
+    });
+
     // Enable temper and attributes edit
-    this.enableEditOnClick(html, 'element');
     this.enableEditOnClick(html, 'fire');
     this.enableEditOnClick(html, 'water');
     this.enableEditOnClick(html, 'earth');
