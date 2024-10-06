@@ -134,8 +134,54 @@ export class WoeActorSheet extends ActorSheet {
     this.render();
   });
 
-    
+     // Add click listeners for temper rollDie based on currentValue
+  html.find('#fire-view').on('click', () => this.rollTemperOrAttribute('fire', 'tempers'));
+  html.find('#water-view').on('click', () => this.rollTemperOrAttribute('water', 'tempers'));
+  html.find('#earth-view').on('click', () => this.rollTemperOrAttribute('earth', 'tempers'));
+  html.find('#air-view').on('click', () => this.rollTemperOrAttribute('air', 'tempers'));
+
+  // Add click listeners for attribute rollDie based on currentValue
+  html.find('#body-view').on('click', () => this.rollTemperOrAttribute('body', 'attributes'));
+  html.find('#mind-view').on('click', () => this.rollTemperOrAttribute('mind', 'attributes'));
+  html.find('#soul-view').on('click', () => this.rollTemperOrAttribute('soul', 'attributes'));
+  html.find('#martial-view').on('click', () => this.rollTemperOrAttribute('martial', 'attributes'));
+  html.find('#elementary-view').on('click', () => this.rollTemperOrAttribute('elementary', 'attributes'));
+  html.find('#rhetoric-view').on('click', () => this.rollTemperOrAttribute('rhetoric', 'attributes'));
   }
+
+  rollTemperOrAttribute(field, type) {
+    let value;
+  
+    // Get the current value from the temper or attribute
+    if (type === 'tempers') {
+      value = this.actor.system.tempers[field].currentValue;
+    } else if (type === 'attributes') {
+      value = this.actor.system.attributes[field].currentValue;
+    }
+  
+    // Log the roll for debugging
+    console.log("Rolling die for:", type, field, "with value:", value);
+  
+    // Roll the die with the current value (like 'malus', 'neutral', etc.)
+    this.handleSingleDiceRoll(value);  // Use "this" to reference the method correctly
+  }
+
+   // Method to handle the dice rolling
+  async handleSingleDiceRoll(type) {
+    const capitalizedType = toUpperCaseValue(type);
+    const result = await rollDie(type);
+    this.displayRollResultsInChat(capitalizedType, result);
+  }
+
+  // Display the roll result in the chat
+  displayRollResultsInChat(capitalizedType, result) {
+    ChatMessage.create({
+      content: `${capitalizedType} rolled: ${result}`,
+      speaker: ChatMessage.getSpeaker(),
+    });
+  }
+
+
 
  // This function adds event listeners for managing wound checkboxes
 manageWoundsListeners(html, attribute) {
