@@ -42,7 +42,7 @@ export class WoeActorSheet extends ActorSheet {
         actorData.system.tempers[temper].baseValue = 'neutral';
       }
       if (!actorData.system.tempers[temper].currentValue) {
-        actorData.system.tempers[temper].currentValue = 'neutral';
+        actorData.system.tempers[temper].currentValue = 'neutral';  // Set default to 'neutral'
       }
     });
   
@@ -50,6 +50,7 @@ export class WoeActorSheet extends ActorSheet {
     context.actorName = this.actor.name;
     return context;
   }
+  
 
   activateListeners(html) {
     super.activateListeners(html);
@@ -195,35 +196,71 @@ export class WoeActorSheet extends ActorSheet {
 
     // Dice Listeners
     html.find('#malusDie').on('click', () => {
-      rollDie("malus");  
+      handleSingleDiceRoll("malus");  
     });
-
+    
     html.find('#neutralDie').on('click', () => {
-      rollDie("neutral");  
+      handleSingleDiceRoll("neutral");  
     });
-
+    
     html.find('#bonusDie').on('click', () => {
-      rollDie("bonus"); 
+      handleSingleDiceRoll("bonus"); 
     });
-
+    
     html.find('#criticalDie').on('click', () => {
-      rollDie("critical");  
+      handleSingleDiceRoll("critical");  
     });
 
      
     // Add click listeners for temper and attribute rollDie based on currentValue
-    html.find('#fire-view').on('click', () => this.rollTemperOrAttribute('fire', 'tempers'));
-    html.find('#water-view').on('click', () => this.rollTemperOrAttribute('water', 'tempers'));
-    html.find('#earth-view').on('click', () => this.rollTemperOrAttribute('earth', 'tempers'));
-    html.find('#air-view').on('click', () => this.rollTemperOrAttribute('air', 'tempers'));
+    html.find('#fire-view').on('click', () => handleSingleDiceRoll(this.actor.system.tempers['fire'].currentValue));
+    html.find('#water-view').on('click', () => handleSingleDiceRoll(this.actor.system.tempers['water'].currentValue));
+    html.find('#earth-view').on('click', () => handleSingleDiceRoll(this.actor.system.tempers['earth'].currentValue));
+    html.find('#air-view').on('click', () => handleSingleDiceRoll(this.actor.system.tempers['air'].currentValue));
 
-    html.find('#body-view').on('click', () => this.rollTemperOrAttribute('body', 'attributes'));
-    html.find('#mind-view').on('click', () => this.rollTemperOrAttribute('mind', 'attributes'));
-    html.find('#soul-view').on('click', () => this.rollTemperOrAttribute('soul', 'attributes'));
-    html.find('#martial-view').on('click', () => this.rollTemperOrAttribute('martial', 'attributes'));
-    html.find('#elementary-view').on('click', () => this.rollTemperOrAttribute('elementary', 'attributes'));
-    html.find('#rhetoric-view').on('click', () => this.rollTemperOrAttribute('rhetoric', 'attributes'));
+    html.find('#body-view').on('click', () => handleSingleDiceRoll(this.actor.system.attributes['body'].currentValue));
+    html.find('#mind-view').on('click', () => handleSingleDiceRoll(this.actor.system.attributes['mind'].currentValue));
+    html.find('#soul-view').on('click', () => handleSingleDiceRoll(this.actor.system.attributes['soul'].currentValue));
+    html.find('#martial-view').on('click', () => handleSingleDiceRoll(this.actor.system.attributes['martial'].currentValue));
+    html.find('#elementary-view').on('click', () => handleSingleDiceRoll(this.actor.system.attributes['elementary'].currentValue));
+    html.find('#rhetoric-view').on('click', () => handleSingleDiceRoll(this.actor.system.attributes['rhetoric'].currentValue));
+
+
+       // Ensure `this.actor` is correctly passed to the maneuver window
+  html.find('#maneuver-button').on('click', (event) => {
+    openManeuverWindow(this.actor);  // Pass the actor correctly
+  });
+
+  // Attribute selection listener (only one can be selected within the attribute question)
+$(document).on('click', '.attribute-choice', function() {
+  selectedAttribute = $(this).data('attribute');
+  // Remove the 'selected' class only from the attribute choices
+  $('.attribute-choice').removeClass('selected');
+  // Add 'selected' class to the clicked attribute button
+  $(this).addClass('selected');
+});
+
+// Temper selection listener (only one can be selected within the temper question)
+$(document).on('click', '.temper-choice', function() {
+  if (!$(this).hasClass('disabled')) {
+    selectedTemper = $(this).data('temper');
+    // Remove 'selected' class only from the temper choices
+    $('.temper-choice').removeClass('selected');
+    // Add 'selected' class to the clicked temper button
+    $(this).addClass('selected');
+  }
+});
+
+// Context selection listener (only one can be selected within the context question)
+$(document).on('click', '.context-choice', function() {
+  selectedContext = $(this).data('context');
+  // Remove 'selected' class only from the context choices
+  $('.context-choice').removeClass('selected');
+  // Add 'selected' class to the clicked context button
+  $(this).addClass('selected');
+});
 }
+
 
   
 enableEditOnClick(html, field) {
@@ -391,42 +428,54 @@ enableEditOnClick(html, field) {
   
 }
 
-let rollDie = async (type) => {
+async function rollDie(type) {
+  if (!type) {
+    console.error("rollDie received an invalid type:", type);
+    return "undefined";  // Return a string instead of undefined if type is invalid
+  }
 
+  // Log the type being rolled
+  console.log("Rolling dice for type:", type);
+
+  // Convert the type to lowercase
   type = type.toLowerCase();
 
-  // Roll a single d12 asynchronously
+  // Roll a d12
   let roll = new Roll("1d12");
   await roll.evaluate();
 
-  let dieValue = roll.total;
+  console.log("Roll Result:", roll.total);
+
   let result;
-
-  // Capitalize the first letter of the die type
-  let capitalizedType = toUpperCaseValue(type);
-
-  // Determine the result based on the die type
   switch (type) {
-    case "malus":
-      result = dieValue <= 7 ? "Setback" : dieValue <= 11 ? "Stalemate" : "Gain";
+    case 'malus':
+      result = (roll.total <= 7) ? "Setback" : (roll.total <= 11) ? "Stalemate" : "Gain";
       break;
-    case "neutral":
-      result = dieValue <= 3 ? "Setback" : dieValue <= 9 ? "Stalemate" : "Gain";
+    case 'neutral':
+      result = (roll.total <= 3) ? "Setback" : (roll.total <= 9) ? "Stalemate" : "Gain";
       break;
-    case "bonus":
-      result = dieValue <= 2 ? "Setback" : dieValue <= 7 ? "Stalemate" : "Gain";
+    case 'bonus':
+      result = (roll.total <= 2) ? "Setback" : (roll.total <= 7) ? "Stalemate" : "Gain";
       break;
-    case "critical":
-      result = dieValue === 1 ? "Setback" : dieValue <= 5 ? "Stalemate" : "Gain";
+    case 'critical':
+      result = (roll.total == 1) ? "Setback" : (roll.total <= 5) ? "Stalemate" : "Gain";
       break;
     default:
-      console.error("Unknown dice type");
-      return;
+      console.error("Unknown dice type:", type);
+      result = "undefined";
   }
 
-  // Pass the capitalized die type and the result to the chat display function
+  // Log the final result
+  console.log("Result for type", type, ":", result);
+
+  return result;
+}
+
+async function handleSingleDiceRoll(type) {
+  const capitalizedType = toUpperCaseValue(type);
+  const result = await rollDie(type);
   displayRollResultsInChat(capitalizedType, result);
-};
+}
 
   function displayRollResultsInChat(capitalizedType, result) {
     // Create the chat message in the desired format
@@ -436,3 +485,131 @@ let rollDie = async (type) => {
     });
   }
 
+  // Function to open the maneuver window
+function openManeuverWindow(actor) {
+  let content = `
+    <div>
+      <h3>On which of your attributes are you relying on?</h3>
+      <div id="attribute-section">
+        ${createAttributeSelection(actor)}
+      </div>
+
+      <h3>What is your current state of mind?</h3>
+      <div id="temper-section">
+        ${createTemperSelection(actor)}
+      </div>
+
+      <h3>How advantageous to you is the context?</h3>
+      <div id="context-section">
+        ${createContextSelection()}
+      </div>
+    </div>
+  `;
+
+  // Render the window using Foundry's Dialog
+  new Dialog({
+    title: "Maneuver",
+    content: content,
+    buttons: {
+      maneuver: {
+        label: "Launch Maneuver",
+        callback: async () => {
+          // Handle the dice rolling when the button is clicked
+          await launchManeuver(actor);
+        }
+      }
+    }
+  }).render(true);
+}
+
+// Helper function to create the attribute selection
+function createAttributeSelection(actor) {
+  return `
+    <button class="attribute-choice" data-attribute="body">Body</button>
+    <button class="attribute-choice" data-attribute="soul">Soul</button>
+    <button class="attribute-choice" data-attribute="mind">Mind</button>
+    <button class="attribute-choice" data-attribute="martial">Martial</button>
+    <button class="attribute-choice" data-attribute="elemental">Elemental</button>
+    <button class="attribute-choice" data-attribute="rhetoric">Rhetoric</button>
+  `;
+}
+
+// Helper function to create the temper selection
+function createTemperSelection(actor) {
+  const tempers = ['fire', 'water', 'earth', 'air'];
+  return tempers.map(temper => {
+    let trauma = actor.system.tempers[temper].wound;  // Check for trauma
+    let disabled = trauma ? 'disabled' : '';
+    let classDisabled = trauma ? 'class="disabled"' : '';
+    return `<button class="temper-choice" data-temper="${temper}" ${disabled} ${classDisabled}>${toUpperCaseValue(temper)}</button>`;
+  }).join('');
+}
+
+// Helper function to create the context selection
+function createContextSelection() {
+  return `
+    <button class="context-choice" data-context="malus">Detrimental</button>
+    <button class="context-choice" data-context="neutral">Neutral</button>
+    <button class="context-choice" data-context="bonus">Favorable</button>
+    <button class="context-choice" data-context="critical">Highly Beneficial</button>
+  `;
+}
+
+// Variables to store selected options
+let selectedAttribute = null;
+let selectedTemper = null;
+let selectedContext = null;
+
+// Event listeners for attribute, temper, and context choices
+$(document).on('click', '.attribute-choice', function() {
+  selectedAttribute = $(this).data('attribute');
+  $('.attribute-choice').removeClass('selected');
+  $(this).addClass('selected');
+});
+
+$(document).on('click', '.temper-choice', function() {
+  if (!$(this).hasClass('disabled')) {
+    selectedTemper = $(this).data('temper');
+    $('.temper-choice').removeClass('selected');
+    $(this).addClass('selected');
+  }
+});
+
+$(document).on('click', '.context-choice', function() {
+  selectedContext = $(this).data('context');
+  $('.context-choice').removeClass('selected');
+  $(this).addClass('selected');
+});
+
+
+//Launch maneuver function//
+async function launchManeuver(actor) {
+  if (!selectedAttribute || !selectedTemper || !selectedContext) {
+    ui.notifications.error("You must answer all three questions.");
+    return;
+  }
+
+  // Retrieve the current values for the selected attribute and temper
+  const attributeValue = actor.system.attributes[selectedAttribute]?.currentValue;
+  const temperValue = actor.system.tempers[selectedTemper]?.currentValue;
+
+  // Ensure values exist before proceeding with the roll
+  if (!attributeValue || !temperValue) {
+    console.error("Invalid selections:", selectedAttribute, selectedTemper, selectedContext);
+    return;
+  }
+
+  // Roll the dice for the attribute, temper, and context
+  const attributeResult = await rollDie(attributeValue);
+  const temperResult = await rollDie(temperValue);
+  const contextResult = await rollDie(selectedContext);
+
+  // Format the message according to your requirement: "AttributeLabel, TemperLabel, and Context ANSWER"
+  const message = `${toUpperCaseValue(selectedAttribute)}, ${toUpperCaseValue(selectedTemper)} & ${toUpperCaseValue(selectedContext)} rolled: ${attributeResult}, ${temperResult}, ${contextResult}`;
+
+  // Display the results in the chat
+  ChatMessage.create({
+    content: message,
+    speaker: ChatMessage.getSpeaker(),
+  });
+}

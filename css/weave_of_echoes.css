@@ -389,3 +389,10 @@
 .woe .tab.active {
   display: block;
 }
+
+
+.selected {
+  background-color: #4CAF50; /* or any color for highlighting */
+  color: white;
+  border: 2px solid #45a049;
+}
