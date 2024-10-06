@@ -32,7 +32,7 @@
   <!-- Element -->
   <div>
     <label for="element" style="cursor: pointer;" id="element-label">Element:</label>
-    <span id="element-view">{{system.element.value}}</span>
+    <span id="element-view">{{toUpperCaseValue system.element.value}}</span>
     <select id="element-edit" name="element" style="display: none;">
       <option value="fire" {{#if (eq system.element.value "fire")}}selected{{/if}}>Fire</option>
       <option value="water" {{#if (eq system.element.value "water")}}selected{{/if}}>Water</option>
@@ -285,11 +285,50 @@
 
 </div> <!-- End of Profile Tab -->
 
-   <!-- Relationships Tab (empty for now) -->
-      <div class="tab" data-tab="relationships">
-        <h2>Relationships</h2>
-        <!-- Empty content for now -->
-      </div>
+<!-- Relationships Tab -->
+<div class="tab" data-tab="relationships">
+  <h2>Relationships</h2>
+  
+  <!-- Button to Add a New Relationship -->
+  <button id="add-relationship">Add Relationship</button>
+
+  <!-- Form to Add or Edit a Relationship -->
+  <div id="relationship-form" style="display: none;">
+    
+    <!-- Player Name -->
+<label for="player-name-${index}">Player:</label>
+<div id="player-view-${index}" class="view-mode">${rel.playerName || "Click to edit Player Name"}</div>
+<input type="text" id="player-edit-${index}" class="edit-mode" style="display:none;" value="${rel.playerName || ""}" />
+
+<!-- Character Name (Dropdown) -->
+<label for="character-name-${index}">Character:</label>
+<div id="character-view-${index}" class="view-mode">${rel.characterName || "Choose another character"}</div>
+<select id="character-edit-${index}" class="edit-mode" style="display:none;">
+  <option value="" disabled selected>Choose another character</option>
+  ${this.getAvailableCharactersOptions(rel.characterName)}
+</select>
+
+    <!-- Relationship Level (Radio Buttons) -->
+    <label for="relationship-level">Relation:</label>
+    <div id="relationship-level">
+      <label><input type="radio" name="relationship" value="-3"> -3</label>
+      <label><input type="radio" name="relationship" value="-2"> -2</label>
+      <label><input type="radio" name="relationship" value="-1"> -1</label>
+      <label><input type="radio" name="relationship" value="0" checked> 0</label>
+      <label><input type="radio" name="relationship" value="1"> 1</label>
+      <label><input type="radio" name="relationship" value="2"> 2</label>
+      <label><input type="radio" name="relationship" value="3"> 3</label>
+    </div>
+    
+    <button id="save-relationship">Save Relationship</button>
+  </div>
+
+  <!-- List of Existing Relationships -->
+  <div id="relationship-list">
+    <!-- Relationships will be dynamically populated here -->
+  </div>
+</div>
+
 
       <!-- Biography Tab -->
       <div class="tab" data-tab="biography">

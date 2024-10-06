@@ -1,15 +1,33 @@
 import { onManageActiveEffect, prepareActiveEffectCategories } from '../helpers/effects.mjs';
 
+// Helper function to capitalize the first letter of a string
 function toUpperCaseValue(value) {
   if (!value) return '';
   return value.charAt(0).toUpperCase() + value.slice(1);
 }
 
+// Register Handlebars helper for uppercase transformation
 Handlebars.registerHelper('toUpperCaseValue', function(value) {
   if (typeof value === "string") {
     return value.charAt(0).toUpperCase() + value.slice(1);
   }
   return value;
+});
+
+// Handle actor deletion and remove associated relationships
+Hooks.on("preDeleteActor", async (actor, options, userId) => {
+  const deletedActorName = actor.name;
+  const otherActors = game.actors.filter(a => a.id !== actor.id && a.type === "character");
+
+  // Remove relationships related to deleted actor from other actors
+  for (let otherActor of otherActors) {
+    const relationships = foundry.utils.duplicate(otherActor.system.relationships || []);
+    const updatedRelationships = relationships.filter(rel => rel.characterName !== deletedActorName);
+
+    if (relationships.length !== updatedRelationships.length) {
+      await otherActor.update({ 'system.relationships': updatedRelationships });
+    }
+  }
 });
 
 export class WoeActorSheet extends ActorSheet {
@@ -19,11 +37,7 @@ export class WoeActorSheet extends ActorSheet {
       width: 600,
       height: 600,
       tabs: [
-        {
-          navSelector: '.sheet-tabs',
-          contentSelector: '.tab-content',
-          initial: 'profile' // Default tab is the Profile tab
-        },
+        { navSelector: '.sheet-tabs', contentSelector: '.tab-content', initial: 'profile' },
       ],
     });
   }
@@ -32,57 +46,64 @@ export class WoeActorSheet extends ActorSheet {
     return `systems/weave_of_echoes/templates/actor/actor-character-sheet.hbs`;
   }
 
+  // Prepare data and make sure system values are set correctly
   async getData() {
     const context = super.getData();
     const actorData = this.document.toObject(false);
-  
+
     // Ensure tempers are initialized with baseValue and currentValue
     ['fire', 'water', 'earth', 'air'].forEach(temper => {
-      if (!actorData.system.tempers[temper].baseValue) {
-        actorData.system.tempers[temper].baseValue = 'neutral';
-      }
-      if (!actorData.system.tempers[temper].currentValue) {
-        actorData.system.tempers[temper].currentValue = 'neutral';  // Set default to 'neutral'
-      }
+      if (!actorData.system.tempers[temper].baseValue) actorData.system.tempers[temper].baseValue = 'neutral';
+      if (!actorData.system.tempers[temper].currentValue) actorData.system.tempers[temper].currentValue = 'neutral';
     });
-  
+
+    // Available actors for relationship dropdown
+    context.actors = game.actors.filter(actor => actor.id !== this.actor.id && actor.type === "character");
     context.system = actorData.system;
     context.actorName = this.actor.name;
+
     return context;
   }
-  
 
+  // Activate Listeners for sheet interactions
   activateListeners(html) {
     super.activateListeners(html);
 
-    // Built-in tab navigation (Foundry's system will handle the tab changes)
-    
-    // Save Biography
-    html.find('#biography').on('blur', async (event) => {
-      const biography = html.find('#biography').val();
-      await this.actor.update({ 'system.biography': biography });
-    });
+    // Handle name editing
+    this.handleNameEditing(html);
 
-    // Save Private Notes
-    html.find('#private-notes').on('blur', async (event) => {
-      const privateNotes = html.find('#private-notes').val();
-      await this.actor.update({ 'system.privateNotes': privateNotes });
-    });
+    // Handle Stamina interactions (increase, decrease, and max editing)
+    this.handleStaminaEditing(html);
 
-    // Initialize Stamina Max to 4 if undefined
-    if (!this.actor.system.stamina.max || isNaN(this.actor.system.stamina.max)) {
-      this.actor.update({ "system.stamina.max": 4 });
-    }
+    // Handle Element editing
+    this.handleElementEditing(html);
 
-    // Handle name editing (via label click)
-    html.find('#name-label').on('click', (event) => {
+    // Enable editing for tempers and attributes
+    this.enableAttributeEditing(html);
+
+    // Handle Wound listeners for attributes
+    this.manageAttributeWounds(html);
+
+    // Handle trauma (wounds) listeners for tempers
+    this.manageTemperTrauma(html);
+
+    // Dice roll event listeners for tempers and attributes
+    this.addDiceListeners(html);
+
+    // Relationship management (view, add, edit, delete)
+    this.displayRelationships(html);
+    this.addRelationshipListeners(html);
+  }
+
+  handleNameEditing(html) {
+    html.find('#name-label').on('click', () => {
       html.find('#actor-name').hide();
       html.find('#name-edit').prop('disabled', false).show().focus();
     });
 
-    html.find('#name-edit').on('blur', async (event) => {
-      const newName = html.find('#name-edit').val();
-      if (newName.trim()) {
+    html.find('#name-edit').on('blur', async () => {
+      const newName = html.find('#name-edit').val().trim();
+      if (newName) {
         await this.actor.update({ "name": newName });
         html.find('#actor-name').text(newName).show();
       } else {
@@ -90,12 +111,12 @@ export class WoeActorSheet extends ActorSheet {
       }
       html.find('#name-edit').hide();
     });
+  }
 
-    // Handle Current Stamina increment and decrement
-    html.find('#stamina-decrease').on('click', async (event) => {
+  handleStaminaEditing(html) {
+    // Decrease stamina
+    html.find('#stamina-decrease').on('click', async () => {
       let currentStamina = parseInt(html.find('#current-stamina-view').text());
-      let maxStamina = this.actor.system.stamina.max || 4;
-
       if (currentStamina > 0) {
         currentStamina--;
         await this.actor.update({ "system.stamina.current": currentStamina });
@@ -103,10 +124,10 @@ export class WoeActorSheet extends ActorSheet {
       }
     });
 
-    html.find('#stamina-increase').on('click', async (event) => {
+    // Increase stamina
+    html.find('#stamina-increase').on('click', async () => {
       let currentStamina = parseInt(html.find('#current-stamina-view').text());
-      let maxStamina = this.actor.system.stamina.max || 4;
-
+      const maxStamina = this.actor.system.stamina.max || 4;
       if (currentStamina < maxStamina) {
         currentStamina++;
         await this.actor.update({ "system.stamina.current": currentStamina });
@@ -114,224 +135,81 @@ export class WoeActorSheet extends ActorSheet {
       }
     });
 
-    // Handle editing of Stamina Max (via label click)
-    html.find('#stamina-label').on('click', (event) => {
+    // Edit max stamina
+    html.find('#stamina-label').on('click', () => {
       html.find('#stamina-max-view').hide();
       html.find('#stamina-max-edit').show().focus();
     });
 
-    html.find('#stamina-max-edit').on('blur', async (event) => {
-      let newStaminaMax = parseInt(html.find('#stamina-max-edit').val());
-      if (!newStaminaMax || isNaN(newStaminaMax)) {
-        newStaminaMax = 4;
-      }
+    html.find('#stamina-max-edit').on('blur', async () => {
+      let newMaxStamina = parseInt(html.find('#stamina-max-edit').val());
+      if (isNaN(newMaxStamina)) newMaxStamina = 4;
 
       await this.actor.update({
-        "system.stamina.max": newStaminaMax,
-        "system.stamina.current": Math.min(this.actor.system.stamina.current, newStaminaMax)
+        "system.stamina.max": newMaxStamina,
+        "system.stamina.current": Math.min(this.actor.system.stamina.current, newMaxStamina)
       });
 
-      html.find('#stamina-max-view').text(newStaminaMax).show();
-      html.find('#current-stamina-view').text(this.actor.system.stamina.current).show();
+      html.find('#stamina-max-view').text(newMaxStamina).show();
       html.find('#stamina-max-edit').hide();
+      html.find('#current-stamina-view').text(this.actor.system.stamina.current).show();
     });
+  }
 
-    // Handle element editing (via label click)
-    html.find('#element-label').on('click', (event) => {
+  handleElementEditing(html) {
+    html.find('#element-label').on('click', () => {
       html.find('#element-view').hide();
       html.find('#element-edit').show().focus();
     });
 
-    html.find('#element-edit').on('blur', async (event) => {
+    html.find('#element-edit').on('blur', async () => {
       const newElement = html.find('#element-edit').val();
       await this.actor.update({ "system.element.value": newElement });
       html.find('#element-view').text(newElement).show();
       html.find('#element-edit').hide();
     });
-
-    // Enable temper and attributes edit
-    this.enableEditOnClick(html, 'fire');
-    this.enableEditOnClick(html, 'water');
-    this.enableEditOnClick(html, 'earth');
-    this.enableEditOnClick(html, 'air');
-    this.enableEditOnClick(html, 'mind');
-    this.enableEditOnClick(html, 'body');
-    this.enableEditOnClick(html, 'soul');
-    this.enableEditOnClick(html, 'martial');
-    this.enableEditOnClick(html, 'elementary');
-    this.enableEditOnClick(html, 'rhetoric');
-
-    // Manage wounds for all attributes
-    this.manageWoundsListeners(html, 'body');
-    this.manageWoundsListeners(html, 'mind');
-    this.manageWoundsListeners(html, 'soul');
-    this.manageWoundsListeners(html, 'martial');
-    this.manageWoundsListeners(html, 'elementary');
-    this.manageWoundsListeners(html, 'rhetoric');
-
-     // Trauma listeners for tempers
-     html.find('#fire-trauma').on('change', async (event) => {
-      const isChecked = html.find('#fire-trauma').is(':checked');
-      await this.actor.update({ "system.tempers.fire.wound": isChecked });
-      this.render();  // Re-render to update the display
-    });
-
-    html.find('#water-trauma').on('change', async (event) => {
-      const isChecked = html.find('#water-trauma').is(':checked');
-      await this.actor.update({ "system.tempers.water.wound": isChecked });
-      this.render();
-    });
-
-    html.find('#earth-trauma').on('change', async (event) => {
-      const isChecked = html.find('#earth-trauma').is(':checked');
-      await this.actor.update({ "system.tempers.earth.wound": isChecked });
-      this.render();
-    });
-
-    html.find('#air-trauma').on('change', async (event) => {
-      const isChecked = html.find('#air-trauma').is(':checked');
-      await this.actor.update({ "system.tempers.air.wound": isChecked });
-      this.render();
-    });
-
-    // Dice Listeners
-    html.find('#malusDie').on('click', () => {
-      handleSingleDiceRoll("malus");  
-    });
-    
-    html.find('#neutralDie').on('click', () => {
-      handleSingleDiceRoll("neutral");  
-    });
-    
-    html.find('#bonusDie').on('click', () => {
-      handleSingleDiceRoll("bonus"); 
-    });
-    
-    html.find('#criticalDie').on('click', () => {
-      handleSingleDiceRoll("critical");  
-    });
-
-     
-    // Add click listeners for temper and attribute rollDie based on currentValue
-    html.find('#fire-view').on('click', () => handleSingleDiceRoll(this.actor.system.tempers['fire'].currentValue));
-    html.find('#water-view').on('click', () => handleSingleDiceRoll(this.actor.system.tempers['water'].currentValue));
-    html.find('#earth-view').on('click', () => handleSingleDiceRoll(this.actor.system.tempers['earth'].currentValue));
-    html.find('#air-view').on('click', () => handleSingleDiceRoll(this.actor.system.tempers['air'].currentValue));
-
-    html.find('#body-view').on('click', () => handleSingleDiceRoll(this.actor.system.attributes['body'].currentValue));
-    html.find('#mind-view').on('click', () => handleSingleDiceRoll(this.actor.system.attributes['mind'].currentValue));
-    html.find('#soul-view').on('click', () => handleSingleDiceRoll(this.actor.system.attributes['soul'].currentValue));
-    html.find('#martial-view').on('click', () => handleSingleDiceRoll(this.actor.system.attributes['martial'].currentValue));
-    html.find('#elementary-view').on('click', () => handleSingleDiceRoll(this.actor.system.attributes['elementary'].currentValue));
-    html.find('#rhetoric-view').on('click', () => handleSingleDiceRoll(this.actor.system.attributes['rhetoric'].currentValue));
-
-
-       // Ensure `this.actor` is correctly passed to the maneuver window
-  html.find('#maneuver-button').on('click', (event) => {
-    openManeuverWindow(this.actor);  // Pass the actor correctly
-  });
-
-  // Attribute selection listener (only one can be selected within the attribute question)
-$(document).on('click', '.attribute-choice', function() {
-  selectedAttribute = $(this).data('attribute');
-  // Remove the 'selected' class only from the attribute choices
-  $('.attribute-choice').removeClass('selected');
-  // Add 'selected' class to the clicked attribute button
-  $(this).addClass('selected');
-});
-
-// Temper selection listener (only one can be selected within the temper question)
-$(document).on('click', '.temper-choice', function() {
-  if (!$(this).hasClass('disabled')) {
-    selectedTemper = $(this).data('temper');
-    // Remove 'selected' class only from the temper choices
-    $('.temper-choice').removeClass('selected');
-    // Add 'selected' class to the clicked temper button
-    $(this).addClass('selected');
   }
-});
 
-// Context selection listener (only one can be selected within the context question)
-$(document).on('click', '.context-choice', function() {
-  selectedContext = $(this).data('context');
-  // Remove 'selected' class only from the context choices
-  $('.context-choice').removeClass('selected');
-  // Add 'selected' class to the clicked context button
-  $(this).addClass('selected');
-});
-}
+  enableAttributeEditing(html) {
+    const fields = ['fire', 'water', 'earth', 'air', 'mind', 'body', 'soul', 'martial', 'elementary', 'rhetoric'];
+    fields.forEach(field => {
+      const labelSelector = `#${field}-label`;
+      const viewSelector = `#${field}-view`;
+      const editSelector = `#${field}-edit`;
 
+      html.find(labelSelector).on('click', () => {
+        html.find(viewSelector).hide();
+        html.find(editSelector).prop('disabled', false).show().focus();
+      });
 
-  
-enableEditOnClick(html, field) {
-  const labelSelector = `#${field}-label`;
-  const viewSelector = `#${field}-view`;
-  const editSelector = `#${field}-edit`;
-
-  html.find(labelSelector).on('click', (event) => {
-    console.log("Label clicked:", field);  // Debugging check
-    html.find(viewSelector).hide();  // Hide the view
-    html.find(editSelector).prop('disabled', false).show().focus();  // Show the input for editing
-  });
-
-  html.find(editSelector).on('blur', async (event) => {
-    const newValue = html.find(editSelector).val();
-    console.log("New value entered:", newValue);  // Debugging check
-    
-    let updateData = {};
-
-    // Check if the field is a temper or an attribute
-    if (['fire', 'water', 'earth', 'air'].includes(field)) {
-      // Handle tempers - update both baseValue and currentValue
-      updateData[`system.tempers.${field}.baseValue`] = newValue;
-      updateData[`system.tempers.${field}.currentValue`] = newValue;
-    } else {
-      // Handle attributes - update both baseValue and currentValue, and reset wounds
-      updateData[`system.attributes.${field}.baseValue`] = newValue;
-      updateData[`system.attributes.${field}.currentValue`] = newValue;
-      updateData[`system.attributes.${field}.wounds`] = {
-        wound1: false,
-        wound2: false,
-        wound3: false
-      };
-    }
-
-    // Perform the update
-    await this.actor.update(updateData);
-    
-    // Ensure the updated currentValue is displayed
-    html.find(viewSelector).text(newValue).show();  // Display the updated value
-    html.find(editSelector).hide();  // Hide the input field after editing
-  });
-}
-
-  
-
-  manageWoundsListeners(html, attribute) {
-    const attr = this.actor.system.attributes[attribute];
-    const wound1 = html.find(`#${attribute}-wound1`);
-    const wound2 = html.find(`#${attribute}-wound2`);
-    const wound3 = html.find(`#${attribute}-wound3`);
-
-    // Initial checkbox management
-    this.manageWoundCheckboxes(attribute, wound1, wound2, wound3);
-
-    wound1.on('change', async (event) => {
-      const checked = event.target.checked;
-      await this.actor.update({ [`system.attributes.${attribute}.wounds.wound1`]: checked });
-      this.updateAttributeCurrentValue(attribute);
+      html.find(editSelector).on('blur', async () => {
+        const newValue = html.find(editSelector).val();
+        let updateData = {};
+        if (['fire', 'water', 'earth', 'air'].includes(field)) {
+          updateData[`system.tempers.${field}.baseValue`] = newValue;
+          updateData[`system.tempers.${field}.currentValue`] = newValue;
+        } else {
+          updateData[`system.attributes.${field}.baseValue`] = newValue;
+          updateData[`system.attributes.${field}.currentValue`] = newValue;
+        }
+        await this.actor.update(updateData);
+        html.find(viewSelector).text(newValue).show();
+        html.find(editSelector).hide();
+      });
     });
+  }
 
-    wound2.on('change', async (event) => {
-      const checked = event.target.checked;
-      await this.actor.update({ [`system.attributes.${attribute}.wounds.wound2`]: checked });
-      this.updateAttributeCurrentValue(attribute);
-    });
+  manageAttributeWounds(html) {
+    const attributes = ['body', 'mind', 'soul', 'martial', 'elementary', 'rhetoric'];
+    attributes.forEach(attr => {
+      const wound1 = html.find(`#${attr}-wound1`);
+      const wound2 = html.find(`#${attr}-wound2`);
+      const wound3 = html.find(`#${attr}-wound3`);
+      this.manageWoundCheckboxes(attr, wound1, wound2, wound3);
 
-    wound3.on('change', async (event) => {
-      const checked = event.target.checked;
-      await this.actor.update({ [`system.attributes.${attribute}.wounds.wound3`]: checked });
-      this.updateAttributeCurrentValue(attribute);
+      wound1.on('change', async () => this.updateWoundState(attr, 'wound1', wound1));
+      wound2.on('change', async () => this.updateWoundState(attr, 'wound2', wound2));
+      wound3.on('change', async () => this.updateWoundState(attr, 'wound3', wound3));
     });
   }
 
@@ -343,39 +221,17 @@ enableEditOnClick(html, field) {
       wound1.prop('disabled', true);
       wound2.prop('disabled', true);
       wound3.prop('disabled', true);
-    } else if (attr.currentValue === 'malus') {
-      if (wounds.wound3) {
-        wound1.prop('disabled', true);
-        wound2.prop('disabled', true);
-        wound3.prop('disabled', false);
-      } else if (wounds.wound2) {
-        wound1.prop('disabled', true);
-        wound2.prop('disabled', false);
-        wound3.prop('disabled', true);
-      } else if (wounds.wound1) {
-        wound1.prop('disabled', false);
-        wound2.prop('disabled', true);
-        wound3.prop('disabled', true);
-      }
     } else {
-      if (!wounds.wound1 && !wounds.wound2 && !wounds.wound3) {
-        wound1.prop('disabled', false);
-        wound2.prop('disabled', true);
-        wound3.prop('disabled', true);
-      } else if (wounds.wound1 && !wounds.wound2 && !wounds.wound3) {
-        wound1.prop('disabled', false);
-        wound2.prop('disabled', false);
-        wound3.prop('disabled', true);
-      } else if (wounds.wound2 && !wounds.wound3) {
-        wound1.prop('disabled', true);
-        wound2.prop('disabled', false);
-        wound3.prop('disabled', false);
-      } else if (wounds.wound3) {
-        wound1.prop('disabled', true);
-        wound2.prop('disabled', true);
-        wound3.prop('disabled', false);
-      }
+      wound1.prop('disabled', false);
+      wound2.prop('disabled', false);
+      wound3.prop('disabled', false);
     }
+  }
+
+  async updateWoundState(attribute, wound, checkbox) {
+    const checked = checkbox.is(':checked');
+    await this.actor.update({ [`system.attributes.${attribute}.wounds.${wound}`]: checked });
+    this.updateAttributeCurrentValue(attribute);
   }
 
   async updateAttributeCurrentValue(attribute) {
@@ -387,12 +243,6 @@ enableEditOnClick(html, field) {
     if (attr.wounds.wound3) currentValue = this.degradeAttributeValue(currentValue);
 
     await this.actor.update({ [`system.attributes.${attribute}.currentValue`]: currentValue });
-
-    const wound1 = $(`#${attribute}-wound1`);
-    const wound2 = $(`#${attribute}-wound2`);
-    const wound3 = $(`#${attribute}-wound3`);
-
-    this.manageWoundCheckboxes(attribute, wound1, wound2, wound3);
   }
 
   degradeAttributeValue(value) {
@@ -403,48 +253,136 @@ enableEditOnClick(html, field) {
         return 'neutral';
       case 'neutral':
         return 'malus';
-      case 'malus':
-        return 'malus';
       default:
         return value;
     }
   }
 
-  rollTemperOrAttribute(field, type) {
-    let value;
-  
-    // Get the current value from the temper or attribute
-    if (type === 'tempers') {
-      value = this.actor.system.tempers[field].currentValue;
-    } else if (type === 'attributes') {
-      value = this.actor.system.attributes[field].currentValue;
-    }
-  
-    // Ensure value is passed correctly to rollDie
-    console.log("Rolling die for:", type, field, "with value:", value); // Debugging check
-    rollDie(value);  // Call rollDie with the current value
+  manageTemperTrauma(html) {
+    ['fire', 'water', 'earth', 'air'].forEach(temper => {
+      html.find(`#${temper}-trauma`).on('change', async () => {
+        const isChecked = html.find(`#${temper}-trauma`).is(':checked');
+        await this.actor.update({ [`system.tempers.${temper}.wound`]: isChecked });
+        this.render();  // Re-render to apply trauma change
+      });
+    });
   }
-  
-  
+
+  addDiceListeners(html) {
+    ['malus', 'neutral', 'bonus', 'critical'].forEach(dieType => {
+      html.find(`#${dieType}Die`).on('click', () => this.handleSingleDiceRoll(dieType));
+    });
+  }
+
+  async handleSingleDiceRoll(type) {
+    const capitalizedType = toUpperCaseValue(type);
+    const result = await rollDie(type);
+    this.displayRollResultsInChat(capitalizedType, result);
+  }
+
+  displayRelationships(html) {
+    const relationships = this.actor.system.relationships || [];
+    const relationshipList = html.find('#relationship-list');
+    relationshipList.empty();
+
+    relationships.forEach((rel, index) => {
+      const relationshipHtml = `
+        <div class="relationship-item">
+          <label>Player:</label>
+          <input type="text" class="relationship-input" data-index="${index}" data-field="playerName" value="${rel.playerName || ''}" />
+          
+          <label>Character:</label>
+          <select class="relationship-input" data-index="${index}" data-field="characterName">
+            ${this.getAvailableCharactersOptions(rel.characterName || '')} <!-- Ensure it's never undefined -->
+          </select>
+
+          <label>Relation:</label>
+          <div id="relationship-level">
+            ${this.getRelationshipLevelOptions(rel.relationshipLevel || 0, index)} <!-- Ensure it's never undefined -->
+          </div>
+          
+          <button class="delete-relationship" data-index="${index}">Delete</button>
+        </div>`;
+      relationshipList.append(relationshipHtml);
+    });
 }
 
-async function rollDie(type) {
-  if (!type) {
-    console.error("rollDie received an invalid type:", type);
-    return "undefined";  // Return a string instead of undefined if type is invalid
+  addRelationshipListeners(html) {
+    // Add new relationship
+    html.find('#add-relationship').on('click', async () => {
+      const relationships = this.actor.system.relationships || [];
+      relationships.push({
+        playerName: '',
+        characterName: '',  // Ensure characterName is always initialized
+        relationshipLevel: 0
+      });
+      await this.actor.update({ 'system.relationships': relationships });
+      this.render();
+    });
+    
+    // Update relationships
+    html.on('change', '.relationship-input', async (event) => {
+      const index = $(event.currentTarget).data('index');
+      const field = $(event.currentTarget).data('field');
+      const value = $(event.currentTarget).val();
+      const relationships = foundry.utils.duplicate(this.actor.system.relationships);
+      relationships[index][field] = field === 'relationshipLevel' ? parseInt(value) : value;
+      await this.actor.update({ 'system.relationships': relationships });
+      this.render();
+    });
+
+    // Delete a relationship
+    html.on('click', '.delete-relationship', async (event) => {
+      const index = $(event.currentTarget).data('index');
+      if (confirm("Are you sure you want to delete this relationship?")) {
+        const relationships = foundry.utils.duplicate(this.actor.system.relationships);
+        relationships.splice(index, 1);
+        await this.actor.update({ 'system.relationships': relationships });
+        this.render();
+      }
+    });
   }
 
-  // Log the type being rolled
-  console.log("Rolling dice for type:", type);
+  getAvailableCharactersOptions(selectedCharacterName) {
+    // Initialize the selectedCharacterName in case it's undefined
+     selectedCharacterName = selectedCharacterName || '';
+  
+    const currentActorName = this.actor.name;
+    const allCharacters = game.actors.filter(actor => actor.type === "character");
+    const existingRelationships = this.actor.system.relationships.map(rel => rel.characterName);
+  
+    const availableCharacters = allCharacters.filter(char => 
+      !existingRelationships.includes(char.name) || char.name === selectedCharacterName
+    ).filter(char => char.name !== currentActorName);
+  
+    let options = `<option value="" disabled selected>Choose another character</option>`;
+  
+    if (availableCharacters.length === 0) {
+      options += `<option disabled>No characters available</option>`;
+    } else {
+      options += availableCharacters.map(char => 
+        `<option value="${char.name}" ${char.name === selectedCharacterName ? 'selected' : ''}>${char.name}</option>`
+      ).join('');
+    }
+  
+    return options;
+  }
 
-  // Convert the type to lowercase
+  getRelationshipLevelOptions(selectedLevel, index) {
+    const levels = [-3, -2, -1, 0, 1, 2, 3];
+    return levels.map(level => `
+      <label><input type="radio" class="relationship-input" data-index="${index}" data-field="relationshipLevel" name="relationship-level-${index}" value="${level}" ${level === selectedLevel ? 'checked' : ''}> ${level}</label>
+    `).join('');
+  }
+}
+
+// Dice rolling logic
+async function rollDie(type) {
+  if (!type) return "undefined";
+
   type = type.toLowerCase();
-
-  // Roll a d12
   let roll = new Roll("1d12");
   await roll.evaluate();
-
-  console.log("Roll Result:", roll.total);
 
   let result;
   switch (type) {
@@ -461,172 +399,15 @@ async function rollDie(type) {
       result = (roll.total == 1) ? "Setback" : (roll.total <= 5) ? "Stalemate" : "Gain";
       break;
     default:
-      console.error("Unknown dice type:", type);
       result = "undefined";
   }
-
-  // Log the final result
-  console.log("Result for type", type, ":", result);
 
   return result;
 }
 
-async function handleSingleDiceRoll(type) {
-  const capitalizedType = toUpperCaseValue(type);
-  const result = await rollDie(type);
-  displayRollResultsInChat(capitalizedType, result);
-}
-
-  function displayRollResultsInChat(capitalizedType, result) {
-    // Create the chat message in the desired format
-    ChatMessage.create({
-      content: `${capitalizedType} rolled: ${result}`,  // Example: "Malus rolled: Setback"
-      speaker: ChatMessage.getSpeaker(),
-    });
-  }
-
-  // Function to open the maneuver window
-function openManeuverWindow(actor) {
-  let content = `
-    <div>
-      <h3>On which of your attributes are you relying on?</h3>
-      <div id="attribute-section">
-        ${createAttributeSelection(actor)}
-      </div>
-
-      <h3>What is your current state of mind?</h3>
-      <div id="temper-section">
-        ${createTemperSelection(actor)}
-      </div>
-
-      <h3>How advantageous to you is the context?</h3>
-      <div id="context-section">
-        ${createContextSelection()}
-      </div>
-    </div>
-  `;
-
-  // Render the window using Foundry's Dialog
-  new Dialog({
-    title: "Maneuver",
-    content: content,
-    buttons: {
-      maneuver: {
-        label: "Launch Maneuver",
-        callback: async () => {
-          // Handle the dice rolling when the button is clicked
-          await launchManeuver(actor);
-        }
-      }
-    }
-  }).render(true);
-}
-
-// Helper function to create the attribute selection
-function createAttributeSelection(actor) {
-  return `
-    <button class="attribute-choice" data-attribute="body">Body</button>
-    <button class="attribute-choice" data-attribute="soul">Soul</button>
-    <button class="attribute-choice" data-attribute="mind">Mind</button>
-    <button class="attribute-choice" data-attribute="martial">Martial</button>
-    <button class="attribute-choice" data-attribute="elemental">Elemental</button>
-    <button class="attribute-choice" data-attribute="rhetoric">Rhetoric</button>
-  `;
-}
-
-// Helper function to create the temper selection
-function createTemperSelection(actor) {
-  const tempers = ['fire', 'water', 'earth', 'air'];
-  return tempers.map(temper => {
-    let trauma = actor.system.tempers[temper].wound;  // Check for trauma
-    let disabled = trauma ? 'disabled' : '';
-    let classDisabled = trauma ? 'class="disabled"' : '';
-    return `<button class="temper-choice" data-temper="${temper}" ${disabled} ${classDisabled}>${toUpperCaseValue(temper)}</button>`;
-  }).join('');
-}
-
-// Helper function to create the context selection
-function createContextSelection() {
-  return `
-    <button class="context-choice" data-context="malus">Detrimental</button>
-    <button class="context-choice" data-context="neutral">Neutral</button>
-    <button class="context-choice" data-context="bonus">Favorable</button>
-    <button class="context-choice" data-context="critical">Highly Beneficial</button>
-  `;
-}
-
-// Variables to store selected options
-let selectedAttribute = null;
-let selectedTemper = null;
-let selectedContext = null;
-
-// Event listeners for attribute, temper, and context choices
-$(document).on('click', '.attribute-choice', function() {
-  selectedAttribute = $(this).data('attribute');
-  $('.attribute-choice').removeClass('selected');
-  $(this).addClass('selected');
-});
-
-$(document).on('click', '.temper-choice', function() {
-  if (!$(this).hasClass('disabled')) {
-    selectedTemper = $(this).data('temper');
-    $('.temper-choice').removeClass('selected');
-    $(this).addClass('selected');
-  }
-});
-
-$(document).on('click', '.context-choice', function() {
-  selectedContext = $(this).data('context');
-  $('.context-choice').removeClass('selected');
-  $(this).addClass('selected');
-});
-
-const contextLabels = {
-  malus: "Detrimental",
-  neutral: "Neutral",
-  bonus: "Favorable",
-  critical: "Highly Beneficial"
-};
-
-async function launchManeuver(actor) {
-  if (!selectedAttribute || !selectedTemper || !selectedContext) {
-    ui.notifications.error("You must answer all three questions.");
-    return;
-  }
-
-  console.log("Selected Attribute:", selectedAttribute);
-  console.log("Selected Temper:", selectedTemper);
-  console.log("Selected Context:", selectedContext);  // Log the context
-
-  // Retrieve the current values for the selected attribute and temper
-  const attributeValue = actor.system.attributes[selectedAttribute]?.currentValue;
-  const temperValue = actor.system.tempers[selectedTemper]?.currentValue;
-
-  console.log("Attribute Value:", attributeValue);
-  console.log("Temper Value:", temperValue);
-
-  // Ensure values exist before proceeding with the roll
-  if (!attributeValue || !temperValue) {
-    console.error("Invalid selections:", selectedAttribute, selectedTemper, selectedContext);
-    return;
-  }
-
-  // Roll the dice for the attribute, temper, and context
-  const attributeResult = await rollDie(attributeValue);
-  const temperResult = await rollDie(temperValue);
-  const contextResult = await rollDie(selectedContext);
-
-  // Check the context label mapping
-  const contextLabel = contextLabels[selectedContext];  // Convert the context value to the label
-  console.log("Mapped Context Label:", contextLabel);  // Log the label to see if it maps correctly
-
-  // Format the message according to your requirement: "AttributeLabel, TemperLabel, and ContextLabel ANSWER"
-  const message = `${toUpperCaseValue(selectedAttribute)}, ${toUpperCaseValue(selectedTemper)} & ${contextLabel} rolled: ${attributeResult}, ${temperResult}, ${contextResult}`;
-
-  // Display the results in the chat
+function displayRollResultsInChat(capitalizedType, result) {
   ChatMessage.create({
-    content: message,
+    content: `${capitalizedType} rolled: ${result}`,
     speaker: ChatMessage.getSpeaker(),
   });
 }
-

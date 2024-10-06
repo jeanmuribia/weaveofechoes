@@ -41,3 +41,21 @@ Si on décoche wound 1 :
 currentValue monte d'un cran.
 Wound 1 devient décochée et cochable.
 Wound 2 et Wound 3 deviennent inactives et décochées.
+
+
+
+
+
+
+Synergy : 
+
+Here's a rephrased version of your synergy system plan:
+
+Relationships:
+In the "Relationships" tab, there will be an "Add Relationship" button. Upon clicking it, the user can input the player's name, the character's name, and select a relationship value from a radio button scale ranging from -3 to +3 (7 options in total). These labels can be customized later. The character's name will appear as a dropdown menu that lists all other player characters (PCs) in the game, allowing you to select and link to them.
+
+Generate Synergy Points (GM Feature):
+As the GM, you'll have access to a "Generate Synergy Points" button on your screen. When you click it, a window will open displaying all playable characters. You can select any number of characters, and based on the interpersonal relationships between those selected characters, a certain number of synergy points will be generated using a predefined formula we'll create later.
+
+Manual Synergy Points Management (GM Feature):
+As the GM, you'll also have the ability to manually add or remove synergy points for the characters. This will be done through + and - buttons, allowing you to adjust the synergy points as needed.

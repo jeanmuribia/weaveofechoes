@@ -3,7 +3,7 @@ export class WoeActor extends Actor {
   prepareData() {
     super.prepareData();
     const systemData = this.system;
-  
+
     // Initialize Stamina if not present
     if (!systemData.stamina) {
       systemData.stamina = {
@@ -11,7 +11,7 @@ export class WoeActor extends Actor {
         current: 4
       };
     }
-  
+
     // Ensure attributes are initialized for all keys, including "mind" and "elementary"
     const attributes = ["body", "soul", "mind", "martial", "elementary", "rhetoric"];
     attributes.forEach(attr => {
@@ -32,7 +32,7 @@ export class WoeActor extends Actor {
         };
       }
     });
-  
+
     // Initialize tempers for fire, water, earth, and air
     const tempers = ["fire", "water", "earth", "air"];
     tempers.forEach(temper => {
@@ -49,43 +49,44 @@ export class WoeActor extends Actor {
         systemData.tempers[temper].wound = false; // Default to no trauma
       }
     });
-  
-    console.log("Attributes initialized:", systemData.attributes);
-    console.log("Tempers initialized:", systemData.tempers);
+
+    // Initialize relationships if not present
+    if (!systemData.relationships) {
+      systemData.relationships = [];
+    }
   }
 
-  
   /**
-   * Crée un nouvel acteur avec des valeurs par défaut pour ses attributs
+   * Create a new actor with default values for attributes
    * 
-   * @param {string} name - Le nom de l'acteur
-   * @param {string} type - Le type d'acteur
+   * @param {string} name - The actor's name
+   * @param {string} type - The actor's type
    */
   static async createActor(name, type) {
     if (!name || name.trim() === "") {
-      name = "Unnamed"; // Si aucun nom n'est fourni, utiliser "Unnamed"
+      name = "Unnamed"; // Use "Unnamed" if no name is provided
     }
 
-    // Définir les valeurs initiales pour le nouvel acteur
+    // Define initial values for the new actor
     const actorData = {
-      name: name || "Unnamed", // Si aucun nom n'est passé, utiliser "Unnamed"
+      name: name || "Unnamed", // Use "Unnamed" if no name is passed
       type: type,
-      img: "icons/svg/mystery-man.svg", // Icône par défaut pour l'acteur
+      img: "icons/svg/mystery-man.svg", // Default icon for the actor
       system: {
-        name: { value: name }, // Nom de l'acteur
-        element: { value: "none" }, // Valeur par défaut pour l'élément (par exemple "none")
+        name: { value: name }, // Actor's name
+        element: { value: "none" }, // Default element value (e.g., "none")
         stamina: {
-          max: 4, // Valeur par défaut pour la Stamina Max
-          current: 4 // Valeur par défaut pour la Stamina Courante
+          max: 4, // Default Stamina Max value
+          current: 4 // Default Current Stamina value
         },
         tempers: {
-          fire: { value: "neutral" }, // Tempérament du feu par défaut
-          water: { value: "neutral" }, // Tempérament de l'eau par défaut
-          earth: { value: "neutral" }, // Tempérament de la terre par défaut
-          air: { value: "neutral" } // Tempérament de l'air par défaut
+          fire: { value: "neutral" }, // Default fire temper value
+          water: { value: "neutral" }, // Default water temper value
+          earth: { value: "neutral" }, // Default earth temper value
+          air: { value: "neutral" } // Default air temper value
         },
         attributes: {
-          // Initialiser tous les attributs avec des valeurs par défaut
+          // Initialize all attributes with default values
           body: {
             baseValue: "neutral",
             currentValue: "neutral",
@@ -116,11 +117,12 @@ export class WoeActor extends Actor {
             currentValue: "neutral",
             wounds: { wound1: false, wound2: false, wound3: false }
           }
-        }
+        },
+        relationships: [] // Default relationships array
       }
     };
 
-    // Crée un nouvel acteur dans le système Foundry
+    // Create a new actor in the Foundry system
     await Actor.create(actorData);
   }
 }
