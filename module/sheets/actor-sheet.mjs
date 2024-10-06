@@ -1,5 +1,17 @@
 import { onManageActiveEffect, prepareActiveEffectCategories } from '../helpers/effects.mjs';
 
+function toUpperCaseValue(value) {
+  if (!value) return '';
+  return value.charAt(0).toUpperCase() + value.slice(1);
+}
+
+Handlebars.registerHelper('toUpperCaseValue', function(value) {
+  if (typeof value === "string") {
+    return value.charAt(0).toUpperCase() + value.slice(1);
+  }
+  return value;
+});
+
 export class WoeActorSheet extends ActorSheet {
   static get defaultOptions() {
     return foundry.utils.mergeObject(super.defaultOptions, {
@@ -23,6 +35,17 @@ export class WoeActorSheet extends ActorSheet {
   async getData() {
     const context = super.getData();
     const actorData = this.document.toObject(false);
+  
+    // Ensure tempers are initialized with baseValue and currentValue
+    ['fire', 'water', 'earth', 'air'].forEach(temper => {
+      if (!actorData.system.tempers[temper].baseValue) {
+        actorData.system.tempers[temper].baseValue = 'neutral';
+      }
+      if (!actorData.system.tempers[temper].currentValue) {
+        actorData.system.tempers[temper].currentValue = 'neutral';
+      }
+    });
+  
     context.system = actorData.system;
     context.actorName = this.actor.name;
     return context;
@@ -186,54 +209,63 @@ export class WoeActorSheet extends ActorSheet {
     html.find('#criticalDie').on('click', () => {
       rollDie("critical");  
     });
+
+     
+    // Add click listeners for temper and attribute rollDie based on currentValue
+    html.find('#fire-view').on('click', () => this.rollTemperOrAttribute('fire', 'tempers'));
+    html.find('#water-view').on('click', () => this.rollTemperOrAttribute('water', 'tempers'));
+    html.find('#earth-view').on('click', () => this.rollTemperOrAttribute('earth', 'tempers'));
+    html.find('#air-view').on('click', () => this.rollTemperOrAttribute('air', 'tempers'));
+
+    html.find('#body-view').on('click', () => this.rollTemperOrAttribute('body', 'attributes'));
+    html.find('#mind-view').on('click', () => this.rollTemperOrAttribute('mind', 'attributes'));
+    html.find('#soul-view').on('click', () => this.rollTemperOrAttribute('soul', 'attributes'));
+    html.find('#martial-view').on('click', () => this.rollTemperOrAttribute('martial', 'attributes'));
+    html.find('#elementary-view').on('click', () => this.rollTemperOrAttribute('elementary', 'attributes'));
+    html.find('#rhetoric-view').on('click', () => this.rollTemperOrAttribute('rhetoric', 'attributes'));
 }
 
-  enableEditOnClick(html, field) {
-    const labelSelector = `#${field}-label`;
-    const viewSelector = `#${field}-view`;
-    const editSelector = `#${field}-edit`;
-
-    html.find(labelSelector).on('click', (event) => {
-      console.log("Label clicked:", field);  // Debugging check
-      html.find(viewSelector).hide();  // Hide the view
-      html.find(editSelector).prop('disabled', false).show().focus();  // Show the input for editing
-  });
   
+enableEditOnClick(html, field) {
+  const labelSelector = `#${field}-label`;
+  const viewSelector = `#${field}-view`;
+  const editSelector = `#${field}-edit`;
+
+  html.find(labelSelector).on('click', (event) => {
+    console.log("Label clicked:", field);  // Debugging check
+    html.find(viewSelector).hide();  // Hide the view
+    html.find(editSelector).prop('disabled', false).show().focus();  // Show the input for editing
+  });
+
   html.find(editSelector).on('blur', async (event) => {
-      const newValue = html.find(editSelector).val();
-      console.log("New value entered:", newValue);  // Debugging check
-      
-      let updateData = {};
-  
-      // Check if the field is a temper or an attribute
-      if (['fire', 'water', 'earth', 'air'].includes(field)) {
-          // Handle tempers - update both baseValue and currentValue
-          updateData[`system.tempers.${field}.baseValue`] = newValue;
-          updateData[`system.tempers.${field}.currentValue`] = newValue;
-      } else {
-          // Handle attributes - update both baseValue and currentValue, and reset wounds
-          updateData[`system.attributes.${field}.baseValue`] = newValue;
-          updateData[`system.attributes.${field}.currentValue`] = newValue;
-          updateData[`system.attributes.${field}.wounds`] = {
-              wound1: false,
-              wound2: false,
-              wound3: false
-          };
-      }
-  
-      // Perform the update
-      await this.actor.update(updateData).then(() => {
-          console.log("Actor updated:", updateData);  // Debugging check for successful update
-      }).catch((err) => {
-          console.error("Error updating actor:", err);  // Error handling for update failure
-      });
-  
-      // Ensure the updated currentValue is displayed
-      html.find(viewSelector).text(newValue).show();  // Display the updated value
-      html.find(editSelector).hide();  // Hide the input field after editing
-      console.log("Displayed value updated to:", newValue);  // Debugging check for displayed value
-  });
+    const newValue = html.find(editSelector).val();
+    console.log("New value entered:", newValue);  // Debugging check
+    
+    let updateData = {};
 
+    // Check if the field is a temper or an attribute
+    if (['fire', 'water', 'earth', 'air'].includes(field)) {
+      // Handle tempers - update both baseValue and currentValue
+      updateData[`system.tempers.${field}.baseValue`] = newValue;
+      updateData[`system.tempers.${field}.currentValue`] = newValue;
+    } else {
+      // Handle attributes - update both baseValue and currentValue, and reset wounds
+      updateData[`system.attributes.${field}.baseValue`] = newValue;
+      updateData[`system.attributes.${field}.currentValue`] = newValue;
+      updateData[`system.attributes.${field}.wounds`] = {
+        wound1: false,
+        wound2: false,
+        wound3: false
+      };
+    }
+
+    // Perform the update
+    await this.actor.update(updateData);
+    
+    // Ensure the updated currentValue is displayed
+    html.find(viewSelector).text(newValue).show();  // Display the updated value
+    html.find(editSelector).hide();  // Hide the input field after editing
+  });
 }
 
   
@@ -341,86 +373,66 @@ export class WoeActorSheet extends ActorSheet {
     }
   }
 
+  rollTemperOrAttribute(field, type) {
+    let value;
+  
+    // Get the current value from the temper or attribute
+    if (type === 'tempers') {
+      value = this.actor.system.tempers[field].currentValue;
+    } else if (type === 'attributes') {
+      value = this.actor.system.attributes[field].currentValue;
+    }
+  
+    // Ensure value is passed correctly to rollDie
+    console.log("Rolling die for:", type, field, "with value:", value); // Debugging check
+    rollDie(value);  // Call rollDie with the current value
+  }
+  
   
 }
 
 let rollDie = async (type) => {
+
+  type = type.toLowerCase();
+
   // Roll a single d12 asynchronously
   let roll = new Roll("1d12");
-  await roll.evaluate();  // Ensure asynchronous evaluation
+  await roll.evaluate();
 
-  let dieValue = roll.total; // The result of the d12 roll
+  let dieValue = roll.total;
   let result;
 
-  // Determine the result based on the dice type and dieValue
+  // Capitalize the first letter of the die type
+  let capitalizedType = toUpperCaseValue(type);
+
+  // Determine the result based on the die type
   switch (type) {
     case "malus":
-      if (dieValue >= 1 && dieValue <= 7) {
-        result = 1; // Setback
-      } else if (dieValue >= 8 && dieValue <= 11) {
-        result = 2; // Stalemate
-      } else {
-        result = 3; // Gain
-      }
+      result = dieValue <= 7 ? "Setback" : dieValue <= 11 ? "Stalemate" : "Gain";
       break;
-
     case "neutral":
-      if (dieValue >= 1 && dieValue <= 3) {
-        result = 1; // Setback
-      } else if (dieValue >= 4 && dieValue <= 9) {
-        result = 2; // Stalemate
-      } else {
-        result = 3; // Gain
-      }
+      result = dieValue <= 3 ? "Setback" : dieValue <= 9 ? "Stalemate" : "Gain";
       break;
-
     case "bonus":
-      if (dieValue >= 1 && dieValue <= 2) {
-        result = 1; // Setback
-      } else if (dieValue >= 3 && dieValue <= 7) {
-        result = 2; // Stalemate
-      } else {
-        result = 3; // Gain
-      }
+      result = dieValue <= 2 ? "Setback" : dieValue <= 7 ? "Stalemate" : "Gain";
       break;
-
     case "critical":
-      if (dieValue === 1) {
-        result = 1; // Setback
-      } else if (dieValue >= 2 && dieValue <= 5) {
-        result = 2; // Stalemate
-      } else {
-        result = 3; // Gain
-      }
+      result = dieValue === 1 ? "Setback" : dieValue <= 5 ? "Stalemate" : "Gain";
       break;
-
     default:
       console.error("Unknown dice type");
       return;
   }
 
-  // Display the result in the chat after evaluating the roll
-  displayRollResultsInChat(result);
+  // Pass the capitalized die type and the result to the chat display function
+  displayRollResultsInChat(capitalizedType, result);
 };
 
-// Function to display results in the chat based on the roll result
-function displayRollResultsInChat(result) {
-  let resultLabel;
-  
-  // Assign labels based on the result value (1 = Setback, 2 = Stalemate, 3 = Gain)
-  if (result === 1) {
-    resultLabel = "Setback";
-  } else if (result === 2) {
-    resultLabel = "Stalemate";
-  } else if (result === 3) {
-    resultLabel = "Gain";
-  } else {
-    resultLabel = "Unknown";  // Just in case something unexpected happens
+  function displayRollResultsInChat(capitalizedType, result) {
+    // Create the chat message in the desired format
+    ChatMessage.create({
+      content: `${capitalizedType} rolled: ${result}`,  // Example: "Malus rolled: Setback"
+      speaker: ChatMessage.getSpeaker(),
+    });
   }
 
-  // Create the chat message
-  ChatMessage.create({
-    content: `Roll Result: ${resultLabel}`,
-    speaker: ChatMessage.getSpeaker(),
-  });
-}

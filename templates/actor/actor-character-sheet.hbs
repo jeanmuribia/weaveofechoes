@@ -72,11 +72,11 @@
   <label id="fire-label" style="cursor: pointer;">Fire Temper:</label>
   
   <!-- Display currentValue for the temper -->
-  <span id="fire-view" class="temper {{system.tempers.fire.currentValue}}" style="margin-left: 10px;">
-    {{system.tempers.fire.currentValue}}
+  <span id="fire-view" class="temper {{system.tempers.fire.currentValue}} clickable" style="margin-left: 10px;">
+    {{toUpperCaseValue system.tempers.fire.currentValue}}
   </span>
 
-  <!-- Trauma Checkbox (on the right of the value) -->
+  <!-- Trauma Checkbox -->
   <input type="checkbox" id="fire-trauma" class="trauma" {{#if system.tempers.fire.wound}}checked{{/if}} style="margin-left: 10px;"> Trauma
   
   <select id="fire-edit" name="fire" style="display: none; margin-left: 10px;">
@@ -87,14 +87,12 @@
   </select>
 </div>
 
-<!-- Repeat similar blocks for other tempers -->
-
 <!-- Water Temper -->
 <div style="display: flex; align-items: center;">
   <label id="water-label" style="cursor: pointer;">Water Temper:</label>
   
-  <span id="water-view" class="temper {{system.tempers.water.currentValue}}" style="margin-left: 10px;">
-    {{system.tempers.water.currentValue}}
+  <span id="water-view" class="temper {{system.tempers.water.currentValue}} clickable" style="margin-left: 10px;">
+    {{toUpperCaseValue system.tempers.water.currentValue}}
   </span>
 
   <!-- Trauma Checkbox -->
@@ -112,8 +110,8 @@
 <div style="display: flex; align-items: center;">
   <label id="earth-label" style="cursor: pointer;">Earth Temper:</label>
   
-  <span id="earth-view" class="temper {{system.tempers.earth.currentValue}}" style="margin-left: 10px;">
-    {{system.tempers.earth.currentValue}}
+  <span id="earth-view" class="temper {{system.tempers.earth.currentValue}} clickable" style="margin-left: 10px;">
+    {{toUpperCaseValue system.tempers.earth.currentValue}}
   </span>
 
   <!-- Trauma Checkbox -->
@@ -131,8 +129,8 @@
 <div style="display: flex; align-items: center;">
   <label id="air-label" style="cursor: pointer;">Air Temper:</label>
   
-  <span id="air-view" class="temper {{system.tempers.air.currentValue}}" style="margin-left: 10px;">
-    {{system.tempers.air.currentValue}}
+  <span id="air-view" class="temper {{system.tempers.air.currentValue}} clickable" style="margin-left: 10px;">
+    {{toUpperCaseValue system.tempers.air.currentValue}}
   </span>
 
   <!-- Trauma Checkbox -->
@@ -154,7 +152,7 @@
   <div style="display: flex; align-items: center;">
     <label id="body-label" style="cursor: pointer;">Body:</label>
     <span id="body-view" class="attribute {{system.attributes.body.currentValue}}" style="margin-left: 10px;">
-      {{system.attributes.body.currentValue}}
+      {{toUpperCaseValue system.attributes.body.currentValue}}
     </span>
     <select id="body-edit" name="body" style="display: none;">
       <option value="malus" {{#if (eq system.attributes.body.baseValue "malus")}}selected{{/if}}>Malus</option>
@@ -175,7 +173,7 @@
   <div style="display: flex; align-items: center;">
     <label id="soul-label" style="cursor: pointer;">Soul:</label>
     <span id="soul-view" class="attribute {{system.attributes.soul.currentValue}}" style="margin-left: 10px;">
-      {{system.attributes.soul.currentValue}}
+      {{toUpperCaseValue system.attributes.soul.currentValue}}
     </span>
     <select id="soul-edit" name="soul" style="display: none;">
       <option value="malus" {{#if (eq system.attributes.soul.baseValue "malus")}}selected{{/if}}>Malus</option>
@@ -196,7 +194,7 @@
   <div style="display: flex; align-items: center;">
     <label id="mind-label" style="cursor: pointer;">Mind:</label>
     <span id="mind-view" class="attribute {{system.attributes.mind.currentValue}}" style="margin-left: 10px;">
-      {{system.attributes.mind.currentValue}}
+      {{toUpperCaseValue system.attributes.mind.currentValue}}
     </span>
     <select id="mind-edit" name="mind" style="display: none;">
       <option value="malus" {{#if (eq system.attributes.mind.baseValue "malus")}}selected{{/if}}>Malus</option>
@@ -217,7 +215,7 @@
   <div style="display: flex; align-items: center;">
     <label id="martial-label" style="cursor: pointer;">Martial:</label>
     <span id="martial-view" class="attribute {{system.attributes.martial.currentValue}}" style="margin-left: 10px;">
-      {{system.attributes.martial.currentValue}}
+      {{toUpperCaseValue system.attributes.martial.currentValue}}
     </span>
     <select id="martial-edit" name="martial" style="display: none;">
       <option value="malus" {{#if (eq system.attributes.martial.baseValue "malus")}}selected{{/if}}>Malus</option>
@@ -238,7 +236,7 @@
   <div style="display: flex; align-items: center;">
     <label id="elementary-label" style="cursor: pointer;">Elementary:</label>
     <span id="elementary-view" class="attribute {{system.attributes.elementary.currentValue}}" style="margin-left: 10px;">
-      {{system.attributes.elementary.currentValue}}
+      {{toUpperCaseValue system.attributes.elementary.currentValue}}
     </span>
     <select id="elementary-edit" name="elementary" style="display: none;">
       <option value="malus" {{#if (eq system.attributes.elementary.baseValue "malus")}}selected{{/if}}>Malus</option>
@@ -259,7 +257,7 @@
   <div style="display: flex; align-items: center;">
     <label id="rhetoric-label" style="cursor: pointer;">Rhetoric:</label>
     <span id="rhetoric-view" class="attribute {{system.attributes.rhetoric.currentValue}}" style="margin-left: 10px;">
-      {{system.attributes.rhetoric.currentValue}}
+      {{toUpperCaseValue system.attributes.rhetoric.currentValue}}
     </span>
     <select id="rhetoric-edit" name="rhetoric" style="display: none;">
       <option value="malus" {{#if (eq system.attributes.rhetoric.baseValue "malus")}}selected{{/if}}>Malus</option>
