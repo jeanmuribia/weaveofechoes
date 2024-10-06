@@ -581,17 +581,29 @@ $(document).on('click', '.context-choice', function() {
   $(this).addClass('selected');
 });
 
+const contextLabels = {
+  malus: "Detrimental",
+  neutral: "Neutral",
+  bonus: "Favorable",
+  critical: "Highly Beneficial"
+};
 
-//Launch maneuver function//
 async function launchManeuver(actor) {
   if (!selectedAttribute || !selectedTemper || !selectedContext) {
     ui.notifications.error("You must answer all three questions.");
     return;
   }
 
+  console.log("Selected Attribute:", selectedAttribute);
+  console.log("Selected Temper:", selectedTemper);
+  console.log("Selected Context:", selectedContext);  // Log the context
+
   // Retrieve the current values for the selected attribute and temper
   const attributeValue = actor.system.attributes[selectedAttribute]?.currentValue;
   const temperValue = actor.system.tempers[selectedTemper]?.currentValue;
+
+  console.log("Attribute Value:", attributeValue);
+  console.log("Temper Value:", temperValue);
 
   // Ensure values exist before proceeding with the roll
   if (!attributeValue || !temperValue) {
@@ -604,8 +616,12 @@ async function launchManeuver(actor) {
   const temperResult = await rollDie(temperValue);
   const contextResult = await rollDie(selectedContext);
 
-  // Format the message according to your requirement: "AttributeLabel, TemperLabel, and Context ANSWER"
-  const message = `${toUpperCaseValue(selectedAttribute)}, ${toUpperCaseValue(selectedTemper)} & ${toUpperCaseValue(selectedContext)} rolled: ${attributeResult}, ${temperResult}, ${contextResult}`;
+  // Check the context label mapping
+  const contextLabel = contextLabels[selectedContext];  // Convert the context value to the label
+  console.log("Mapped Context Label:", contextLabel);  // Log the label to see if it maps correctly
+
+  // Format the message according to your requirement: "AttributeLabel, TemperLabel, and ContextLabel ANSWER"
+  const message = `${toUpperCaseValue(selectedAttribute)}, ${toUpperCaseValue(selectedTemper)} & ${contextLabel} rolled: ${attributeResult}, ${temperResult}, ${contextResult}`;
 
   // Display the results in the chat
   ChatMessage.create({
@@ -613,3 +629,4 @@ async function launchManeuver(actor) {
     speaker: ChatMessage.getSpeaker(),
   });
 }
+

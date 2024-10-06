@@ -3,7 +3,7 @@ export class WoeActor extends Actor {
   prepareData() {
     super.prepareData();
     const systemData = this.system;
-
+  
     // Initialize Stamina if not present
     if (!systemData.stamina) {
       systemData.stamina = {
@@ -11,7 +11,7 @@ export class WoeActor extends Actor {
         current: 4
       };
     }
-
+  
     // Ensure attributes are initialized for all keys, including "mind" and "elementary"
     const attributes = ["body", "soul", "mind", "martial", "elementary", "rhetoric"];
     attributes.forEach(attr => {
@@ -32,8 +32,26 @@ export class WoeActor extends Actor {
         };
       }
     });
-
+  
+    // Initialize tempers for fire, water, earth, and air
+    const tempers = ["fire", "water", "earth", "air"];
+    tempers.forEach(temper => {
+      if (!systemData.tempers[temper]) {
+        systemData.tempers[temper] = {}; // Ensure the temper object exists
+      }
+      if (!systemData.tempers[temper].baseValue) {
+        systemData.tempers[temper].baseValue = "neutral"; // Default base value for temper
+      }
+      if (!systemData.tempers[temper].currentValue) {
+        systemData.tempers[temper].currentValue = systemData.tempers[temper].baseValue; // Default currentValue to baseValue
+      }
+      if (!systemData.tempers[temper].wound) {
+        systemData.tempers[temper].wound = false; // Default to no trauma
+      }
+    });
+  
     console.log("Attributes initialized:", systemData.attributes);
+    console.log("Tempers initialized:", systemData.tempers);
   }
 
   
