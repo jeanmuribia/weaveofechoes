@@ -17,16 +17,23 @@ Handlebars.registerHelper('toUpperCaseValue', function(value) {
 // Handle actor deletion and remove associated relationships
 Hooks.on("preDeleteActor", async (actor, options, userId) => {
   const deletedActorName = actor.name;
-  const otherActors = game.actors.filter(a => a.id !== actor.id && a.type === "character");
 
-  // Remove relationships related to deleted actor from other actors
-  for (let otherActor of otherActors) {
-    const relationships = foundry.utils.duplicate(otherActor.system.relationships || []);
-    const updatedRelationships = relationships.filter(rel => rel.characterName !== deletedActorName);
+  // Loop through all other actors and remove the deleted character from their relationships
+  for (let otherActor of game.actors.filter(a => a.id !== actor.id && a.type === "character")) {
+      const relationships = foundry.utils.duplicate(otherActor.system.relationships || []);
+      const updatedRelationships = relationships.filter(rel => rel.characterName !== deletedActorName);
 
-    if (relationships.length !== updatedRelationships.length) {
-      await otherActor.update({ 'system.relationships': updatedRelationships });
-    }
+      // If relationships were updated, save the change
+      if (relationships.length !== updatedRelationships.length) {
+          await otherActor.update({ 'system.relationships': updatedRelationships });
+      }
+  }
+});
+
+Hooks.on("createActor", async (actor, options, userId) => {
+  // Add new character to the available list of characters for relationships
+  if (actor.type === "character") {
+      // Nothing to update here, characters are automatically part of the available pool
   }
 });
 
@@ -93,7 +100,131 @@ export class WoeActorSheet extends ActorSheet {
     // Relationship management (view, add, edit, delete)
     this.displayRelationships(html);
     this.addRelationshipListeners(html);
+
+          // Manage wounds for all attributes
+      this.manageWoundsListeners(html, 'body');
+      this.manageWoundsListeners(html, 'mind');
+      this.manageWoundsListeners(html, 'soul');
+      this.manageWoundsListeners(html, 'martial');
+      this.manageWoundsListeners(html, 'elementary');
+      this.manageWoundsListeners(html, 'rhetoric');
+
+        // Trauma listeners for tempers
+  html.find('#fire-trauma').on('change', async (event) => {
+    const isChecked = html.find('#fire-trauma').is(':checked');
+    await this.actor.update({ "system.tempers.fire.wound": isChecked });
+    this.render();  // Re-render to update the display
+  });
+
+  html.find('#water-trauma').on('change', async (event) => {
+    const isChecked = html.find('#water-trauma').is(':checked');
+    await this.actor.update({ "system.tempers.water.wound": isChecked });
+    this.render();
+  });
+
+  html.find('#earth-trauma').on('change', async (event) => {
+    const isChecked = html.find('#earth-trauma').is(':checked');
+    await this.actor.update({ "system.tempers.earth.wound": isChecked });
+    this.render();
+  });
+
+  html.find('#air-trauma').on('change', async (event) => {
+    const isChecked = html.find('#air-trauma').is(':checked');
+    await this.actor.update({ "system.tempers.air.wound": isChecked });
+    this.render();
+  });
+
+    
   }
+
+ // This function adds event listeners for managing wound checkboxes
+manageWoundsListeners(html, attribute) {
+  const attr = this.actor.system.attributes[attribute];
+  const wound1 = html.find(`#${attribute}-wound1`);
+  const wound2 = html.find(`#${attribute}-wound2`);
+  const wound3 = html.find(`#${attribute}-wound3`);
+
+  // Initial checkbox management
+  this.manageWoundCheckboxes(attribute, wound1, wound2, wound3);
+
+  // Add change listeners for each wound checkbox
+  wound1.on('change', async (event) => {
+    const checked = event.target.checked;
+    await this.actor.update({ [`system.attributes.${attribute}.wounds.wound1`]: checked });
+    this.updateAttributeCurrentValue(attribute);
+  });
+
+  wound2.on('change', async (event) => {
+    const checked = event.target.checked;
+    await this.actor.update({ [`system.attributes.${attribute}.wounds.wound2`]: checked });
+    this.updateAttributeCurrentValue(attribute);
+  });
+
+  wound3.on('change', async (event) => {
+    const checked = event.target.checked;
+    await this.actor.update({ [`system.attributes.${attribute}.wounds.wound3`]: checked });
+    this.updateAttributeCurrentValue(attribute);
+  });
+}
+
+manageWoundCheckboxes(attribute, wound1, wound2, wound3) {
+  const attr = this.actor.system.attributes[attribute];
+  const wounds = attr.wounds;
+
+  if (attr.baseValue === 'malus') {
+    wound1.prop('disabled', true);
+    wound2.prop('disabled', true);
+    wound3.prop('disabled', true);
+  } else if (attr.currentValue === 'malus') {
+    if (wounds.wound3) {
+      wound1.prop('disabled', true);
+      wound2.prop('disabled', true);
+      wound3.prop('disabled', false);
+    } else if (wounds.wound2) {
+      wound1.prop('disabled', true);
+      wound2.prop('disabled', false);
+      wound3.prop('disabled', true);
+    } else if (wounds.wound1) {
+      wound1.prop('disabled', false);
+      wound2.prop('disabled', true);
+      wound3.prop('disabled', true);
+    }
+  } else {
+    if (!wounds.wound1 && !wounds.wound2 && !wounds.wound3) {
+      wound1.prop('disabled', false);
+      wound2.prop('disabled', true);
+      wound3.prop('disabled', true);
+    } else if (wounds.wound1 && !wounds.wound2 && !wounds.wound3) {
+      wound1.prop('disabled', false);
+      wound2.prop('disabled', false);
+      wound3.prop('disabled', true);
+    } else if (wounds.wound2 && !wounds.wound3) {
+      wound1.prop('disabled', true);
+      wound2.prop('disabled', false);
+      wound3.prop('disabled', false);
+    } else if (wounds.wound3) {
+      wound1.prop('disabled', true);
+      wound2.prop('disabled', true);
+      wound3.prop('disabled', false);
+    }
+  }
+}
+
+// This function degrades the value of the attribute as the wounds increase
+degradeAttributeValue(value) {
+  switch (value) {
+    case 'critical':
+      return 'bonus';
+    case 'bonus':
+      return 'neutral';
+    case 'neutral':
+      return 'malus';
+    case 'malus':
+      return 'malus';  // Stays at malus
+    default:
+      return value;
+  }
+}
 
   handleNameEditing(html) {
     html.find('#name-label').on('click', () => {
@@ -213,21 +344,6 @@ export class WoeActorSheet extends ActorSheet {
     });
   }
 
-  manageWoundCheckboxes(attribute, wound1, wound2, wound3) {
-    const attr = this.actor.system.attributes[attribute];
-    const wounds = attr.wounds;
-
-    if (attr.baseValue === 'malus') {
-      wound1.prop('disabled', true);
-      wound2.prop('disabled', true);
-      wound3.prop('disabled', true);
-    } else {
-      wound1.prop('disabled', false);
-      wound2.prop('disabled', false);
-      wound3.prop('disabled', false);
-    }
-  }
-
   async updateWoundState(attribute, wound, checkbox) {
     const checked = checkbox.is(':checked');
     await this.actor.update({ [`system.attributes.${attribute}.wounds.${wound}`]: checked });
@@ -289,89 +405,173 @@ export class WoeActorSheet extends ActorSheet {
       const relationshipHtml = `
         <div class="relationship-item">
           <label>Player:</label>
-          <input type="text" class="relationship-input" data-index="${index}" data-field="playerName" value="${rel.playerName || ''}" />
-          
+          <input type="text" class="relationship-input" data-index="${index}" data-field="playerName" value="${rel.playerName}" />
+
           <label>Character:</label>
-          <select class="relationship-input" data-index="${index}" data-field="characterName">
-            ${this.getAvailableCharactersOptions(rel.characterName || '')} <!-- Ensure it's never undefined -->
-          </select>
+          <span>${rel.characterName}</span>  <!-- Show plain text once character is chosen -->
 
           <label>Relation:</label>
           <div id="relationship-level">
-            ${this.getRelationshipLevelOptions(rel.relationshipLevel || 0, index)} <!-- Ensure it's never undefined -->
+            ${this.getRelationshipLevelOptions(rel.relationshipLevel, index)}
           </div>
           
           <button class="delete-relationship" data-index="${index}">Delete</button>
         </div>`;
       relationshipList.append(relationshipHtml);
     });
-}
 
-  addRelationshipListeners(html) {
-    // Add new relationship
-    html.find('#add-relationship').on('click', async () => {
-      const relationships = this.actor.system.relationships || [];
-      relationships.push({
-        playerName: '',
-        characterName: '',  // Ensure characterName is always initialized
-        relationshipLevel: 0
+    this.activateRelationshipListeners(html);  // Ensure listeners are activated after rendering
+  }
+
+  activateRelationshipListeners(html) {
+    const relationships = this.actor.system.relationships || [];
+  
+    relationships.forEach((rel, index) => {
+      // Player Name - click to edit
+      html.find(`input[data-field="playerName"][data-index="${index}"]`).on('blur', async (event) => {
+        const newPlayerName = event.currentTarget.value;
+        relationships[index].playerName = newPlayerName;
+        await this.actor.update({ 'system.relationships': relationships });
+        this.render();
       });
-      await this.actor.update({ 'system.relationships': relationships });
-      this.render();
-    });
-    
-    // Update relationships
-    html.on('change', '.relationship-input', async (event) => {
-      const index = $(event.currentTarget).data('index');
-      const field = $(event.currentTarget).data('field');
-      const value = $(event.currentTarget).val();
-      const relationships = foundry.utils.duplicate(this.actor.system.relationships);
-      relationships[index][field] = field === 'relationshipLevel' ? parseInt(value) : value;
-      await this.actor.update({ 'system.relationships': relationships });
-      this.render();
-    });
-
-    // Delete a relationship
-    html.on('click', '.delete-relationship', async (event) => {
-      const index = $(event.currentTarget).data('index');
-      if (confirm("Are you sure you want to delete this relationship?")) {
-        const relationships = foundry.utils.duplicate(this.actor.system.relationships);
+  
+      // Character Name - only allow selection if characterName is not already assigned
+      if (!rel.characterName) {
+        html.find(`select[data-field="characterName"][data-index="${index}"]`).on('change', async (event) => {
+          const newCharacterName = event.currentTarget.value;
+          relationships[index].characterName = newCharacterName;
+          await this.actor.update({ 'system.relationships': relationships });
+          this.render();  // Re-render the sheet after selection
+        });
+      }
+  
+      // Delete relationship
+      html.find(`.delete-relationship[data-index="${index}"]`).on('click', async () => {
         relationships.splice(index, 1);
         await this.actor.update({ 'system.relationships': relationships });
         this.render();
-      }
+      });
     });
   }
 
+  async addRelationship() {
+    // Step 1: Get available characters not already tied to a relationship
+    const availableCharacters = game.actors.filter(actor => actor.type === "character")
+        .filter(char => !this.actor.system.relationships.some(rel => rel.characterName === char.name))
+        .filter(char => char.name !== this.actor.name);
+
+    // Step 2: If no characters are available, show an error
+    if (availableCharacters.length === 0) {
+        ui.notifications.error("You are already tied to every other character.");
+        return;
+    }
+
+    // Step 3: Create a list of character options for the dropdown
+    const characterOptions = availableCharacters.map(char => `<option value="${char.name}">${char.name}</option>`).join('');
+
+    // Step 4: Show a modal dialog prompting the user to select a character
+    let dialog = new Dialog({
+        title: "Choose a Character",
+        content: `
+            <form>
+                <div class="form-group">
+                    <label for="character">Please choose a character to be tied with:</label>
+                    <select id="character" name="character">
+                        ${characterOptions}
+                    </select>
+                </div>
+            </form>
+        `,
+        buttons: {
+            add: {
+                icon: '<i class="fas fa-check"></i>',
+                label: "Add Relationship",
+                callback: async (html) => {
+                    const selectedCharacter = html.find('#character').val();
+                    if (selectedCharacter) {
+                        // Add the new relationship
+                        const relationships = foundry.utils.duplicate(this.actor.system.relationships);
+                        relationships.push({
+                            playerName: '',   // Leave empty for user to fill later
+                            characterName: selectedCharacter, // Set selected character
+                            relationshipLevel: 0  // Default relationship level
+                        });
+
+                        await this.actor.update({ 'system.relationships': relationships });
+                        this.render();  // Re-render the sheet to display the new relationship
+                    }
+                }
+            },
+            cancel: {
+                icon: '<i class="fas fa-times"></i>',
+                label: "Cancel"
+            }
+        },
+        default: "add"
+    });
+
+    dialog.render(true);  // Show the dialog
+    
+}
+
+
+
+addRelationshipListeners(html) {
+  html.find('#add-relationship').on('click', (event) => {
+      event.preventDefault();
+      this.addRelationship();  // Call the new modal-based method
+  });
+}
+
   getAvailableCharactersOptions(selectedCharacterName) {
     // Initialize the selectedCharacterName in case it's undefined
-     selectedCharacterName = selectedCharacterName || '';
+    selectedCharacterName = selectedCharacterName || '';
   
     const currentActorName = this.actor.name;
     const allCharacters = game.actors.filter(actor => actor.type === "character");
-    const existingRelationships = this.actor.system.relationships.map(rel => rel.characterName);
-  
-    const availableCharacters = allCharacters.filter(char => 
-      !existingRelationships.includes(char.name) || char.name === selectedCharacterName
-    ).filter(char => char.name !== currentActorName);
-  
+
+    // Filter characters that are already in relationships
+    const existingRelationships = this.actor.system.relationships
+        .map(rel => rel.characterName)   // Get all related character names
+        .filter(name => name);           // Exclude empty names from incomplete relationships
+
+    console.log("Existing Relationships:", existingRelationships);
+
+    const availableCharacters = allCharacters
+        .filter(char => !existingRelationships.includes(char.name) || char.name === selectedCharacterName)
+        .filter(char => char.name !== currentActorName); // Exclude the current actor themselves
+
+    console.log("Available Characters:", availableCharacters);
+
+    // Build the options HTML for the available characters dropdown
     let options = `<option value="" disabled selected>Choose another character</option>`;
   
     if (availableCharacters.length === 0) {
-      options += `<option disabled>No characters available</option>`;
+        options += `<option disabled>No characters available</option>`;
     } else {
-      options += availableCharacters.map(char => 
-        `<option value="${char.name}" ${char.name === selectedCharacterName ? 'selected' : ''}>${char.name}</option>`
-      ).join('');
+        options += availableCharacters.map(char => 
+            `<option value="${char.name}" ${char.name === selectedCharacterName ? 'selected' : ''}>${char.name}</option>`
+        ).join('');
     }
-  
-    return options;
-  }
 
+    return options;
+}
   getRelationshipLevelOptions(selectedLevel, index) {
-    const levels = [-3, -2, -1, 0, 1, 2, 3];
+    const levels = [
+      { value: -3, label: "Hatred" },
+      { value: -2, label: "Hostility" },
+      { value: -1, label: "Displeasure" },
+      { value: 0, label: "Indifference" },
+      { value: 1, label: "Liking" },
+      { value: 2, label: "Friendship" },
+      { value: 3, label: "Love" }
+    ];
+    
     return levels.map(level => `
-      <label><input type="radio" class="relationship-input" data-index="${index}" data-field="relationshipLevel" name="relationship-level-${index}" value="${level}" ${level === selectedLevel ? 'checked' : ''}> ${level}</label>
+      <label><input type="radio" class="relationship-input" data-index="${index}" 
+        data-field="relationshipLevel" name="relationship-level-${index}" 
+        value="${level.value}" ${level.value === selectedLevel ? 'checked' : ''}> 
+        ${level.label}</label>
     `).join('');
   }
 }
@@ -405,9 +605,3 @@ async function rollDie(type) {
   return result;
 }
 
-function displayRollResultsInChat(capitalizedType, result) {
-  ChatMessage.create({
-    content: `${capitalizedType} rolled: ${result}`,
-    speaker: ChatMessage.getSpeaker(),
-  });
-}
