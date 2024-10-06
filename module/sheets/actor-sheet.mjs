@@ -38,6 +38,15 @@ Hooks.on("createActor", async (actor, options, userId) => {
 });
 
 export class WoeActorSheet extends ActorSheet {
+
+
+  constructor(...args) {
+    super(...args);
+    this.selectedAttribute = null;
+    this.selectedTemper = null;
+    this.selectedContext = null;
+  }
+
   static get defaultOptions() {
     return foundry.utils.mergeObject(super.defaultOptions, {
       classes: ['weave-of-echoes', 'sheet', 'actor'],
@@ -48,6 +57,8 @@ export class WoeActorSheet extends ActorSheet {
       ],
     });
   }
+
+
 
   get template() {
     return `systems/weave_of_echoes/templates/actor/actor-character-sheet.hbs`;
@@ -97,6 +108,12 @@ export class WoeActorSheet extends ActorSheet {
     // Dice roll event listeners for tempers and attributes
     this.addDiceListeners(html);
 
+    //maneuver listener
+    html.find('#maneuver-button').on('click', (event) => {
+      event.preventDefault();
+      this.openManeuverWindow();  // Call the method to open the maneuver modal
+  });
+
     // Relationship management (view, add, edit, delete)
     this.displayRelationships(html);
     this.addRelationshipListeners(html);
@@ -134,7 +151,7 @@ export class WoeActorSheet extends ActorSheet {
     this.render();
   });
 
-     // Add click listeners for temper rollDie based on currentValue
+   // Add click listeners for temper rollDie based on currentValue
   html.find('#fire-view').on('click', () => this.rollTemperOrAttribute('fire', 'tempers'));
   html.find('#water-view').on('click', () => this.rollTemperOrAttribute('water', 'tempers'));
   html.find('#earth-view').on('click', () => this.rollTemperOrAttribute('earth', 'tempers'));
@@ -181,7 +198,175 @@ export class WoeActorSheet extends ActorSheet {
     });
   }
 
+  
+// Method to open the maneuver modal
+openManeuverWindow() {
+  const content = `
+    <div>
+      <h3>On which of your attributes are you relying on?</h3>
+      <div id="attribute-section">
+        <button class="attribute-choice" data-attribute="body">Body</button>
+        <button class="attribute-choice" data-attribute="soul">Soul</button>
+        <button class="attribute-choice" data-attribute="mind">Mind</button>
+        <button class="attribute-choice" data-attribute="martial">Martial</button>
+        <button class="attribute-choice" data-attribute="elementary">Elementary</button>
+        <button class="attribute-choice" data-attribute="rhetoric">Rhetoric</button>
+      </div>
 
+      <h3>What is your current state of mind?</h3>
+      <div id="temper-section">
+        <button class="temper-choice" data-temper="fire">Fire</button>
+        <button class="temper-choice" data-temper="water">Water</button>
+        <button class="temper-choice" data-temper="earth">Earth</button>
+        <button class="temper-choice" data-temper="air">Air</button>
+      </div>
+
+      <h3>Is the context advantageous?</h3>
+      <div id="context-section">
+        <button class="context-choice" data-context="malus">Detrimental</button>
+        <button class="context-choice" data-context="neutral">Neutral</button>
+        <button class="context-choice" data-context="bonus">Favorable</button>
+        <button class="context-choice" data-context="critical">Highly beneficial</button>
+      </div>
+    </div>
+  `;
+
+  let dialog = new Dialog({
+    title: "Maneuver",
+    content: content,
+    buttons: {
+      roll: {
+        label: "Please answer all 3 questions.",
+        callback: async () => {
+          if (this.selectedAttribute && this.selectedTemper && this.selectedContext) {
+            await this.launchManeuver();
+          }
+        },
+        disabled: true  // Disabled initially
+      }
+    },
+    render: (html) => {
+      // Disable any temper with trauma
+      this.disableTraumatizedTempers(html);
+
+      html.find('.attribute-choice').on('click', (event) => {
+        this.selectedAttribute = $(event.currentTarget).data('attribute');
+        html.find('.attribute-choice').removeClass('selected');
+        $(event.currentTarget).addClass('selected');
+        this.updateRollButtonState(html);
+    });
+    
+    html.find('.temper-choice').on('click', (event) => {
+        this.selectedTemper = $(event.currentTarget).data('temper');
+        html.find('.temper-choice').removeClass('selected');
+        $(event.currentTarget).addClass('selected');
+        this.updateRollButtonState(html);
+    });
+    
+    html.find('.context-choice').on('click', (event) => {
+        this.selectedContext = $(event.currentTarget).data('context');
+        html.find('.context-choice').removeClass('selected');
+        $(event.currentTarget).addClass('selected');
+        this.updateRollButtonState(html);
+    });
+    }
+  });
+
+  dialog.render(true);
+}
+
+// Disable any traumatized tempers in the maneuver modal
+disableTraumatizedTempers(html) {
+  const tempers = ['fire', 'water', 'earth', 'air'];
+  
+  tempers.forEach(temper => {
+    if (this.actor.system.tempers[temper].wound) { // If trauma exists for this temper
+      const temperButton = html.find(`button[data-temper="${temper}"]`);
+      temperButton.prop('disabled', true).addClass('disabled').css({
+        'background-color': 'lightgrey',
+        'color': 'darkgrey',
+        'cursor': 'not-allowed'
+      });
+    }
+  });
+}
+
+// Update the state of the "Roll the dice" button
+updateRollButtonState(html) {
+  const isAllSelected = this.selectedAttribute && this.selectedTemper && this.selectedContext;
+  const rollButton = html.find('button:contains("Roll the dice")');
+
+  if (isAllSelected) {
+      rollButton.prop('disabled', false).html('<i class="fas fa-dice"></i> Roll the dice!');
+  } else {
+      rollButton.prop('disabled', true).text('Please answer all 3 questions.');
+  }
+}
+
+// Launch the maneuver based on the selected options
+async launchManeuver() {
+  if (!this.selectedAttribute || !this.selectedTemper || !this.selectedContext) {
+    ui.notifications.error("You must answer all three questions.");
+    return;
+  }
+
+  // Retrieve the current values for the selected attribute, temper, and context
+  const attributeValue = this.actor.system.attributes[this.selectedAttribute]?.currentValue;
+  const temperValue = this.actor.system.tempers[this.selectedTemper]?.currentValue;
+
+  // Roll the dice for the attribute, temper, and context
+  const attributeResult = await rollDie(attributeValue);
+  const temperResult = await rollDie(temperValue);
+  const contextResult = await rollDie(this.selectedContext);
+
+  // Format the message
+  const message = `${toUpperCaseValue(this.selectedAttribute)}, ${toUpperCaseValue(this.selectedTemper)} & ${toUpperCaseValue(this.selectedContext)} rolled: ${attributeResult}, ${temperResult}, ${contextResult}`;
+
+  // Display the results in the chat
+  ChatMessage.create({
+    content: message,
+    speaker: ChatMessage.getSpeaker(),
+  });
+
+  // Reset selections
+  this.selectedAttribute = null;
+  this.selectedTemper = null;
+  this.selectedContext = null;
+}
+
+// Get the readable context name
+getContextName(contextType) {
+  switch (contextType) {
+    case 'malus': return 'Detrimental';
+    case 'neutral': return 'Neutral';
+    case 'bonus': return 'Favorable';
+    case 'critical': return 'Highly Beneficial';
+    default: return contextType;
+  }
+}
+
+// Get the colored label based on die type
+getColoredLabel(name, type) {
+  let colorClass = '';
+
+  switch (type) {
+    case 'malus':
+      colorClass = 'color-malus';  // Corresponds to pastel grey
+      break;
+    case 'neutral':
+      colorClass = 'color-neutral';  // Corresponds to pastel yellow
+      break;
+    case 'bonus':
+      colorClass = 'color-bonus';  // Corresponds to pastel green
+      break;
+    case 'critical':
+      colorClass = 'color-critical';  // Corresponds to pastel red
+      break;
+  }
+
+  // Return a span with the assigned color class
+  return `<span class="${colorClass}">${toUpperCaseValue(name)}</span>`;
+}
 
  // This function adds event listeners for managing wound checkboxes
 manageWoundsListeners(html, attribute) {
@@ -648,6 +833,19 @@ async function rollDie(type) {
       result = "undefined";
   }
 
-  return result;
+  // Wrap the result in a styled span for Gain and Setback
+  return formatResult(result);
 }
 
+// Function to format Gain and Setback with distinct styles
+function formatResult(result) {
+  switch (result) {
+    case "Gain":
+      return `<span class="result-gain"><strong>${result}</strong></span>`;
+    case "Setback":
+      return `<span class="result-setback"><strong>${result}</strong></span>`;
+    case "Stalemate":
+    default:
+      return result;  // No change for Stalemate
+  }
+}

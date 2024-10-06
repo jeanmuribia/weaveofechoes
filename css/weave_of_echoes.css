@@ -396,3 +396,38 @@
   color: white;
   border: 2px solid #45a049;
 }
+
+.color-malus {
+  color: #a0a0a0;  /* Pastel grey */
+}
+
+.color-neutral {
+  color: #f5e665;  /* Pastel yellow */
+}
+
+.color-bonus {
+  color: #66c266;  /* Pastel green */
+}
+
+.color-critical {
+  color: #ff6666;  /* Pastel red */
+}
+
+.result-gain {
+  color: #00b300;  /* Distinct bright green for Gain */
+  font-weight: bold;  /* Bold */
+}
+
+.result-setback {
+  color: #505050;  /* Distinct dark grey for Setback */
+  font-weight: bold;  /* Bold */
+}
+
+.greyed-out {
+  background-color: #d3d3d3; /* Light grey background */
+  color: #6e6e6e; /* Darker grey text */
+  border: 1px solid #a9a9a9; /* Medium grey border */
+  opacity: 1; /* Full opacity to make sure it's visible */
+  cursor: not-allowed; /* Disable pointer */
+  pointer-events: none; /* Disable clicking */
+}
