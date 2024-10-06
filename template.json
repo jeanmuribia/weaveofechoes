@@ -11,16 +11,20 @@
         },
         "tempers": {
           "fire": {
-            "value": "neutral"
+            "baseValue": "neutral",
+            "currentValue":"neutral"
           },
           "water": {
-            "value": "neutral"
+           "baseValue": "neutral",
+            "currentValue":"neutral"
           },
           "earth": {
-            "value": "neutral"
+            "baseValue": "neutral",
+            "currentValue":"neutral"
           },
           "air": {
-            "value": "neutral"
+            "baseValue": "neutral",
+            "currentValue":"neutral"
           }
         },
         "attributes": {

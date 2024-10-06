@@ -145,23 +145,48 @@ export class WoeActorSheet extends ActorSheet {
     this.manageWoundsListeners(html, 'elementary');
     this.manageWoundsListeners(html, 'rhetoric');
 
+     // Trauma listeners for tempers
+     html.find('#fire-trauma').on('change', async (event) => {
+      const isChecked = html.find('#fire-trauma').is(':checked');
+      await this.actor.update({ "system.tempers.fire.wound": isChecked });
+      this.render();  // Re-render to update the display
+    });
 
-    //DiceListeners
+    html.find('#water-trauma').on('change', async (event) => {
+      const isChecked = html.find('#water-trauma').is(':checked');
+      await this.actor.update({ "system.tempers.water.wound": isChecked });
+      this.render();
+    });
+
+    html.find('#earth-trauma').on('change', async (event) => {
+      const isChecked = html.find('#earth-trauma').is(':checked');
+      await this.actor.update({ "system.tempers.earth.wound": isChecked });
+      this.render();
+    });
+
+    html.find('#air-trauma').on('change', async (event) => {
+      const isChecked = html.find('#air-trauma').is(':checked');
+      await this.actor.update({ "system.tempers.air.wound": isChecked });
+      this.render();
+    });
+
+    // Dice Listeners
     html.find('#malusDie').on('click', () => {
       rollDie("malus");  
-     });
-    html.find('#neutralDie').on('click', () => {
-     rollDie("neutral");  
     });
+
+    html.find('#neutralDie').on('click', () => {
+      rollDie("neutral");  
+    });
+
     html.find('#bonusDie').on('click', () => {
       rollDie("bonus"); 
-     });
-     html.find('#criticalDie').on('click', () => {
-      rollDie("critical");  
-     });
-  }
+    });
 
-  
+    html.find('#criticalDie').on('click', () => {
+      rollDie("critical");  
+    });
+}
 
   enableEditOnClick(html, field) {
     const labelSelector = `#${field}-label`;
@@ -169,34 +194,49 @@ export class WoeActorSheet extends ActorSheet {
     const editSelector = `#${field}-edit`;
 
     html.find(labelSelector).on('click', (event) => {
-      html.find(viewSelector).hide();
-      html.find(editSelector).prop('disabled', false).show().focus();
-    });
-
-    html.find(editSelector).on('blur', async (event) => {
+      console.log("Label clicked:", field);  // Debugging check
+      html.find(viewSelector).hide();  // Hide the view
+      html.find(editSelector).prop('disabled', false).show().focus();  // Show the input for editing
+  });
+  
+  html.find(editSelector).on('blur', async (event) => {
       const newValue = html.find(editSelector).val();
+      console.log("New value entered:", newValue);  // Debugging check
+      
       let updateData = {};
+  
+      // Check if the field is a temper or an attribute
       if (['fire', 'water', 'earth', 'air'].includes(field)) {
-        updateData[`system.tempers.${field}.value`] = newValue;
+          // Handle tempers - update both baseValue and currentValue
+          updateData[`system.tempers.${field}.baseValue`] = newValue;
+          updateData[`system.tempers.${field}.currentValue`] = newValue;
       } else {
-        // Update the baseValue and reset the wounds and current value
-        updateData[`system.attributes.${field}.baseValue`] = newValue;
-        updateData[`system.attributes.${field}.currentValue`] = newValue;
-        updateData[`system.attributes.${field}.wounds`] = {
-          wound1: false,
-          wound2: false,
-          wound3: false
-        };
+          // Handle attributes - update both baseValue and currentValue, and reset wounds
+          updateData[`system.attributes.${field}.baseValue`] = newValue;
+          updateData[`system.attributes.${field}.currentValue`] = newValue;
+          updateData[`system.attributes.${field}.wounds`] = {
+              wound1: false,
+              wound2: false,
+              wound3: false
+          };
       }
+  
+      // Perform the update
+      await this.actor.update(updateData).then(() => {
+          console.log("Actor updated:", updateData);  // Debugging check for successful update
+      }).catch((err) => {
+          console.error("Error updating actor:", err);  // Error handling for update failure
+      });
+  
+      // Ensure the updated currentValue is displayed
+      html.find(viewSelector).text(newValue).show();  // Display the updated value
+      html.find(editSelector).hide();  // Hide the input field after editing
+      console.log("Displayed value updated to:", newValue);  // Debugging check for displayed value
+  });
 
-      // Update the actor data
-      await this.actor.update(updateData);
+}
 
-      // Update the displayed value
-      html.find(viewSelector).text(newValue).show();
-      html.find(editSelector).hide();
-    });
-  }
+  
 
   manageWoundsListeners(html, attribute) {
     const attr = this.actor.system.attributes[attribute];
