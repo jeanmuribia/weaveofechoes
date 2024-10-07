@@ -344,6 +344,7 @@ export class SynergyTracker extends Application {
         });
     }
     
+    
       
     
     calculateSynergicManeuverCost(html) {
@@ -446,6 +447,41 @@ export class SynergyTracker extends Application {
             ui.notifications.error("Not enough synergy points to apply the cost.");
         }
     }
-    
 
+    incrementMaxSynergy() {
+        let synergyData = game.settings.get("weave_of_echoes", "synergyData") || { currentSynergy: 0, maxSynergy: 0 };
+        synergyData.maxSynergy += 1;
+        game.settings.set("weave_of_echoes", "synergyData", synergyData);
+        this.render(); // Mettre à jour l'affichage du Synergy Tracker
+    }
+    
+    // Fonction pour décrémenter la valeur maximale de synergie
+    decrementMaxSynergy() {
+        let synergyData = game.settings.get("weave_of_echoes", "synergyData") || { currentSynergy: 0, maxSynergy: 0 };
+        if (synergyData.maxSynergy > 1) {
+            synergyData.maxSynergy -= 1;
+            game.settings.set("weave_of_echoes", "synergyData", synergyData);
+            this.render(); // Mettre à jour l'affichage du Synergy Tracker
+        } else {
+            ui.notifications.warn("La valeur maximale de synergie doit être au moins 1.");
+        }
+    }
+// Fermez la classe SynergyTracker correctement
 }
+
+// Ajouter le hook `renderSynergyTracker` en dehors de la classe
+Hooks.on('renderSynergyTracker', (app, html, data) => {
+    // Assurez-vous que vous êtes bien sur la bonne instance de SynergyTracker
+    const synergyTracker = app;
+
+    // Ajouter un écouteur sur le bouton pour modifier la valeur maximale de Synergy
+    html.find('#edit-max-synergy-button').on('click', () => {
+        synergyTracker._onEditMaxSynergy(); // Fonction pour ouvrir la modal de modification
+    });
+
+    // Ajouter un écouteur sur le bouton pour augmenter la valeur maximale
+    html.find('#increase-max-synergy').on('click', synergyTracker.incrementMaxSynergy.bind(synergyTracker));
+
+    // Ajouter un écouteur sur le bouton pour diminuer la valeur maximale
+    html.find('#decrease-max-synergy').on('click', synergyTracker.decrementMaxSynergy.bind(synergyTracker));
+});

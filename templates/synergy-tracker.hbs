@@ -1,31 +1,56 @@
-<div class="synergy-tracker">
+
+<div class="synergy-tracker-container">
+
+    <!-- Section Points de Synergie -->
     <div class="synergy-points-container">
         <div class="synergy-chip">{{currentSynergy}} / {{maxSynergy}}</div>
     </div>
 
-    <div class="generate-synergy-section">
+    <!-- Contrôles Max Synergy -->
+    <div class="synergy-section">
+        <label class="synergy-label">Max Synergy</label>
+        <div class="synergy-buttons-container">
+            <button id="increase-max-synergy" class="synergy-button">+</button>
+            <button id="decrease-max-synergy" class="synergy-button">-</button>
+        </div>
+    </div>
+
+    <!-- Bouton pour générer la synergie maximale -->
+    <div class="synergy-section">
         <button id="generate-synergy" class="generate-button">Generate Max Synergy</button>
     </div>
 
-    <div class="synergy-controls-section">
-        <button id="empty-pool" class="control-button">Empty Pool</button>
-        <button id="fill-pool" class="control-button">Fill Pool</button>
+    <!-- Contrôles du Pool de Synergie -->
+    <div class="synergy-section">
+        <label class="synergy-label">Synergy Pool Controls</label>
+        <div class="synergy-buttons-container">
+            <button id="empty-pool" class="control-button">Empty Pool</button>
+            <button id="fill-pool" class="control-button">Fill Pool</button>
+        </div>
     </div>
 
-    <div class="increment-controls-section">
-        <button id="increase-synergy" class="square-button">+</button>
-        <button id="decrease-synergy" class="square-button">-</button>
+    <!-- Contrôles Current Synergy -->
+    <div class="synergy-section">
+        <label class="synergy-label">Current Synergy</label>
+        <div class="synergy-buttons-container">
+            <button id="increase-synergy" class="synergy-button">+</button>
+            <button id="decrease-synergy" class="synergy-button">-</button>
+        </div>
     </div>
 
-    <div class="synergy-cost">
+    <!-- Bouton pour le Coût de la Manœuvre -->
+    <div class="synergy-section">
         <button id="synergic-maneuver" class="synergic-maneuver-button dialog-button">Synergic Maneuver Cost</button>
     </div>
 
-    <h4>Members</h4>
-    <!-- Adding a proper class to the list for better JS querying -->
-    <ul class="members-list">
-        {{#each characters}}
-            <li class="member-item">{{this.name}}</li>
-        {{/each}}
-    </ul>
+    <!-- Liste des Membres du Groupe -->
+    <div class="members-section">
+        <h4>Members</h4>
+        <ul class="members-list">
+            {{#each characters}}
+                <li class="member-item">{{this.name}}</li>
+            {{/each}}
+        </ul>
+    </div>
+
 </div>
