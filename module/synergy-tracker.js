@@ -15,9 +15,12 @@ export class SynergyTracker extends Application {
     getData() {
         let synergyData = game.settings.get("weave_of_echoes", "synergyData") || { currentSynergy: 0, maxSynergy: 0, characters: [] };
         this.groupMembers = game.settings.get("weave_of_echoes", "groupMembers") || []; // Retrieve stored group members
+        
+        // Fetch the full actor objects based on stored IDs
+        this.groupMembers = this.groupMembers.map(id => game.actors.get(id)).filter(actor => actor); 
+        
         return synergyData;
     }
-    
     
 
     activateListeners(html) {
@@ -127,59 +130,53 @@ export class SynergyTracker extends Application {
 
     generateSynergyPoints(characters) {
         let synergyPool = 0;
-        const relationshipValues = {
-            '-3': -3, // Hatred
-            '-2': -2, // Hostility
-            '-1': -1, // Displeasure
-            '0': 0,   // Indifference (no contribution)
-            '1': 1,   // Liking
-            '2': 1,   // Friendship
-            '3': 1    // Love
-        };
     
-        const mutualBonusValues = {
-            '1': 1, // Liking
-            '2': 2, // Friendship
-            '3': 3  // Love
-        };
+        // Each character contributes a base of 3 points to the synergy pool
+        synergyPool += characters.length * 3;
     
-        // Calculate individual contributions
-        for (let char of characters) {
-            let charContribution = 0;
-            for (let rel of char.system.relationships) {
-                const value = relationshipValues[rel.relationshipLevel] || 0;
-                if (value > 0) {
-                    charContribution += value;
-                } else if (value < 0) {
-                    charContribution -= Math.abs(value);
-                }
-                console.log(`${char.name} -> ${rel.characterName}: ${rel.relationshipLevel} (${value})`);
-            }
-            synergyPool += charContribution;
-            console.log(`${char.name} total contribution: ${charContribution}`);
-        }
+        // Create a set of selected character names for easy lookup
+        const selectedCharacterNames = new Set(characters.map(char => char.name));
+        console.log("Selected Character Names: ", selectedCharacterNames);
     
-        // Check for mutual positive relationships
+        // Loop through all pairs of characters to calculate synergy modifiers
         for (let i = 0; i < characters.length; i++) {
             for (let j = i + 1; j < characters.length; j++) {
                 const char1 = characters[i];
                 const char2 = characters[j];
                 const rel1 = char1.system.relationships.find(r => r.characterName === char2.name);
                 const rel2 = char2.system.relationships.find(r => r.characterName === char1.name);
-        
-                if (rel1 && rel2 && rel1.relationshipLevel === rel2.relationshipLevel && rel1.relationshipLevel > 0) {
-                    const mutualBonus = mutualBonusValues[rel1.relationshipLevel] || 0;
-                    synergyPool += mutualBonus;
-                    console.log(`Mutual bonus for ${char1.name} and ${char2.name}: ${mutualBonus}`);
-                } else {
-                    console.log(`No mutual bonus for ${char1.name} and ${char2.name}`);
+    
+                if (rel1 && rel2) {
+                    let relationshipModifier = 0;
+    
+                    // Check relationship levels between the pair
+                    if (rel1.relationshipLevel > 0 && rel2.relationshipLevel > 0) {
+                        // Mutually positive relationships (e.g., Love + Love or Love + Friendship)
+                        relationshipModifier = 2;
+                    } else if (rel1.relationshipLevel < 0 && rel2.relationshipLevel < 0) {
+                        // Mutually negative relationships (e.g., Hatred + Hostility)
+                        relationshipModifier = -2;
+                    } else if ((rel1.relationshipLevel < 0 && rel2.relationshipLevel >= 0) ||
+                               (rel2.relationshipLevel < 0 && rel1.relationshipLevel >= 0)) {
+                        // Relationships involving one negative (e.g., Hatred + Indifferent)
+                        relationshipModifier = -1;
+                    } else {
+                        // Positive + Indifferent or similar relationships
+                        relationshipModifier = 0;
+                    }
+    
+                    // Add the relationship modifier to the synergy pool
+                    synergyPool += relationshipModifier;
+                    console.log(`Relationship between ${char1.name} and ${char2.name}: Modifier = ${relationshipModifier}`);
                 }
             }
         }
+    
         console.log("Total synergy pool:", synergyPool);
         return Math.max(0, synergyPool);  // Ensure synergy is never negative
-        
     }
+    
+    
 
     async updateSynergyTrackerDisplay() {
         const synergyData = game.settings.get("weave_of_echoes", "synergyData") || { currentSynergy: 0, maxSynergy: 0, characters: [] };
@@ -311,14 +308,6 @@ export class SynergyTracker extends Application {
             title: "Synergic Maneuver Cost",
             content: content,
             buttons: {
-                calculate: {
-                    icon: '<i class="fas fa-calculator"></i>',
-                    label: "Calculate Cost",
-                    callback: (html) => {
-                        this.calculateSynergicManeuverCost(html);
-                    },
-                    classes: ['calculate-button']
-                },
                 apply: {
                     icon: '<i class="fas fa-check"></i>',
                     label: "Apply Cost",
@@ -334,65 +323,98 @@ export class SynergyTracker extends Application {
                     classes: ['cancel-button']
                 }
             },
-            default: "calculate",
+            default: "cancel",
             classes: ["dialog-synergy-modal"]
         });
     
         dialog.render(true);
     
-        // Automatically calculate cost after rendering the modal
-        dialog.element.ready(() => {
-            this.calculateSynergicManeuverCost(dialog.element);
+        // Instead of using `ready()`, listen to `renderComplete` for the dialog element
+        Hooks.once('renderDialog', (app, html) => {
+            if (app.title === "Synergic Maneuver Cost") {
+                const calculateButton = $('<button class="dialog-button calculate-button"><i class="fas fa-calculator"></i> Calculate Cost</button>');
+                calculateButton.on("click", () => {
+                    this.calculateSynergicManeuverCost(html);
+                });
+                html.find('.dialog-buttons').prepend(calculateButton);
+    
+                // Automatically calculate cost after rendering the modal
+                this.calculateSynergicManeuverCost(html);
+            }
         });
     }
     
       
     
     calculateSynergicManeuverCost(html) {
-        // Retrieve selected characters
+        // Récupérer les identifiants des personnages sélectionnés
         const selectedCharIds = Array.from(html.find('input[name="selected-chars"]:checked')).map(input => input.value);
-        const selectedCharacters = this.groupMembers.filter(char => selectedCharIds.includes(char.id));
+        const selectedCharacters = selectedCharIds.map(id => game.actors.get(id)).filter(actor => actor);
     
         if (selectedCharacters.length < 2) {
-            // We need at least two characters for a synergy maneuver
-            html.find('#maneuver-cost').text("Select at least two characters");
+            html.find('#maneuver-cost').text('Select at least two characters');
             return;
         }
     
-        // Perform calculation
-        let baseCost = 0;
-        let gapCost = 0;
+        let totalCost = 0;
     
-        // Assuming the same logic as before to calculate the cost
+        console.log("Calculating cost for selected characters:", selectedCharacters.map(char => char.name));
+    
+        // Parcourir les paires de personnages sélectionnés pour calculer le coût
         for (let i = 0; i < selectedCharacters.length; i++) {
             for (let j = i + 1; j < selectedCharacters.length; j++) {
                 const char1 = selectedCharacters[i];
                 const char2 = selectedCharacters[j];
     
-                // Ensure relationships property exists
-                if (!char1.system.relationships || !char2.system.relationships) {
-                    console.log(`${char1.name} or ${char2.name} does not have relationships defined.`);
-                    continue;
+                const rel1 = char1.system.relationships.find(r => r.characterName === char2.name);
+                const rel2 = char2.system.relationships.find(r => r.characterName === char1.name);
+    
+                if (!rel1 || !rel2) {
+                    console.log(`Relation not found between ${char1.name} and ${char2.name}`);
+                    continue; // Sauter si les relations n'existent pas
                 }
     
-                // Find the relationship levels between characters
-                const rel1 = char1.system.relationships.find(r => r.characterName === char2.name)?.relationshipLevel || 0;
-                const rel2 = char2.system.relationships.find(r => r.characterName === char1.name)?.relationshipLevel || 0;
+                console.log(`Relation between ${char1.name} and ${char2.name}:`, rel1, rel2);
     
-                // Calculate base cost from relationship levels
-                const relationshipOrder = ['Love', 'Friendship', 'Liking'];
-                baseCost += relationshipOrder.length - relationshipOrder.indexOf(rel1) || 0;
+                // Définir les niveaux de relation
+                const relationValues = {
+                    '-3': 7,  // Haine
+                    '-2': 6,  // Hostilité
+                    '-1': 5,  // Déplaisir
+                    '0': 4,   // Indifférence
+                    '1': 3,   // Sympathie
+                    '2': 2,   // Amitié
+                    '3': 1    // Amour
+                };
     
-                // Calculate relationship gap cost
-                gapCost += Math.abs(rel1 - rel2);
+                // Calculer le coût de la paire
+                const level1 = relationValues[rel1.relationshipLevel];
+                const level2 = relationValues[rel2.relationshipLevel];
+                let pairCost = level1 + level2;
+    
+                // Appliquer une réduction si les relations sont mutuellement positives
+                if (rel1.relationshipLevel > 0 && rel1.relationshipLevel === rel2.relationshipLevel) {
+                    pairCost -= 2;
+                    console.log(`Mutual positive relationship found between ${char1.name} and ${char2.name}, applying -2 discount.`);
+                }
+    
+                // S'assurer que le coût minimal est de 1
+                pairCost = Math.max(1, pairCost);
+    
+                console.log(`Total cost for ${char1.name} and ${char2.name}: ${pairCost}`);
+                totalCost += pairCost;
             }
         }
     
-        const totalCost = baseCost + gapCost;
-    
-        // Update the maneuver cost field in the modal
-        html.find('#maneuver-cost').text(`${totalCost} points`);
+        console.log("Final total maneuver cost:", totalCost);
+        // Mettre à jour le champ de coût dans la modale
+        html.find('#maneuver-cost').text(totalCost);
     }
+    
+    
+    
+    
+    
     
     async applySynergyCost(html) {
         // Retrieve selected characters

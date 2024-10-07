@@ -82,14 +82,19 @@ Hooks.once('init', function () {
 /*  Ready Hook                                  */
 /* -------------------------------------------- */
 
-Hooks.once('ready', function () {
-  // Wait to register hotbar drop hook on ready so that modules could register earlier if they want to
-  Hooks.on('hotbarDrop', (bar, data, slot) => createItemMacro(data, slot));
-
-  // Render SynergyTracker for the GM
+Hooks.on('ready', async function() {
   if (game.user.isGM) {
-    const synergyTracker = new SynergyTracker();
-    synergyTracker.render(true);
+      const synergyTracker = new SynergyTracker();
+
+      // Load saved synergy data
+      let savedSynergyData = game.settings.get("weave_of_echoes", "synergyData");
+      if (savedSynergyData) {
+          synergyTracker.currentSynergy = savedSynergyData.currentSynergy;
+          synergyTracker.maxSynergy = savedSynergyData.maxSynergy;
+          synergyTracker.groupMembers = savedSynergyData.characters.map(charId => game.actors.get(charId)).filter(char => char);
+      }
+
+      synergyTracker.render(true);
   }
 });
 
