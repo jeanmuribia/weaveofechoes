@@ -14,8 +14,9 @@ import { SynergyTracker } from './synergy-tracker.js';
 /* -------------------------------------------- */
 
 Hooks.once('init', function () {
-  // Add utility classes to the global game object so that they're more easily
-  // accessible in global contexts.
+  console.log("Weave of Echoes | Initializing System");
+
+  // Add utility classes to the global game object so that they're more easily accessible in global contexts.
   game.woe = {
     WoeActor,
     WoeItem,
@@ -39,8 +40,7 @@ Hooks.once('init', function () {
   CONFIG.Item.documentClass = WoeItem;
 
   // Active Effects are never copied to the Actor,
-  // but will still apply to the Actor from within the Item
-  // if the transfer property on the Active Effect is true.
+  // but will still apply to the Actor from within the Item if the transfer property on the Active Effect is true.
   CONFIG.ActiveEffect.legacyTransferral = false;
 
   // Register sheet application classes
@@ -56,16 +56,26 @@ Hooks.once('init', function () {
   });
 
   // Preload Handlebars templates.
-  return preloadHandlebarsTemplates();
-});
+  preloadHandlebarsTemplates();
 
-/* -------------------------------------------- */
-/*  Handlebars Helpers                          */
-/* -------------------------------------------- */
+  // Register game settings for synergy
+  game.settings.register("weave_of_echoes", "synergyData", {
+    name: "Synergy Data",
+    hint: "Stores synergy related data.",
+    scope: "world",
+    config: false,
+    default: { currentSynergy: 0, maxSynergy: 0, characters: [] },
+    type: Object,
+  });
 
-// If you need to add Handlebars helpers, here is a useful example:
-Handlebars.registerHelper('toLowerCase', function (str) {
-  return str.toLowerCase();
+  game.settings.register("weave_of_echoes", "groupMembers", {
+    name: "Group Members",
+    hint: "Stores the current members of the synergy group.",
+    scope: "world",
+    config: false,
+    default: [],
+    type: Array,
+  });
 });
 
 /* -------------------------------------------- */
@@ -75,6 +85,12 @@ Handlebars.registerHelper('toLowerCase', function (str) {
 Hooks.once('ready', function () {
   // Wait to register hotbar drop hook on ready so that modules could register earlier if they want to
   Hooks.on('hotbarDrop', (bar, data, slot) => createItemMacro(data, slot));
+
+  // Render SynergyTracker for the GM
+  if (game.user.isGM) {
+    const synergyTracker = new SynergyTracker();
+    synergyTracker.render(true);
+  }
 });
 
 /* -------------------------------------------- */
@@ -142,44 +158,3 @@ function rollItemMacro(itemUuid) {
     item.roll();
   });
 }
-
-Hooks.once('init', async function() {
-  game.settings.register("weave_of_echoes", "synergyGroups", {
-    name: "Synergy Groups",
-    scope: "world",
-    config: false,
-    type: Object,
-    default: []
-  });
-});
-
-Hooks.once('init', async function() {
-  game.settings.register("weave_of_echoes", "synergyData", {
-      name: "Synergy Data",
-      scope: "world",
-      config: false,
-      type: Object,
-      default: {
-          currentSynergy: 0,
-          maxSynergy: 0,
-          characters: []
-      }
-  });
-});
-
-Hooks.on('ready', async function() {
-  if (game.user.isGM) {
-    const synergyTracker = new SynergyTracker();
-    synergyTracker.render(true);
-
-  }
-});
-
-// Optional: Add this if you want to update all clients when synergy points change
-Hooks.on('updateSetting', (setting, value) => {
-  if (setting.key === "weave_of_echoes.synergyPoints") {
-    ui.notifications.info(`Synergy Points updated to ${value}`);
-    // If you have any displays of synergy points elsewhere, update them here
-  }
-});
-

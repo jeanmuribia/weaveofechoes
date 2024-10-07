@@ -606,3 +606,11 @@
   border-radius: 8px;
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
 }
+
+.character-checkbox {
+  margin: 5px 0; /* Space between checkboxes */
+}
+
+.character-checkbox label {
+  font-weight: bold; /* Make the labels bold */
+}

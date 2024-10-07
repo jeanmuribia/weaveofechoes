@@ -17,10 +17,15 @@
         <button id="decrease-synergy" class="square-button">-</button>
     </div>
 
+    <div class="synergy-cost">
+        <button id="synergic-maneuver" class="synergic-maneuver-button dialog-button">Synergic Maneuver Cost</button>
+    </div>
+
     <h4>Members</h4>
-    <ul class="items-list">
+    <!-- Adding a proper class to the list for better JS querying -->
+    <ul class="members-list">
         {{#each characters}}
-            <li class="item">{{this.name}}</li>
+            <li class="member-item">{{this.name}}</li>
         {{/each}}
     </ul>
 </div>
