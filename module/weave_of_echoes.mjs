@@ -7,6 +7,7 @@ import { WoeItemSheet } from './sheets/item-sheet.mjs';
 // Import helper/utility classes and constants.
 import { preloadHandlebarsTemplates } from './helpers/templates.mjs';
 import { WOE } from './helpers/config.mjs';
+import { SynergyTracker } from './synergy-tracker.js';
 
 /* -------------------------------------------- */
 /*  Init Hook                                   */
@@ -141,3 +142,44 @@ function rollItemMacro(itemUuid) {
     item.roll();
   });
 }
+
+Hooks.once('init', async function() {
+  game.settings.register("weave_of_echoes", "synergyGroups", {
+    name: "Synergy Groups",
+    scope: "world",
+    config: false,
+    type: Object,
+    default: []
+  });
+});
+
+Hooks.once('init', async function() {
+  game.settings.register("weave_of_echoes", "synergyData", {
+      name: "Synergy Data",
+      scope: "world",
+      config: false,
+      type: Object,
+      default: {
+          currentSynergy: 0,
+          maxSynergy: 0,
+          characters: []
+      }
+  });
+});
+
+Hooks.on('ready', async function() {
+  if (game.user.isGM) {
+    const synergyTracker = new SynergyTracker();
+    synergyTracker.render(true);
+
+  }
+});
+
+// Optional: Add this if you want to update all clients when synergy points change
+Hooks.on('updateSetting', (setting, value) => {
+  if (setting.key === "weave_of_echoes.synergyPoints") {
+    ui.notifications.info(`Synergy Points updated to ${value}`);
+    // If you have any displays of synergy points elsewhere, update them here
+  }
+});
+

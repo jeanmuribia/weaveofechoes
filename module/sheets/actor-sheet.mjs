@@ -80,6 +80,17 @@ export class WoeActorSheet extends ActorSheet {
     context.system = actorData.system;
     context.actorName = this.actor.name;
 
+    //relationship Levels
+    context.relationshipLevels = [
+      { value: -3, label: "Hatred" },
+      { value: -2, label: "Hostility" },
+      { value: -1, label: "Displeasure" },
+      { value: 0, label: "Indifference" },
+      { value: 1, label: "Liking" },
+      { value: 2, label: "Friendship" },
+      { value: 3, label: "Love" }
+    ];
+
     return context;
   }
 
@@ -199,81 +210,89 @@ export class WoeActorSheet extends ActorSheet {
   }
 
   
-// Method to open the maneuver modal
-openManeuverWindow() {
-  const content = `
-    <div>
-      <h3>On which of your attributes are you relying on?</h3>
-      <div id="attribute-section">
-        <button class="attribute-choice" data-attribute="body">Body</button>
-        <button class="attribute-choice" data-attribute="soul">Soul</button>
-        <button class="attribute-choice" data-attribute="mind">Mind</button>
-        <button class="attribute-choice" data-attribute="martial">Martial</button>
-        <button class="attribute-choice" data-attribute="elementary">Elementary</button>
-        <button class="attribute-choice" data-attribute="rhetoric">Rhetoric</button>
-      </div>
+  openManeuverWindow() {
+    const content = `
+      <div>
+        <h3>On which of your attributes are you relying on?</h3>
+        <div id="attribute-section">
+          <button class="attribute-choice" data-attribute="body">Body</button>
+          <button class="attribute-choice" data-attribute="soul">Soul</button>
+          <button class="attribute-choice" data-attribute="mind">Mind</button>
+          <button class="attribute-choice" data-attribute="martial">Martial</button>
+          <button class="attribute-choice" data-attribute="elementary">Elementary</button>
+          <button class="attribute-choice" data-attribute="rhetoric">Rhetoric</button>
+        </div>
 
-      <h3>What is your current state of mind?</h3>
-      <div id="temper-section">
-        <button class="temper-choice" data-temper="fire">Fire</button>
-        <button class="temper-choice" data-temper="water">Water</button>
-        <button class="temper-choice" data-temper="earth">Earth</button>
-        <button class="temper-choice" data-temper="air">Air</button>
-      </div>
+        <h3>What is your current state of mind?</h3>
+        <div id="temper-section">
+          <button class="temper-choice" data-temper="fire">Fire</button>
+          <button class="temper-choice" data-temper="water">Water</button>
+          <button class="temper-choice" data-temper="earth">Earth</button>
+          <button class="temper-choice" data-temper="air">Air</button>
+        </div>
 
-      <h3>Is the context advantageous?</h3>
-      <div id="context-section">
-        <button class="context-choice" data-context="malus">Detrimental</button>
-        <button class="context-choice" data-context="neutral">Neutral</button>
-        <button class="context-choice" data-context="bonus">Favorable</button>
-        <button class="context-choice" data-context="critical">Highly beneficial</button>
+        <h3>Is the context advantageous?</h3>
+        <div id="context-section">
+          <button class="context-choice" data-context="malus">Detrimental</button>
+          <button class="context-choice" data-context="neutral">Neutral</button>
+          <button class="context-choice" data-context="bonus">Favorable</button>
+          <button class="context-choice" data-context="critical">Highly beneficial</button>
+        </div>
       </div>
-    </div>
-  `;
+    `;
 
-  let dialog = new Dialog({
-    title: "Maneuver",
-    content: content,
-    buttons: {
-      roll: {
-        label: "Please answer all 3 questions.",
-        callback: async () => {
-          if (this.selectedAttribute && this.selectedTemper && this.selectedContext) {
-            await this.launchManeuver();
-          }
-        },
-        disabled: true  // Disabled initially
+    let dialog = new Dialog({
+      title: "Maneuver",
+      content: content,
+      buttons: {
+        roll: {
+          label: "Please answer all 3 questions.",
+          callback: () => this.launchManeuver(),
+          disabled: true
+        }
+      },
+      render: (html) => {
+        this.disableTraumatizedTempers(html);
+
+        html.find('.attribute-choice').on('click', (event) => {
+          this.selectedAttribute = $(event.currentTarget).data('attribute');
+          html.find('.attribute-choice').removeClass('selected');
+          $(event.currentTarget).addClass('selected');
+          this.updateRollButtonState(html);
+        });
+      
+        html.find('.temper-choice').on('click', (event) => {
+          this.selectedTemper = $(event.currentTarget).data('temper');
+          html.find('.temper-choice').removeClass('selected');
+          $(event.currentTarget).addClass('selected');
+          this.updateRollButtonState(html);
+        });
+      
+        html.find('.context-choice').on('click', (event) => {
+          this.selectedContext = $(event.currentTarget).data('context');
+          html.find('.context-choice').removeClass('selected');
+          $(event.currentTarget).addClass('selected');
+          this.updateRollButtonState(html);
+        });
       }
-    },
-    render: (html) => {
-      // Disable any temper with trauma
-      this.disableTraumatizedTempers(html);
+    });
 
-      html.find('.attribute-choice').on('click', (event) => {
-        this.selectedAttribute = $(event.currentTarget).data('attribute');
-        html.find('.attribute-choice').removeClass('selected');
-        $(event.currentTarget).addClass('selected');
-        this.updateRollButtonState(html);
-    });
-    
-    html.find('.temper-choice').on('click', (event) => {
-        this.selectedTemper = $(event.currentTarget).data('temper');
-        html.find('.temper-choice').removeClass('selected');
-        $(event.currentTarget).addClass('selected');
-        this.updateRollButtonState(html);
-    });
-    
-    html.find('.context-choice').on('click', (event) => {
-        this.selectedContext = $(event.currentTarget).data('context');
-        html.find('.context-choice').removeClass('selected');
-        $(event.currentTarget).addClass('selected');
-        this.updateRollButtonState(html);
-    });
+    dialog.render(true);
+  }
+
+  updateRollButtonState(html) {
+    const isAllSelected = this.selectedAttribute && this.selectedTemper && this.selectedContext;
+    const rollButton = html.parents('.dialog').find('button.dialog-button.roll');
+
+    if (isAllSelected) {
+      rollButton.prop('disabled', false).html('<i class="fas fa-dice"></i> Roll the dice!');
+    } else {
+      rollButton.prop('disabled', true).text('Please answer all 3 questions.');
     }
-  });
-
-  dialog.render(true);
-}
+    
+    // Force a re-render of the button
+    rollButton.trigger('change');
+  }
 
 // Disable any traumatized tempers in the maneuver modal
 disableTraumatizedTempers(html) {
@@ -291,17 +310,8 @@ disableTraumatizedTempers(html) {
   });
 }
 
-// Update the state of the "Roll the dice" button
-updateRollButtonState(html) {
-  const isAllSelected = this.selectedAttribute && this.selectedTemper && this.selectedContext;
-  const rollButton = html.find('button:contains("Roll the dice")');
 
-  if (isAllSelected) {
-      rollButton.prop('disabled', false).html('<i class="fas fa-dice"></i> Roll the dice!');
-  } else {
-      rollButton.prop('disabled', true).text('Please answer all 3 questions.');
-  }
-}
+
 
 // Launch the maneuver based on the selected options
 async launchManeuver() {
@@ -320,12 +330,23 @@ async launchManeuver() {
   const contextResult = await rollDie(this.selectedContext);
 
   // Format the message
-  const message = `${toUpperCaseValue(this.selectedAttribute)}, ${toUpperCaseValue(this.selectedTemper)} & ${toUpperCaseValue(this.selectedContext)} rolled: ${attributeResult}, ${temperResult}, ${contextResult}`;
+  const message = `
+    <div class="maneuver-result">
+      <span class="maneuver-choices">
+        ${this.getColoredLabel(this.selectedAttribute, attributeValue)}, 
+        ${this.getColoredLabel(this.selectedTemper, temperValue)} & 
+        ${this.getColoredLabel(this.getContextName(this.selectedContext), this.selectedContext)} rolled:
+      </span>
+      <span class="maneuver-results">
+        ${attributeResult}, ${temperResult}, ${contextResult}
+      </span>
+    </div>
+  `;
 
   // Display the results in the chat
   ChatMessage.create({
     content: message,
-    speaker: ChatMessage.getSpeaker(),
+    speaker: ChatMessage.getSpeaker({ actor: this.actor }),
   });
 
   // Reset selections
@@ -334,7 +355,7 @@ async launchManeuver() {
   this.selectedContext = null;
 }
 
-// Get the readable context name
+// Helper method to get the readable context name
 getContextName(contextType) {
   switch (contextType) {
     case 'malus': return 'Detrimental';
@@ -345,27 +366,12 @@ getContextName(contextType) {
   }
 }
 
-// Get the colored label based on die type
+// Helper method to get the colored label with capitalized words
 getColoredLabel(name, type) {
-  let colorClass = '';
-
-  switch (type) {
-    case 'malus':
-      colorClass = 'color-malus';  // Corresponds to pastel grey
-      break;
-    case 'neutral':
-      colorClass = 'color-neutral';  // Corresponds to pastel yellow
-      break;
-    case 'bonus':
-      colorClass = 'color-bonus';  // Corresponds to pastel green
-      break;
-    case 'critical':
-      colorClass = 'color-critical';  // Corresponds to pastel red
-      break;
-  }
-
-  // Return a span with the assigned color class
-  return `<span class="${colorClass}">${toUpperCaseValue(name)}</span>`;
+  const capitalizedName = name.split(' ')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(' ');
+  return `<span class="color-${type}">${capitalizedName}</span>`;
 }
 
  // This function adds event listeners for managing wound checkboxes
@@ -656,93 +662,101 @@ degradeAttributeValue(value) {
 
   activateRelationshipListeners(html) {
     const relationships = this.actor.system.relationships || [];
-  
+    
     relationships.forEach((rel, index) => {
-      // Player Name - click to edit
-      html.find(`input[data-field="playerName"][data-index="${index}"]`).on('blur', async (event) => {
-        const newPlayerName = event.currentTarget.value;
-        relationships[index].playerName = newPlayerName;
-        await this.actor.update({ 'system.relationships': relationships });
-        this.render();
-      });
-  
-      // Character Name - only allow selection if characterName is not already assigned
-      if (!rel.characterName) {
-        html.find(`select[data-field="characterName"][data-index="${index}"]`).on('change', async (event) => {
-          const newCharacterName = event.currentTarget.value;
-          relationships[index].characterName = newCharacterName;
-          await this.actor.update({ 'system.relationships': relationships });
-          this.render();  // Re-render the sheet after selection
-        });
-      }
-  
-      // Delete relationship
-      html.find(`.delete-relationship[data-index="${index}"]`).on('click', async () => {
-        relationships.splice(index, 1);
-        await this.actor.update({ 'system.relationships': relationships });
-        this.render();
-      });
+        // Player Name
+        html.find(`input[data-field="playerName"][data-index="${index}"]`)
+            .on('change', this._onUpdateRelationship.bind(this));
+        
+        // Relationship Level
+        html.find(`input[name="relationship-level-${index}"]`)
+            .on('change', this._onUpdateRelationship.bind(this));
+        
+        // Delete relationship
+        html.find(`.delete-relationship[data-index="${index}"]`)
+            .on('click', this._onDeleteRelationship.bind(this));
     });
+
+    // Add new relationship
+    html.find('#add-relationship').on('click', this.addRelationship.bind(this));
+}
+
+async _onUpdateRelationship(event) {
+  event.preventDefault();
+  const index = event.currentTarget.dataset.index;
+  const field = event.currentTarget.dataset.field || 'relationshipLevel';
+  const value = field === 'relationshipLevel' ? parseInt(event.currentTarget.value) : event.currentTarget.value;
+
+  const relationships = foundry.utils.deepClone(this.actor.system.relationships);
+  relationships[index][field] = value;
+
+  await this.actor.update({ 'system.relationships': relationships });
+  this.render();
+}
+
+async _onDeleteRelationship(event) {
+  event.preventDefault();
+  const index = event.currentTarget.dataset.index;
+
+  const relationships = foundry.utils.deepClone(this.actor.system.relationships);
+  relationships.splice(index, 1);
+
+  await this.actor.update({ 'system.relationships': relationships });
+  this.render();
+}
+
+async addRelationship() {
+  const availableCharacters = game.actors.filter(actor => actor.type === "character")
+    .filter(char => !this.actor.system.relationships.some(rel => rel.characterName === char.name))
+    .filter(char => char.name !== this.actor.name);
+
+  if (availableCharacters.length === 0) {
+    ui.notifications.error("You are already tied to every other character.");
+    return;
   }
 
-  async addRelationship() {
-    // Step 1: Get available characters not already tied to a relationship
-    const availableCharacters = game.actors.filter(actor => actor.type === "character")
-        .filter(char => !this.actor.system.relationships.some(rel => rel.characterName === char.name))
-        .filter(char => char.name !== this.actor.name);
+  const characterOptions = availableCharacters.map(char => `<option value="${char.name}">${char.name}</option>`).join('');
 
-    // Step 2: If no characters are available, show an error
-    if (availableCharacters.length === 0) {
-        ui.notifications.error("You are already tied to every other character.");
-        return;
-    }
+  let dialog = new Dialog({
+    title: "Choose a Character",
+    content: `
+      <form>
+        <div class="form-group">
+          <label for="character">Please choose a character to be tied with:</label>
+          <select id="character" name="character">
+            ${characterOptions}
+          </select>
+        </div>
+      </form>
+    `,
+    buttons: {
+      add: {
+        icon: '<i class="fas fa-check"></i>',
+        label: "Add Relationship",
+        callback: async (html) => {
+          const selectedCharacter = html.find('#character').val();
+          if (selectedCharacter) {
+            const relationships = foundry.utils.deepClone(this.actor.system.relationships);
+            relationships.push({
+              playerName: '',
+              characterName: selectedCharacter,
+              relationshipLevel: 0
+            });
 
-    // Step 3: Create a list of character options for the dropdown
-    const characterOptions = availableCharacters.map(char => `<option value="${char.name}">${char.name}</option>`).join('');
+            await this.actor.update({ 'system.relationships': relationships });
+            this.render();
+          }
+        }
+      },
+      cancel: {
+        icon: '<i class="fas fa-times"></i>',
+        label: "Cancel"
+      }
+    },
+    default: "add"
+  });
 
-    // Step 4: Show a modal dialog prompting the user to select a character
-    let dialog = new Dialog({
-        title: "Choose a Character",
-        content: `
-            <form>
-                <div class="form-group">
-                    <label for="character">Please choose a character to be tied with:</label>
-                    <select id="character" name="character">
-                        ${characterOptions}
-                    </select>
-                </div>
-            </form>
-        `,
-        buttons: {
-            add: {
-                icon: '<i class="fas fa-check"></i>',
-                label: "Add Relationship",
-                callback: async (html) => {
-                    const selectedCharacter = html.find('#character').val();
-                    if (selectedCharacter) {
-                        // Add the new relationship
-                        const relationships = foundry.utils.duplicate(this.actor.system.relationships);
-                        relationships.push({
-                            playerName: '',   // Leave empty for user to fill later
-                            characterName: selectedCharacter, // Set selected character
-                            relationshipLevel: 0  // Default relationship level
-                        });
-
-                        await this.actor.update({ 'system.relationships': relationships });
-                        this.render();  // Re-render the sheet to display the new relationship
-                    }
-                }
-            },
-            cancel: {
-                icon: '<i class="fas fa-times"></i>',
-                label: "Cancel"
-            }
-        },
-        default: "add"
-    });
-
-    dialog.render(true);  // Show the dialog
-    
+  dialog.render(true);
 }
 
 

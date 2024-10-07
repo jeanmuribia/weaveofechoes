@@ -1,0 +1,26 @@
+<div class="synergy-tracker">
+    <div class="synergy-points-container">
+        <div class="synergy-chip">{{currentSynergy}} / {{maxSynergy}}</div>
+    </div>
+
+    <div class="generate-synergy-section">
+        <button id="generate-synergy" class="generate-button">Generate Max Synergy</button>
+    </div>
+
+    <div class="synergy-controls-section">
+        <button id="empty-pool" class="control-button">Empty Pool</button>
+        <button id="fill-pool" class="control-button">Fill Pool</button>
+    </div>
+
+    <div class="increment-controls-section">
+        <button id="increase-synergy" class="square-button">+</button>
+        <button id="decrease-synergy" class="square-button">-</button>
+    </div>
+
+    <h4>Members</h4>
+    <ul class="items-list">
+        {{#each characters}}
+            <li class="item">{{this.name}}</li>
+        {{/each}}
+    </ul>
+</div>

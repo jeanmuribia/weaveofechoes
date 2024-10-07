@@ -431,3 +431,178 @@
   cursor: not-allowed; /* Disable pointer */
   pointer-events: none; /* Disable clicking */
 }
+
+/* synergy tracker CSS */
+
+@import url("https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap");
+
+.synergy-tracker {
+    background-color: #f0f0f0; /* Fond doux et clair */
+    color: #333; /* Texte en noir doux */
+    padding: 15px;
+    border-radius: 8px;
+    font-family: "Roboto", sans-serif;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+}
+
+.synergy-chip {
+    background-color: #c7e8ca; /* Vert pastel */
+    color: #333; /* Texte noir doux */
+    border: 2px solid #8ec58f; /* Bordure verte pastel */
+    border-radius: 50%; /* Forme de jeton */
+    width: 60px;
+    height: 60px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 0 auto 15px auto;
+    font-size: 1.2em;
+    font-weight: bold;
+}
+
+.generate-synergy-section {
+    text-align: center;
+    margin-bottom: 15px;
+}
+
+.generate-button {
+    background-color: #ffc1c1; /* Rouge pastel */
+    color: #333;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: background-color 0.3s ease;
+}
+
+.generate-button:hover {
+    background-color: #e3a1a1; /* Rouge pastel foncé */
+}
+
+.synergy-controls-section {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 15px;
+}
+
+.control-button {
+    background-color: #c1e1ff; /* Bleu pastel */
+    color: #333;
+    padding: 8px 12px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.control-button:hover {
+    background-color: #a1cde3; /* Bleu pastel foncé */
+}
+
+.increment-controls-section {
+    display: flex;
+    justify-content: space-around;
+    margin-bottom: 15px;
+}
+
+.square-button {
+    background-color: #f5e665; /* Jaune pastel */
+    color: #333;
+    width: 40px;
+    height: 40px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: background-color 0.3s ease;
+}
+
+.square-button:hover {
+    background-color: #e3d454; /* Jaune pastel foncé */
+}
+
+.items-list .item {
+    margin: 5px 0;
+    padding: 5px;
+    background-color: rgba(200, 200, 200, 0.1);
+    border-radius: 4px;
+    color: #333;
+    border: 1px solid #ddd;
+}
+
+/* Fond du modal harmonisé avec le Synergy Tracker */
+.dialog-synergy-modal .modal-container {
+  background-color: #f0f0f0; /* Applique la même couleur de fond que le Synergy Tracker */
+  padding: 15px;
+  border-radius: 8px;
+  margin-bottom: 10px;
+}
+
+/* Titre du groupe avec alignement amélioré */
+.group-title {
+  font-size: 1.2em;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 15px; /* Ajoute un espace entre le titre et les cases à cocher */
+  text-align: left;
+  display: block; /* Positionne le titre au-dessus des cases à cocher */
+}
+
+/* Suppression de l'arrière-plan des cases à cocher */
+.synergy-modal .character-checkbox label {
+  background-color: transparent; /* Pas de fond pour les cases à cocher */
+  color: #333;
+  padding: 5px;
+  cursor: pointer;
+}
+
+/* Boutons pour correspondre aux boutons du Synergy Tracker */
+.dialog-button {
+  background-color: #c1e1ff; /* Bleu pastel doux pour les boutons */
+  color: #333;
+  padding: 8px 16px;
+  border: 2px solid #a1cde3; /* Bordure bleu pastel */
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: background-color 0.3s ease;
+  margin: 5px;
+}
+
+.dialog-button:hover {
+  background-color: #a1cde3; /* Bleu pastel foncé au survol */
+}
+
+/* Style pour le bouton Calculate Synergy */
+.calculate-button {
+  background-color: #ffc1c1; /* Rouge pastel pour calculer */
+  color: #333;
+  border: 2px solid #e3a1a1; /* Bordure rouge pastel */
+  padding: 8px 16px;
+  border-radius: 8px;
+}
+
+.calculate-button:hover {
+  background-color: #e3a1a1; /* Rouge pastel foncé au survol */
+}
+
+/* Style pour le bouton Cancel */
+.cancel-button {
+  background-color: #c1e1ff; /* Bleu pastel pour le bouton d'annulation */
+  color: #333;
+  border: 2px solid #a1cde3; /* Bordure bleu pastel */
+  padding: 8px 16px;
+  border-radius: 8px;
+}
+
+.cancel-button:hover {
+  background-color: #a1cde3; /* Bleu pastel foncé au survol */
+}
+
+.modal-background {
+  background-color: #f4f4e8; /* Fond beige ou blanc cassé utilisé dans le Synergy Tracker */
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+}
