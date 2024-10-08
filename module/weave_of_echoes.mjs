@@ -84,34 +84,100 @@ Hooks.once('init', function () {
 
 Hooks.on('getSceneControlButtons', (controls) => {
   if (game.user.isGM) {
-    console.log("Adding Synergy Tracker button to controls");
-    
-    // Trouver le groupe de contrôles "token"
     let tokenControls = controls.find(c => c.name === "token");
-    
     if (tokenControls) {
-      // Ajouter notre bouton au groupe "token"
+      // Supprimer le bouton "+" s'il existe déjà pour le réajouter à la fin
+      tokenControls.tools = tokenControls.tools.filter(tool => tool.name !== "new-synergy-tracker");
+
+      // Ajouter le bouton du Synergy Tracker original
       tokenControls.tools.push({
         name: "synergy-tracker",
         title: "Synergy Tracker",
         icon: "fas fa-sync-alt",
         button: true,
         onClick: () => {
-          console.log("Synergy Tracker button clicked");
           if (game.weaveOfEchoes && game.weaveOfEchoes.synergyTracker) {
-            if (game.weaveOfEchoes.synergyTracker.rendered) {
-              game.weaveOfEchoes.synergyTracker.close();
-            } else {
-              game.weaveOfEchoes.synergyTracker.render(true);
-            }
+            game.weaveOfEchoes.synergyTracker.render(true);
           } else {
             ui.notifications.error("Synergy Tracker not initialized");
           }
         }
       });
+
+      // Ajouter les boutons pour les trackers additionnels
+      if (game.weaveOfEchoes && game.weaveOfEchoes.additionalTrackers) {
+        Object.entries(game.weaveOfEchoes.additionalTrackers).forEach(([trackerId, tracker]) => {
+          tokenControls.tools.push({
+            name: trackerId,
+            title: `Synergy Tracker ${trackerId}`,
+            icon: "fas fa-sync-alt",
+            button: true,
+            onClick: () => tracker.render(true)
+          });
+        });
+      }
+
+      // Ajouter le bouton "+" toujours à la fin
+      tokenControls.tools.push({
+        name: "new-synergy-tracker",
+        title: "New Synergy Tracker",
+        icon: "fas fa-plus",
+        button: true,
+        onClick: () => createNewSynergyTracker()
+      });
     }
   }
 });
+
+
+function createNewSynergyTracker() {
+  const maxTrackers = 4;
+  const currentTrackers = Object.keys(game.weaveOfEchoes.additionalTrackers || {}).length + 1;
+
+  if (currentTrackers >= maxTrackers) {
+      ui.notifications.warn(`Maximum trackers created (${maxTrackers}).`);
+      return;
+  }
+
+  const trackerId = `synergy-tracker-${Date.now()}`;
+  const newTracker = new SynergyTracker({ appId: trackerId });
+
+  // Assurez-vous que chaque nouveau tracker est initialisé avec des données vides
+  newTracker.currentSynergy = 0;
+  newTracker.maxSynergy = 0;
+  newTracker.groupMembers = [];
+
+  game.weaveOfEchoes.additionalTrackers = game.weaveOfEchoes.additionalTrackers || {};
+  game.weaveOfEchoes.additionalTrackers[trackerId] = newTracker;
+
+  addSynergyTrackerButton(trackerId);
+  newTracker.render(true);
+}
+
+
+function addSynergyTrackerButton(trackerId) {
+  const controls = ui.controls.controls;
+  const tokenControls = controls.find(c => c.name === "token");
+  if (tokenControls) {
+    tokenControls.tools.push({
+      name: `synergy-tracker-${trackerId}`,
+      title: `Synergy Tracker ${trackerId}`,
+      icon: "fas fa-sync-alt",
+      button: true,
+      onClick: () => {
+        const tracker = game.weaveOfEchoes.additionalTrackers[trackerId];
+        if (tracker) {
+          if (tracker.rendered) {
+            tracker.close();
+          } else {
+            tracker.render(true);
+          }
+        }
+      }
+    });
+    ui.controls.render();
+  }
+}
 
 Hooks.on('ready', async function() {
   if (game.user.isGM) {
