@@ -639,3 +639,26 @@
   color: #333;
   margin: 5px 0;
 }
+
+
+#synergy-tracker-toggle {
+  width: 36px;
+  height: 36px;
+  background: rgba(0, 0, 0, 0.5);
+  border: 1px solid #000;
+  border-radius: 5px;
+  color: #fff;
+  text-align: center;
+  line-height: 36px;
+  cursor: pointer;
+}
+
+#synergy-tracker-toggle:hover {
+  background: rgba(0, 0, 0, 0.8);
+}
+
+#synergy-tracker-toggle i {
+  font-style: normal;
+  font-weight: bold;
+  font-size: 18px;
+}

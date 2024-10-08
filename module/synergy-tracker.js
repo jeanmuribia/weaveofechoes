@@ -33,6 +33,8 @@ export class SynergyTracker extends Application {
         html.find('#empty-pool').click(this._onEmptyPool.bind(this));
         html.find('#fill-pool').click(this._onFillPool.bind(this));
         html.find('#synergic-maneuver').click(this._onSynergicManeuver.bind(this));
+        html.find('#add-synergy-tracker').click(this._onAddNewSynergyTracker.bind(this));
+        
     }
 
     async _onGenerateSynergy(event) {
@@ -131,16 +133,22 @@ export class SynergyTracker extends Application {
     generateSynergyPoints(characters) {
         let synergyPool = 0;
     
-        // Each character contributes a base of 3 points to the synergy pool
-        synergyPool += characters.length * 3;
+        // Ensure the group size is between 2 and 5
+        const groupSize = Math.max(2, Math.min(characters.length, 5));
+    
+        // Calculate base synergy points based on group size
+        const basePointsPerCharacter = (groupSize <= 3) ? 4 : 3;
+        synergyPool = groupSize * basePointsPerCharacter;
+    
+        console.log(`Group size: ${groupSize}, Base synergy points per character: ${basePointsPerCharacter}, Total base: ${synergyPool}`);
     
         // Create a set of selected character names for easy lookup
         const selectedCharacterNames = new Set(characters.map(char => char.name));
         console.log("Selected Character Names: ", selectedCharacterNames);
     
         // Loop through all pairs of characters to calculate synergy modifiers
-        for (let i = 0; i < characters.length; i++) {
-            for (let j = i + 1; j < characters.length; j++) {
+        for (let i = 0; i < groupSize; i++) {
+            for (let j = i + 1; j < groupSize; j++) {
                 const char1 = characters[i];
                 const char2 = characters[j];
                 const rel1 = char1.system.relationships.find(r => r.characterName === char2.name);
@@ -160,10 +168,8 @@ export class SynergyTracker extends Application {
                                (rel2.relationshipLevel < 0 && rel1.relationshipLevel >= 0)) {
                         // Relationships involving one negative (e.g., Hatred + Indifferent)
                         relationshipModifier = -1;
-                    } else {
-                        // Positive + Indifferent or similar relationships
-                        relationshipModifier = 0;
                     }
+                    // Note: Indifferent relationships (0) don't add or subtract points
     
                     // Add the relationship modifier to the synergy pool
                     synergyPool += relationshipModifier;
@@ -465,6 +471,26 @@ export class SynergyTracker extends Application {
         } else {
             ui.notifications.warn("La valeur maximale de synergie doit être au moins 1.");
         }
+    }
+
+    _onAddNewSynergyTracker(event) {
+        event.preventDefault();
+    
+        // Générer un identifiant unique pour ce nouveau tracker
+        const newTrackerId = `synergy-tracker-${Date.now()}`; // Utilisation d'un identifiant unique basé sur le timestamp
+    
+        // Créer une nouvelle instance du Synergy Tracker avec un nouvel identifiant et des options de positionnement
+        const newSynergyTracker = new SynergyTracker({}, {
+            id: newTrackerId,
+            title: `Synergy Tracker - ${newTrackerId}`,
+            left: Math.floor(Math.random() * window.innerWidth / 2),  // Pour éviter les superpositions
+            top: Math.floor(Math.random() * window.innerHeight / 2)   // Pour éviter les superpositions
+        });
+    
+        // Afficher le nouveau Synergy Tracker
+        newSynergyTracker.render(true);
+        newSynergyTracker.setPosition({ left: 100, top: 100 });
+        console.log(`Creating new Synergy Tracker: ${newTrackerId}`);
     }
 // Fermez la classe SynergyTracker correctement
 }

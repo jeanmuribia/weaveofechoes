@@ -82,21 +82,78 @@ Hooks.once('init', function () {
 /*  Ready Hook                                  */
 /* -------------------------------------------- */
 
+Hooks.on('getSceneControlButtons', (controls) => {
+  if (game.user.isGM) {
+    console.log("Adding Synergy Tracker button to controls");
+    
+    // Trouver le groupe de contrôles "token"
+    let tokenControls = controls.find(c => c.name === "token");
+    
+    if (tokenControls) {
+      // Ajouter notre bouton au groupe "token"
+      tokenControls.tools.push({
+        name: "synergy-tracker",
+        title: "Synergy Tracker",
+        icon: "fas fa-sync-alt",
+        button: true,
+        onClick: () => {
+          console.log("Synergy Tracker button clicked");
+          if (game.weaveOfEchoes && game.weaveOfEchoes.synergyTracker) {
+            if (game.weaveOfEchoes.synergyTracker.rendered) {
+              game.weaveOfEchoes.synergyTracker.close();
+            } else {
+              game.weaveOfEchoes.synergyTracker.render(true);
+            }
+          } else {
+            ui.notifications.error("Synergy Tracker not initialized");
+          }
+        }
+      });
+    }
+  }
+});
+
 Hooks.on('ready', async function() {
   if (game.user.isGM) {
-      const synergyTracker = new SynergyTracker();
+    console.log("Initializing Weave of Echoes and Synergy Tracker");
+
+    // Initialize the weaveOfEchoes namespace
+    game.weaveOfEchoes = game.weaveOfEchoes || {};
+
+    try {
+      // Initialize the synergyTracker
+      game.weaveOfEchoes.synergyTracker = new SynergyTracker();
+      console.log("SynergyTracker initialized:", game.weaveOfEchoes.synergyTracker);
 
       // Load saved synergy data
       let savedSynergyData = game.settings.get("weave_of_echoes", "synergyData");
-      if (savedSynergyData) {
-          synergyTracker.currentSynergy = savedSynergyData.currentSynergy;
-          synergyTracker.maxSynergy = savedSynergyData.maxSynergy;
-          synergyTracker.groupMembers = savedSynergyData.characters.map(charId => game.actors.get(charId)).filter(char => char);
-      }
+      console.log("Loaded saved synergy data:", savedSynergyData);
 
-      synergyTracker.render(true);
+      if (savedSynergyData) {
+        game.weaveOfEchoes.synergyTracker.currentSynergy = savedSynergyData.currentSynergy;
+        game.weaveOfEchoes.synergyTracker.maxSynergy = savedSynergyData.maxSynergy;
+        
+        // Map character IDs to actual Actor objects, filtering out any that don't exist
+        game.weaveOfEchoes.synergyTracker.groupMembers = savedSynergyData.characters
+          .map(charId => game.actors.get(charId))
+          .filter(char => char);
+
+        console.log("Updated SynergyTracker with saved data:", {
+          currentSynergy: game.weaveOfEchoes.synergyTracker.currentSynergy,
+          maxSynergy: game.weaveOfEchoes.synergyTracker.maxSynergy,
+          groupMembers: game.weaveOfEchoes.synergyTracker.groupMembers
+        });
+      } else {
+        console.log("No saved synergy data found");
+      }
+    } catch (error) {
+      console.error("Error initializing Synergy Tracker:", error);
+    }
+  } else {
+    console.log("User is not GM, skipping Synergy Tracker initialization");
   }
 });
+
 
 /* -------------------------------------------- */
 /*  Hotbar Macros                               */
