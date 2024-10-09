@@ -440,7 +440,7 @@
 
 .synergy-tracker-container {
   font-family: 'Roboto', sans-serif;
-  background-color: #f0f5f9;
+  background-color: var(--tracker-color, #f0f5f9);
   padding: 20px;
   border-radius: 10px;
   box-shadow: 0 0 10px rgba(0,0,0,0.1);

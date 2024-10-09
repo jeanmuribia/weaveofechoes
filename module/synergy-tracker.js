@@ -2,8 +2,13 @@ export class SynergyTracker extends Application {
   constructor(options = {}) {
     super(options);
     this.appId = options.appId || "synergy-tracker";
-    this.groupMembers = [];
-}
+    this.color = options.color || this.getRandomPastelColor();
+  }
+  
+  getRandomPastelColor() {
+    const hue = Math.floor(Math.random() * 360);
+    return `hsl(${hue}, 100%, 80%)`;
+  }
 
     static get defaultOptions() {
         return foundry.utils.mergeObject(super.defaultOptions, {
@@ -294,9 +299,9 @@ export class SynergyTracker extends Application {
     
     async render(force = false, options = {}) {
       await super.render(force, options);
+      this.element.css('--tracker-color', this.color);
       this.activateListeners(this.element);
-  }
-    
+    }
     async calculateSelectedSynergy(html) {
         const selectedCharIds = Array.from(html.find('input[name="selected-chars"]:checked')).map(input => input.value);
         const selectedCharacters = game.actors.filter(a => selectedCharIds.includes(a.id));
