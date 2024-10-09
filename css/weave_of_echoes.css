@@ -438,227 +438,115 @@
 
 @import url("https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap");
 
-/* Container principal */
 .synergy-tracker-container {
-  padding: 20px;
-  background-color: #f6f9fc; /* Couleur pastel douce pour le fond */
-  border-radius: 12px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   font-family: 'Roboto', sans-serif;
+  background-color: #f0f5f9;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 0 10px rgba(0,0,0,0.1);
 }
 
-/* Section de chaque groupe de boutons */
+.synergy-counter {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: auto auto auto;
+  gap: 5px;
+  justify-items: center;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.synergy-value {
+  grid-column: 1 / span 2;
+  font-size: 1.5em;
+  font-weight: bold;
+  color: #3d5a80;
+}
+.synergy-max {
+  font-size: 1.2em;
+  color: #98c1d9;
+}
+
 .synergy-section {
   margin-bottom: 20px;
-  text-align: center;
 }
 
-/* Label pour indiquer la section */
-.synergy-label {
-  font-size: 1.2rem;
-  color: #4a4a4a; /* Couleur grise douce */
+h3 {
+  color: #3d5a80;
   margin-bottom: 10px;
-  display: block;
 }
 
-/* Conteneur des boutons de synergie */
-.synergy-buttons-container {
+.synergy-buttons {
   display: flex;
-  align-items: center;
   justify-content: center;
   gap: 10px;
 }
 
-/* Boutons de synergie (augmentation/diminution) */
-.synergy-button {
-  background-color: #a8d5e2; /* Bleu pastel */
-  color: #ffffff;
-  border: none;
-  padding: 10px;
+.round-button {
+  width: 30px;
+  height: 30px;
   border-radius: 50%;
-  cursor: pointer;
-  font-size: 1.5rem;
-  width: 40px;
-  height: 40px;
-  transition: background-color 0.3s;
-}
-
-.synergy-button:hover {
-  background-color: #81c4d3; /* Un bleu pastel légèrement plus foncé au survol */
-}
-
-/* Valeur de la synergie */
-.synergy-value {
-  font-size: 1.5rem;
-  font-weight: bold;
-  color: #4a4a4a;
-}
-
-/* Conteneur de la synergie actuelle */
-.synergy-points-container {
-  display: flex;
-  justify-content: center;
-  margin-bottom: 20px;
-}
-
-/* Étiquette pour l'affichage de la valeur actuelle */
-.synergy-chip {
-  background-color: #eaf4f8; /* Couleur de fond pastel douce */
-  padding: 10px;
-  border-radius: 8px;
-  font-weight: bold;
-  color: #333;
-}
-
-/* Notifications de synergie */
-.synergy-notification {
-  color: #ff6f61; /* Rouge pastel pour alerte */
-  font-weight: bold;
-  margin-top: 15px;
-  display: block;
-  text-align: center;
-}
-
-/* Boutons pour correspondre aux boutons du Synergy Tracker */
-.dialog-button {
-  background-color: #c1e1ff; /* Bleu pastel doux pour les boutons */
-  color: #333;
-  padding: 8px 16px;
-  border: 2px solid #a1cde3; /* Bordure bleu pastel */
-  border-radius: 8px;
-  cursor: pointer;
-  font-weight: bold;
-  transition: background-color 0.3s ease;
-  margin: 5px;
-}
-
-.dialog-button:hover {
-  background-color: #a1cde3; /* Bleu pastel foncé au survol */
-}
-
-/* Style pour le bouton Calculate Synergy */
-.calculate-button {
-  background-color: #ffc1c1; /* Rouge pastel pour calculer */
-  color: #333;
-  border: 2px solid #e3a1a1; /* Bordure rouge pastel */
-  padding: 8px 16px;
-  border-radius: 8px;
-}
-
-.calculate-button:hover {
-  background-color: #e3a1a1; /* Rouge pastel foncé au survol */
-}
-
-/* Style pour le bouton Cancel */
-.cancel-button {
-  background-color: #c1e1ff; /* Bleu pastel pour le bouton d'annulation */
-  color: #333;
-  border: 2px solid #a1cde3; /* Bordure bleu pastel */
-  padding: 8px 16px;
-  border-radius: 8px;
-}
-
-.cancel-button:hover {
-  background-color: #a1cde3; /* Bleu pastel foncé au survol */
-}
-
-/* Fond du modal harmonisé avec le Synergy Tracker */
-.modal-background {
-  background-color: #f6f9fc; /* Applique la même couleur de fond que le Synergy Tracker */
-  padding: 20px;
-  border-radius: 12px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-}
-
-/* Titre du groupe avec alignement amélioré */
-.group-title {
-  font-size: 1.2rem;
-  font-weight: bold;
-  color: #4a4a4a;
-  margin-bottom: 15px;
-  text-align: left;
-}
-
-/* Conteneur des cases à cocher des personnages */
-.character-selection {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  margin-bottom: 15px;
-}
-
-.character-checkbox {
-  margin: 5px 0;
-}
-
-.character-checkbox label {
-  font-weight: bold;
-  color: #333;
-  cursor: pointer;
-}
-
-/* Conteneur général pour la modale Synergy Maneuver */
-.synergic-maneuver-modal {
-  padding: 20px;
-  background-color: #f6f9fc; /* Harmonisation avec le reste du tracker */
-  border-radius: 12px;
-}
-
-/* Résultat du coût de la manœuvre */
-.maneuver-result {
-  margin-top: 20px;
-  font-size: 1.2rem;
-  color: #4a4a4a;
-}
-
-/* Bouton Synergic Maneuver Cost */
-.synergic-maneuver-button {
-  background-color: #b2e0ff; /* Couleur pastel douce */
   border: none;
-  border-radius: 8px;
-  color: #333;
-  padding: 10px;
-  margin-top: 20px;
+  background-color: #98c1d9;
+  color: white;
+  font-size: 1em;
   cursor: pointer;
   transition: background-color 0.3s;
 }
 
-.synergic-maneuver-button:hover {
-  background-color: #8bc6e3; /* Couleur plus foncée au survol */
+.round-button:hover {
+  background-color: #3d5a80;
 }
 
-/* Liste des membres */
+.full-width-button, .half-width-button {
+  width: 100%;
+  padding: 10px;
+  border: none;
+  border-radius: 5px;
+  background-color: #e0fbfc;
+  color: #3d5a80;
+  font-size: 1em;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  margin-bottom: 10px;
+}
+
+.half-width-button {
+  width: calc(50% - 5px);
+}
+
+.full-width-button:hover, .half-width-button:hover {
+  background-color: #98c1d9;
+}
+
 .members-list {
   list-style-type: none;
   padding: 0;
-  margin-top: 20px;
 }
 
 .member-item {
-  font-weight: bold;
-  color: #333;
-  margin: 5px 0;
-}
-
-
-#synergy-tracker-toggle {
-  width: 36px;
-  height: 36px;
-  background: rgba(0, 0, 0, 0.5);
-  border: 1px solid #000;
+  background-color: #e0fbfc;
+  margin-bottom: 5px;
+  padding: 10px;
   border-radius: 5px;
-  color: #fff;
-  text-align: center;
-  line-height: 36px;
   cursor: pointer;
+  transition: background-color 0.3s;
 }
 
-#synergy-tracker-toggle:hover {
-  background: rgba(0, 0, 0, 0.8);
+.member-item:hover {
+  background-color: #98c1d9;
 }
 
-#synergy-tracker-toggle i {
-  font-style: normal;
+.member-item.selected {
+  background-color: #3d5a80;
+  color: white;
+}
+
+#maneuver-cost {
+  background-color: #e0fbfc;
+  padding: 10px;
+  border-radius: 5px;
+  text-align: center;
   font-weight: bold;
-  font-size: 18px;
+  color: #3d5a80;
 }

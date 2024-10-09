@@ -1,8 +1,9 @@
 export class SynergyTracker extends Application {
-    constructor(options = {}) {
-        super(options);
-        this.appId = options.appId || "synergy-tracker";
-    }
+  constructor(options = {}) {
+    super(options);
+    this.appId = options.appId || "synergy-tracker";
+    this.groupMembers = [];
+}
 
     static get defaultOptions() {
         return foundry.utils.mergeObject(super.defaultOptions, {
@@ -22,128 +23,74 @@ export class SynergyTracker extends Application {
     }
 
     getData() {
-        let synergyData = game.settings.get("weave_of_echoes", "synergyData") || { currentSynergy: 0, maxSynergy: 0, characters: [] };
-        this.groupMembers = game.settings.get("weave_of_echoes", "groupMembers") || []; // Retrieve stored group members
-        
-        // Fetch the full actor objects based on stored IDs
-        this.groupMembers = this.groupMembers.map(id => game.actors.get(id)).filter(actor => actor); 
-        
-        return synergyData;
-    }
+      let synergyData = game.settings.get("weave_of_echoes", "synergyData");
+      return {
+          currentSynergy: synergyData.currentSynergy,
+          maxSynergy: synergyData.maxSynergy,
+          groupMembers: synergyData.characters
+      };
+  }
     
     
 
-    activateListeners(html) {
-        super.activateListeners(html);
-    
-        // Assurez-vous d'utiliser les sélecteurs corrects correspondant à votre HTML
-        html.find('#generate-synergy').click(this._onGenerateSynergy.bind(this));
-        html.find('#increase-synergy').click(this._onIncreaseSynergy.bind(this));
-        html.find('#decrease-synergy').click(this._onDecreaseSynergy.bind(this));
-        html.find('#empty-pool').click(this._onEmptyPool.bind(this));
-        html.find('#fill-pool').click(this._onFillPool.bind(this));
-        html.find('#synergic-maneuver').click(this._onSynergicManeuver.bind(this));
-        html.find('#reinitialize-synergy').click(this.reinitializeTracker.bind(this));
-        
-    }
+  activateListeners(html) {
+    super.activateListeners(html);
 
-    async _onGenerateSynergy(event) {
-        event.preventDefault();
-        const characters = game.actors.filter(a => a.type === "character");
-        this.showCharacterSelectionModal(characters);
-    }
-    
-    showCharacterSelectionModal(characters) {
-        const content = `
-            <form class="synergy-modal">
-                <div class="modal-background"> <!-- Encapsulation pour le fond -->
-                    <label class="group-title">Who is in the group?</label> <!-- Titre mis à jour et positionné au-dessus -->
-                    <div class="character-selection">
-                        ${characters.map(char => `
-                            <div class="character-checkbox">
-                                <label>
-                                    <input type="checkbox" name="selected-chars" value="${char.id}">
-                                    ${char.name}
-                                </label>
-                            </div>
-                        `).join('')}
-                    </div>
-                </div>
-            </form>
-        `;
-    
-        new Dialog({
-            title: "Generate Synergy",
-            content: content,
-            buttons: {
-                calculate: {
-                    icon: '<i class="fas fa-calculator"></i>',
-                    label: "Calculate Synergy",
-                    callback: (html) => this.calculateSelectedSynergy(html),
-                    classes: ['calculate-button', 'dialog-button']
-                },
-                cancel: {
-                    icon: '<i class="fas fa-times"></i>',
-                    label: "Cancel",
-                    classes: ['cancel-button', 'dialog-button']
-                }
-            },
-            default: "calculate",
-            classes: ["dialog-synergy-modal"]
-        }).render(true);
-    }
+    html.find('#increase-current-synergy').click((event) => this._onIncreaseCurrentSynergy(event));
+    html.find('#decrease-current-synergy').click((event) => this._onDecreaseCurrentSynergy(event));
+    html.find('#increase-max-synergy').click((event) => this._onIncreaseMaxSynergy(event));
+    html.find('#decrease-max-synergy').click((event) => this._onDecreaseMaxSynergy(event));
+    html.find('#generate-synergy').click((event) => this._onGenerateSynergy(event));
+    html.find('#empty-pool').click((event) => this._onEmptyPool(event));
+    html.find('#fill-pool').click((event) => this._onFillPool(event));
+    html.find('#apply-synergy-cost').click((event) => this._onApplySynergyCost(event));
+    html.find('#reset-tracker').click((event) => this._onResetTracker(event));
+    html.find('.member-item').click((event) => this._onMemberSelection(event));
+}
+
+  _onGenerateSynergy(event) {
+    event.preventDefault();
+    const characters = game.actors.filter(a => a.type === "character");
+    this.showCharacterSelectionModal(characters);
+}
     
 
-    async calculateSelectedSynergy(html) {
-        const selectedCharIds = Array.from(html.find('input[name="selected-chars"]:checked')).map(input => input.value);
-        const selectedCharacters = game.actors.filter(a => selectedCharIds.includes(a.id));
-        
-        // Vérifier si tous les personnages sélectionnés sont dans ce groupe ou aucun groupe
-        const areAllInThisGroupOrNoGroup = selectedCharacters.every(char => 
-          this.groupMembers.some(member => member.id === char.id) || !this.isCharacterInAnyGroup(char.id)
-        );
-      
-        if (!areAllInThisGroupOrNoGroup) {
-          ui.notifications.warn("Some selected characters are already in another group.");
-          return;
-        }
-      
-        if (this.validateAllRelationships(selectedCharacters)) {
-          const synergyPoints = this.generateSynergyPoints(selectedCharacters);
-          let synergyData = game.settings.get("weave_of_echoes", "synergyData") || { currentSynergy: 0, maxSynergy: 0, characters: [] };
-          synergyData.maxSynergy = synergyPoints;
-          synergyData.currentSynergy = synergyPoints;
-          synergyData.characters = selectedCharacters.map(char => ({ id: char.id, name: char.name }));
-          
-          await game.settings.set("weave_of_echoes", "synergyData", synergyData);
-          await game.settings.set("weave_of_echoes", "groupMembers", selectedCharIds);
-      
-          console.log(`Max synergy updated to ${synergyPoints}`);
-          this.render();
-          ui.notifications.info(`Max Synergy updated: ${synergyPoints} points`);
-        } else {
-          ui.notifications.error("Not all selected characters have relationships with each other. Please complete all relationships before generating synergy.");
-        }
-      
-        this.groupMembers = selectedCharacters;
+    async calculateSynergicManeuverCost(selectedCharIds) {
+      const selectedCharacters = selectedCharIds.map(id => game.actors.get(id)).filter(actor => actor);
+    
+      if (selectedCharacters.length < 2) {
+        ui.notifications.warn('Select at least two characters');
+        return 0;
+      }
+    
+      if (this.validateAllRelationships(selectedCharacters)) {
+        const maneuverCost = this.calculateManeuverCost(selectedCharacters);
+        console.log(`Maneuver cost calculated: ${maneuverCost}`);
+        return maneuverCost;
+      } else {
+        ui.notifications.error("Not all selected characters have relationships with each other. Please complete all relationships before calculating maneuver cost.");
+        return 0;
+      }
     }
+    
+ 
 
     validateAllRelationships(characters) {
-        for (let i = 0; i < characters.length; i++) {
-            for (let j = i + 1; j < characters.length; j++) {
-                const char1 = characters[i];
-                const char2 = characters[j];
-                
-                const rel1 = char1.system.relationships.find(r => r.characterName === char2.name);
-                const rel2 = char2.system.relationships.find(r => r.characterName === char1.name);
-
-                if (!rel1 || !rel2) {
-                    console.log(`Missing relationship between ${char1.name} and ${char2.name}`);
-                    return false;
-                }
-            }
+      for (let i = 0; i < characters.length; i++) {
+        for (let j = i + 1; j < characters.length; j++) {
+          const char1 = characters[i];
+          const char2 = characters[j];
+          
+          const rel1 = char1.system.relationships.find(r => r.characterName === char2.name);
+          const rel2 = char2.system.relationships.find(r => r.characterName === char1.name);
+    
+          if (!rel1 || !rel2) {
+            console.log(`Missing relationship between ${char1.name} and ${char2.name}`);
+            return false;
+          }
         }
-        return true;
+      }
+      return true;
     }
 
     generateSynergyPoints(characters) {
@@ -198,8 +145,28 @@ export class SynergyTracker extends Application {
         return Math.max(0, synergyPool);  // Ensure synergy is never negative
     }
     
-    
-
+    _onIncreaseMaxSynergy(event) {
+      event.preventDefault();
+      let synergyData = game.settings.get("weave_of_echoes", "synergyData");
+      synergyData.maxSynergy += 1;
+      this._updateSynergyData(synergyData);
+  }
+  
+  _onDecreaseMaxSynergy(event) {
+      event.preventDefault();
+      let synergyData = game.settings.get("weave_of_echoes", "synergyData");
+      if (synergyData.maxSynergy > 0) {
+          synergyData.maxSynergy -= 1;
+          // Assurez-vous que currentSynergy ne dépasse pas maxSynergy
+          synergyData.currentSynergy = Math.min(synergyData.currentSynergy, synergyData.maxSynergy);
+          this._updateSynergyData(synergyData);
+      }
+  }
+  
+  async _updateSynergyData(synergyData) {
+      await game.settings.set("weave_of_echoes", "synergyData", synergyData);
+      this.render();
+  }
     async updateSynergyTrackerDisplay() {
         const synergyData = game.settings.get("weave_of_echoes", "synergyData") || { currentSynergy: 0, maxSynergy: 0, characters: [] };
         const groupMemberIds = game.settings.get("weave_of_echoes", "groupMembers") || [];
@@ -234,58 +201,24 @@ export class SynergyTracker extends Application {
         this.render();
     }
     
-    async _onIncreaseSynergy(event) {
-        event.preventDefault();
-        let synergyData = game.settings.get("weave_of_echoes", "synergyData") || { currentSynergy: 0, maxSynergy: 0 };
-        
-        if (synergyData.currentSynergy < synergyData.maxSynergy) {
-            synergyData.currentSynergy += 1;
-            await game.settings.set("weave_of_echoes", "synergyData", synergyData);
-            this.render(); // Rafraîchir l'affichage après la mise à jour
-        } else {
-            ui.notifications.warn("Current synergy is already at its maximum.");
-        }
-    }
-    
-    async _onDecreaseSynergy(event) {
-        event.preventDefault();
-        let synergyData = game.settings.get("weave_of_echoes", "synergyData") || { currentSynergy: 0, maxSynergy: 0 };
-        
-        if (synergyData.currentSynergy > 0) {
-            synergyData.currentSynergy -= 1;
-            await game.settings.set("weave_of_echoes", "synergyData", synergyData);
-            this.render(); // Rafraîchir l'affichage après la mise à jour
-        } else {
-            ui.notifications.warn("Current synergy is already at its minimum.");
-        }
-    }
-    
-    _onEditMaxSynergy(event) {
-        event.preventDefault();
-        const currentMax = game.settings.get("weave_of_echoes", "maxSynergyPoints") || 0;
-        new Dialog({
-            title: "Edit Max Synergy",
-            content: `<input type="number" id="new-max-synergy" value="${currentMax}">`,
-            buttons: {
-                save: {
-                    icon: '<i class="fas fa-check"></i>',
-                    label: "Save",
-                    callback: (html) => {
-                        const newMax = parseInt(html.find('#new-max-synergy').val());
-                        if (!isNaN(newMax) && newMax >= 0) {
-                            game.settings.set("weave_of_echoes", "maxSynergyPoints", newMax);
-                            this.render();
-                        }
-                    }
-                },
-                cancel: {
-                    icon: '<i class="fas fa-times"></i>',
-                    label: "Cancel"
-                }
-            },
-            default: "save"
-        }).render(true);
-    }
+    _onIncreaseCurrentSynergy(event) {
+      event.preventDefault();
+      let synergyData = game.settings.get("weave_of_echoes", "synergyData");
+      if (synergyData.currentSynergy < synergyData.maxSynergy) {
+          synergyData.currentSynergy += 1;
+          this._updateSynergyData(synergyData);
+      }
+  }
+  
+  _onDecreaseCurrentSynergy(event) {
+      event.preventDefault();
+      let synergyData = game.settings.get("weave_of_echoes", "synergyData");
+      if (synergyData.currentSynergy > 0) {
+          synergyData.currentSynergy -= 1;
+          this._updateSynergyData(synergyData);
+      }
+  }
+  
 
     _onSynergicManeuver(event) {
         event.preventDefault();
@@ -299,61 +232,70 @@ export class SynergyTracker extends Application {
     }
     
     showSynergicManeuverModal() {
-  const groupMemberIds = game.settings.get("weave_of_echoes", "groupMembers") || [];
-  const groupMembers = groupMemberIds.map(id => game.actors.get(id)).filter(actor => actor);
-
-  const content = `
-    <form class="synergic-maneuver-modal">
-      <div class="form-group">
-        <label for="character-selection">Who is in the maneuver?</label>
-        <div class="character-selection">
-          ${groupMembers.map(char => `
-            <div class="character-checkbox">
-              <label>
-                <input type="checkbox" name="selected-chars" value="${char.id}">
-                ${char.name}
-              </label>
+      const groupMemberIds = game.settings.get("weave_of_echoes", "groupMembers") || [];
+      const groupMembers = groupMemberIds.map(id => game.actors.get(id)).filter(actor => actor);
+    
+      const content = `
+        <form class="synergic-maneuver-modal">
+          <div class="form-group">
+            <label for="character-selection">Who is in the maneuver?</label>
+            <div class="character-selection">
+              ${groupMembers.map(char => `
+                <div class="character-checkbox">
+                  <label>
+                    <input type="checkbox" name="selected-chars" value="${char.id}">
+                    ${char.name}
+                  </label>
+                </div>
+              `).join('')}
             </div>
-          `).join('')}
-        </div>
-        <div id="maneuver-result" class="maneuver-result">
-          Maneuver Cost: <span id="maneuver-cost">- points</span>
-        </div>
-      </div>
-    </form>
-  `;
-
-  const dialog = new Dialog({
-    title: "Synergic Maneuver Cost",
-    content: content,
-    buttons: {
-      calculate: {
-        icon: '<i class="fas fa-calculator"></i>',
-        label: "Calculate Cost",
-        callback: (html) => this.calculateSynergicManeuverCost(html)
-      },
-      apply: {
-        icon: '<i class="fas fa-check"></i>',
-        label: "Apply Cost",
-        callback: async (html) => {
-          await this.applySynergyCost(html);
-          ui.notifications.info("Synergy cost applied!");
-        }
-      },
-      cancel: {
-        icon: '<i class="fas fa-times"></i>',
-        label: "Cancel"
-      }
-    },
-    default: "calculate",
-    close: () => {}
-  });
-
-  dialog.render(true);
-}
+            <div id="maneuver-result" class="maneuver-result">
+              Maneuver Cost: <span id="maneuver-cost">- points</span>
+            </div>
+          </div>
+        </form>
+      `;
+    
+      let d = new Dialog({
+        title: "Synergic Maneuver Cost",
+        content: content,
+        buttons: {
+          calculate: {
+            icon: '<i class="fas fa-calculator"></i>',
+            label: "Calculate Cost",
+            callback: (html) => {
+              this.calculateSynergicManeuverCost(html);
+            }
+          },
+          apply: {
+            icon: '<i class="fas fa-check"></i>',
+            label: "Apply Cost",
+            callback: (html) => this.applySynergyCost(html)
+          },
+          cancel: {
+            icon: '<i class="fas fa-times"></i>',
+            label: "Cancel"
+          }
+        },
+        default: "calculate",
+        close: () => {}
+      });
+    
+      d.render(true);
+    
+      // Ajout d'un listener personnalisé après le rendu de la modale
+      d.element.on('click', '.dialog-button.calculate', (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        this.calculateSynergicManeuverCost(d.element);
+      });
+    }
     
     
-      
+    async render(force = false, options = {}) {
+      await super.render(force, options);
+      this.activateListeners(this.element);
+  }
     
     async calculateSelectedSynergy(html) {
         const selectedCharIds = Array.from(html.find('input[name="selected-chars"]:checked')).map(input => input.value);
@@ -399,36 +341,26 @@ export class SynergyTracker extends Application {
       }
     
     
-    async applySynergyCost(html) {
-        // Retrieve selected characters
-        const selectedCharIds = Array.from(html.find('input[name="selected-chars"]:checked')).map(input => input.value);
-        const selectedCharacters = this.groupMembers.filter(char => selectedCharIds.includes(char.id));
-    
-        if (selectedCharacters.length < 2) {
-            ui.notifications.warn("Please select at least two characters for the maneuver.");
-            return;
-        }
-    
-        // Retrieve the calculated cost from the modal
+      async applySynergyCost(html) {
         const costText = html.find('#maneuver-cost').text();
-        const maneuverCost = parseInt(costText.split(" ")[0]);
-    
+        const maneuverCost = parseInt(costText);
+      
         if (isNaN(maneuverCost)) {
-            ui.notifications.error("Unable to apply cost. Invalid cost value.");
-            return;
+          ui.notifications.error("Unable to apply cost. Invalid cost value.");
+          return;
         }
-    
-        // Retrieve current synergy data and update it
+      
         let synergyData = game.settings.get("weave_of_echoes", "synergyData") || { currentSynergy: 0, maxSynergy: 0 };
         
         if (synergyData.currentSynergy >= maneuverCost) {
-            synergyData.currentSynergy -= maneuverCost;
-            await game.settings.set("weave_of_echoes", "synergyData", synergyData);
-            this.render(); // Refresh Synergy Tracker display
+          synergyData.currentSynergy -= maneuverCost;
+          await game.settings.set("weave_of_echoes", "synergyData", synergyData);
+          this.render(); // Refresh Synergy Tracker display
+          ui.notifications.info(`Applied synergy cost: ${maneuverCost} points`);
         } else {
-            ui.notifications.error("Not enough synergy points to apply the cost.");
+          ui.notifications.error("Not enough synergy points to apply the cost.");
         }
-    }
+      }
 
     incrementMaxSynergy() {
         let synergyData = game.settings.get("weave_of_echoes", "synergyData") || { currentSynergy: 0, maxSynergy: 0 };
@@ -449,70 +381,58 @@ export class SynergyTracker extends Application {
         }
     }
 
-    calculateSynergicManeuverCost(html) {
-        // Récupérer les identifiants des personnages sélectionnés
-        const selectedCharIds = Array.from(html.find('input[name="selected-chars"]:checked')).map(input => input.value);
-        const selectedCharacters = selectedCharIds.map(id => game.actors.get(id)).filter(actor => actor);
-      
-        if (selectedCharacters.length < 2) {
-          html.find('#maneuver-cost').text('Select at least two characters');
-          return;
-        }
-      
-        let totalCost = 0;
-      
-        console.log("Calculating cost for selected characters:", selectedCharacters.map(char => char.name));
-      
-        // Parcourir les paires de personnages sélectionnés pour calculer le coût
-        for (let i = 0; i < selectedCharacters.length; i++) {
-          for (let j = i + 1; j < selectedCharacters.length; j++) {
-            const char1 = selectedCharacters[i];
-            const char2 = selectedCharacters[j];
-      
-            const rel1 = char1.system.relationships.find(r => r.characterName === char2.name);
-            const rel2 = char2.system.relationships.find(r => r.characterName === char1.name);
-      
-            if (!rel1 || !rel2) {
-              console.log(`Relation not found between ${char1.name} and ${char2.name}`);
-              continue;
-            }
-      
-            console.log(`Relation between ${char1.name} and ${char2.name}:`, rel1, rel2);
-      
-            // Définir les niveaux de relation
-            const relationValues = {
-              '-3': 7,  // Haine
-              '-2': 6,  // Hostilité
-              '-1': 5,  // Déplaisir
-              '0': 4,   // Indifférence
-              '1': 3,   // Sympathie
-              '2': 2,   // Amitié
-              '3': 1    // Amour
-            };
-      
-            // Calculer le coût de la paire
-            const level1 = relationValues[rel1.relationshipLevel];
-            const level2 = relationValues[rel2.relationshipLevel];
-            let pairCost = level1 + level2;
-      
-            // Appliquer une réduction si les relations sont mutuellement positives
-            if (rel1.relationshipLevel > 0 && rel1.relationshipLevel === rel2.relationshipLevel) {
-              pairCost -= 2;
-              console.log(`Mutual positive relationship found between ${char1.name} and ${char2.name}, applying -2 discount.`);
-            }
-      
-            // S'assurer que le coût minimal est de 1
-            pairCost = Math.max(1, pairCost);
-      
-            console.log(`Total cost for ${char1.name} and ${char2.name}: ${pairCost}`);
-            totalCost += pairCost;
-          }
-        }
-      
-        console.log("Final total maneuver cost:", totalCost);
-        // Mettre à jour le champ de coût dans la modale
-        html.find('#maneuver-cost').text(totalCost);
-      }
+    showCharacterSelectionModal(characters) {
+      const content = `
+          <form class="synergy-modal">
+              <div class="character-selection">
+                  ${characters.map(char => `
+                      <div class="character-checkbox">
+                          <label>
+                              <input type="checkbox" name="selected-chars" value="${char.id}">
+                              ${char.name}
+                          </label>
+                      </div>
+                  `).join('')}
+              </div>
+          </form>
+      `;
+  
+      new Dialog({
+          title: "Generate Max Synergy",
+          content: content,
+          buttons: {
+              calculate: {
+                  icon: '<i class="fas fa-calculator"></i>',
+                  label: "Calculate Synergy",
+                  callback: (html) => this.calculateSelectedSynergy(html)
+              },
+              cancel: {
+                  icon: '<i class="fas fa-times"></i>',
+                  label: "Cancel"
+              }
+          },
+          default: "calculate"
+      }).render(true);
+  }
+
+  calculateSynergicManeuverCost(html) {
+    const selectedCharIds = Array.from(html.find('input[name="selected-chars"]:checked')).map(input => input.value);
+    const selectedCharacters = selectedCharIds.map(id => game.actors.get(id)).filter(actor => actor);
+
+    if (selectedCharacters.length < 2) {
+        html.find('#maneuver-cost').text('Select at least two characters');
+        return;
+    }
+
+    if (this.validateAllRelationships(selectedCharacters)) {
+        const maneuverCost = this.calculateManeuverCost(selectedCharacters);
+        html.find('#maneuver-cost').text(`${maneuverCost} points`);
+        console.log(`Maneuver cost calculated: ${maneuverCost}`);
+    } else {
+        ui.notifications.error("Not all selected characters have relationships with each other. Please complete all relationships before calculating maneuver cost.");
+        html.find('#maneuver-cost').text('Incomplete relationships');
+    }
+}
 
     async reinitializeTracker() {
         this.groupMembers = [];
@@ -521,21 +441,109 @@ export class SynergyTracker extends Application {
         await game.settings.set("weave_of_echoes", "groupMembers", []);
         this.render(true);
       }
+
+      calculateManeuverCost(characters) {
+        let totalCost = 0;
+      
+        for (let i = 0; i < characters.length; i++) {
+          for (let j = i + 1; j < characters.length; j++) {
+            const char1 = characters[i];
+            const char2 = characters[j];
+      
+            const rel1 = char1.system.relationships.find(r => r.characterName === char2.name);
+            const rel2 = char2.system.relationships.find(r => r.characterName === char1.name);
+      
+            if (rel1 && rel2) {
+              const level1 = parseInt(rel1.relationshipLevel);
+              const level2 = parseInt(rel2.relationshipLevel);
+      
+              let pairCost = 8 - Math.abs(level1) - Math.abs(level2);
+      
+              // Appliquer une réduction si les relations sont mutuellement positives
+              if (level1 > 0 && level2 > 0) {
+                pairCost -= 2;
+              }
+      
+              // S'assurer que le coût minimal est de 1
+              pairCost = Math.max(1, pairCost);
+      
+              totalCost += pairCost;
+            }
+          }
+        }
+      
+        return totalCost;
+      }
+
+    
+_onMemberSelection(event) {
+  const memberId = event.currentTarget.dataset.id;
+  const memberItem = event.currentTarget;
+  
+  if (memberItem.classList.contains('selected')) {
+      memberItem.classList.remove('selected');
+  } else {
+      memberItem.classList.add('selected');
+  }
+  
+  this._updateManeuverCost();
 }
 
-// Ajouter le hook `renderSynergyTracker` en dehors de la classe
-Hooks.on('renderSynergyTracker', (app, html, data) => {
-    // Assurez-vous que vous êtes bien sur la bonne instance de SynergyTracker
-    const synergyTracker = app;
+_updateManeuverCost() {
+  const selectedMembers = this.element.find('.member-item.selected')
+      .map((_, el) => game.actors.get(el.dataset.id))
+      .get();
+  
+  if (selectedMembers.length < 2) {
+      this.element.find('#maneuver-cost').text('Select at least two characters');
+      return;
+  }
 
-    // Ajouter un écouteur sur le bouton pour modifier la valeur maximale de Synergy
-    html.find('#edit-max-synergy-button').on('click', () => {
-        synergyTracker._onEditMaxSynergy(); // Fonction pour ouvrir la modal de modification
-    });
+  const cost = this.calculateManeuverCost(selectedMembers);
+  this.element.find('#maneuver-cost').text(`${cost} points`);
+}
+    
+async _onApplySynergyCost(event) {
+  event.preventDefault();
+  const costText = this.element.find('#maneuver-cost').text();
+  const cost = parseInt(costText);
+  
+  if (isNaN(cost) || cost <= 0) {
+    ui.notifications.warn("Invalid cost. Please calculate the cost first.");
+    return;
+  }
 
-    // Ajouter un écouteur sur le bouton pour augmenter la valeur maximale
-    html.find('#increase-max-synergy').on('click', synergyTracker.incrementMaxSynergy.bind(synergyTracker));
+  await this.applySynergyCost(cost);
+}
 
-    // Ajouter un écouteur sur le bouton pour diminuer la valeur maximale
-    html.find('#decrease-max-synergy').on('click', synergyTracker.decrementMaxSynergy.bind(synergyTracker));
-});
+async applySynergyCost(cost) {
+  let synergyData = game.settings.get("weave_of_echoes", "synergyData") || { currentSynergy: 0, maxSynergy: 0 };
+  
+  if (synergyData.currentSynergy >= cost) {
+    synergyData.currentSynergy -= cost;
+    await game.settings.set("weave_of_echoes", "synergyData", synergyData);
+    this.render();
+    ui.notifications.info(`Applied synergy cost: ${cost} points`);
+  } else {
+    ui.notifications.error("Not enough synergy points to apply the cost.");
+  }
+}
+   
+async _onResetTracker(event) {
+  event.preventDefault();
+  let synergyData = {
+    currentSynergy: 0,
+    maxSynergy: 0,
+    characters: []
+  };
+  await game.settings.set("weave_of_echoes", "synergyData", synergyData);
+  await game.settings.set("weave_of_echoes", "groupMembers", []);
+  this.groupMembers = [];
+  this.render();
+}
+}
+    // Mettez à jour cette méthode pour qu'elle fonctionne avec le nouveau système
+   
+
+
+
