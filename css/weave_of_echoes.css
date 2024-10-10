@@ -391,12 +391,6 @@
 }
 
 
-.selected {
-  background-color: #4CAF50; /* or any color for highlighting */
-  color: white;
-  border: 2px solid #45a049;
-}
-
 .color-malus {
   color: #a0a0a0;  /* Pastel grey */
 }
@@ -440,113 +434,135 @@
 
 .synergy-tracker-container {
   font-family: 'Roboto', sans-serif;
-  background-color: var(--tracker-color, #f0f5f9);
-  padding: 20px;
+  padding: 15px;
   border-radius: 10px;
-  box-shadow: 0 0 10px rgba(0,0,0,0.1);
 }
 
-.synergy-counter {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  grid-template-rows: auto auto auto;
-  gap: 5px;
-  justify-items: center;
+.synergy-circle {
+  display: flex;
   align-items: center;
-  margin-bottom: 15px;
-}
-
-.synergy-value {
-  grid-column: 1 / span 2;
-  font-size: 1.5em;
-  font-weight: bold;
-  color: #3d5a80;
-}
-.synergy-max {
-  font-size: 1.2em;
-  color: #98c1d9;
-}
-
-.synergy-section {
+  justify-content: space-between;
   margin-bottom: 20px;
 }
 
-h3 {
-  color: #3d5a80;
-  margin-bottom: 10px;
+.synergy-controls {
+  display: flex;
+  flex-direction: column;
 }
 
-.synergy-buttons {
+.synergy-values {
   display: flex;
   justify-content: center;
-  gap: 10px;
-}
-
-.round-button {
-  width: 30px;
-  height: 30px;
+  align-items: center;
+  width: 100px;
+  height: 100px;
   border-radius: 50%;
-  border: none;
-  background-color: #98c1d9;
+  background-color: #f0f0f0;
+  font-size: 24px;
+  font-weight: bold;
+}
+
+.synergy-current, .synergy-max {
+  padding: 0 5px;
+}
+
+button {
+  margin: 5px;
+  padding: 5px 10px;
+  background-color: #4CAF50;
   color: white;
-  font-size: 1em;
-  cursor: pointer;
-  transition: background-color 0.3s;
-}
-
-.round-button:hover {
-  background-color: #3d5a80;
-}
-
-.full-width-button, .half-width-button {
-  width: 100%;
-  padding: 10px;
   border: none;
   border-radius: 5px;
-  background-color: #e0fbfc;
-  color: #3d5a80;
-  font-size: 1em;
   cursor: pointer;
-  transition: background-color 0.3s;
-  margin-bottom: 10px;
 }
 
-.half-width-button {
-  width: calc(50% - 5px);
-}
-
-.full-width-button:hover, .half-width-button:hover {
-  background-color: #98c1d9;
-}
-
-.members-list {
-  list-style-type: none;
-  padding: 0;
+.pool-controls, .group-members, .maneuver-section {
+  margin-bottom: 20px;
 }
 
 .member-item {
-  background-color: #e0fbfc;
-  margin-bottom: 5px;
+  position: relative; /* Permet le positionnement absolu du bouton */
+  display: flex;
+  align-items: center;
+  background-color: #f0f0f0;
   padding: 10px;
-  border-radius: 5px;
-  cursor: pointer;
-  transition: background-color 0.3s;
+  margin-bottom: 5px;
+  border-radius: 3px;
 }
 
+.member-name {
+  font-weight: bold; /* Mettre le nom en gras */
+}
+
+.remove-member {
+  position: absolute;
+  right: 10px; /* À quelques pixels de la bordure droite */
+  width: 20px;
+  height: 20px;
+  background-color: red;
+  color: white; /* Couleur du "-" */
+  border: none;
+  border-radius: 50%; /* Rend le bouton circulaire */
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-weight: bold;
+  font-size: 16px; /* Taille du symbole "-" pour une meilleure visibilité */
+}
+
+.remove-member:hover {
+  background-color: darkred; /* Changer la couleur lors du survol */
+}
 .member-item:hover {
-  background-color: #98c1d9;
+  background-color: #e0e0e0;
 }
 
 .member-item.selected {
-  background-color: #3d5a80;
-  color: white;
+  background-color: #4CAF50 !important;
+  color: white !important;
+  border: 2px solid #45a049 !important;
 }
 
-#maneuver-cost {
-  background-color: #e0fbfc;
-  padding: 10px;
-  border-radius: 5px;
-  text-align: center;
+#reset-max-value {
+  background-color: #f44336;
+}
+
+.synergy-cost {
+  font-size: 1rem; /* Taille plus grande pour rendre le coût plus visible */
   font-weight: bold;
-  color: #3d5a80;
+  text-align: center;
+  margin: 15px 0;
+  padding: 10px;
+  background-color: #f0f0f0; /* Couleur de fond douce */
+  border-radius: 8px;
+  border: 2px solid #4CAF50; /* Bordure cohérente avec le reste du design */
+}
+
+.group-members-container {
+  position: relative;
+  padding: 10px;
+  background-color: #f8f8f8;
+  border-radius: 8px;
+  margin-bottom: 15px;
+}
+
+.add-member-container {
+  display: flex;
+  justify-content: flex-end; /* Aligne le bouton "Add Members" à droite */
+  margin-bottom: 10px; /* Ajouter un espace entre le bouton et la liste des membres */
+}
+
+.add-member {
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  padding: 5px 10px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.add-member:hover {
+  background-color: #45a049; /* Couleur un peu plus foncée au survol */
 }

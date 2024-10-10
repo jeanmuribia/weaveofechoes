@@ -677,8 +677,7 @@ degradeAttributeValue(value) {
             .on('click', this._onDeleteRelationship.bind(this));
     });
 
-    // Add new relationship
-    html.find('#add-relationship').on('click', this.addRelationship.bind(this));
+   
 }
 
 async _onUpdateRelationship(event) {
@@ -691,6 +690,10 @@ async _onUpdateRelationship(event) {
   relationships[index][field] = value;
 
   await this.actor.update({ 'system.relationships': relationships });
+
+  // Notifier les trackers de synergie que les relations ont changé
+  Hooks.call('updateSynergyTracker', this.actor);
+
   this.render();
 }
 
@@ -702,6 +705,10 @@ async _onDeleteRelationship(event) {
   relationships.splice(index, 1);
 
   await this.actor.update({ 'system.relationships': relationships });
+
+  // Notifier les trackers de synergie que les relations ont changé
+  Hooks.call('updateSynergyTracker', this.actor);
+
   this.render();
 }
 

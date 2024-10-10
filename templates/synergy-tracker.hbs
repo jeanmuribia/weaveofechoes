@@ -1,38 +1,52 @@
-<div class="synergy-tracker-container">
-    <div class="synergy-counter">
-        <button id="increase-current-synergy" class="round-button">+</button>
-        <button id="increase-max-synergy" class="round-button">+</button>
-        <div class="synergy-value">
-            <span id="current-synergy">{{currentSynergy}}</span> / <span id="max-synergy">{{maxSynergy}}</span>
-        </div>
-        <button id="decrease-current-synergy" class="round-button">-</button>
-        <button id="decrease-max-synergy" class="round-button">-</button>
+<div class="synergy-tracker-container" style="background-color: {{color}}">
+  <h2>{{title}}</h2>
+  
+  <div class="synergy-circle">
+    <div class="synergy-controls left">
+      <button id="increase-current-synergy">+</button>
+      <button id="decrease-current-synergy">-</button>
     </div>
-
-    <button id="generate-synergy" class="full-width-button">Generate Max Synergy</button>
-
-    <div class="synergy-section">
-        <h3>Synergy Pool</h3>
-        <div class="synergy-buttons">
-            <button id="empty-pool" class="half-width-button">Empty</button>
-            <button id="fill-pool" class="half-width-button">Fill</button>
-        </div>
+    <div class="synergy-values">
+      <span class="synergy-current">{{currentSynergy}}</span>
+      <span class="synergy-separator">/</span>
+      <span class="synergy-max">{{maxSynergy}}</span>
     </div>
-
-    <div class="members-section">
-        <h3>Members</h3>
-        <ul class="members-list">
-            {{#each groupMembers}}
-                <li class="member-item" data-id="{{this.id}}">{{this.name}}</li>
-            {{/each}}
-        </ul>
+    <div class="synergy-controls right">
+      <button id="increase-max-synergy">+</button>
+      <button id="decrease-max-synergy">-</button>
     </div>
+  </div>
+  
+  <div class="pool-controls">
+    <button id="empty-pool">Empty Pool</button>
+    <button id="fill-pool">Fill Pool</button>
+    <button id="reset-max-value">Reset Max Value</button>
+  </div>
+  
+ <div class="group-members-container">
+  <h3>Group Members</h3>
+  <div class="add-member-container">
+    <button class="add-member">Add Members</button>
+  </div>
+  <div class="group-members-list">
+    {{#each characters as |character|}}
+      <div class="member-item {{#includes ../selectedCharacters character}}selected{{/includes}}" data-character="{{character}}">
+        <span class="member-name">{{character}}</span>
+        <button class="remove-member" data-character="{{character}}">-</button>
+      </div>
+    {{/each}}
+  </div>
+</div>
 
-    <div class="synergy-section">
-        <h3>Synergic Maneuver Cost</h3>
-        <div id="maneuver-cost">Select at least two characters</div>
-    </div>
-
-    <button id="apply-synergy-cost" class="full-width-button">Apply Cost</button>
-    <button id="reset-tracker" class="full-width-button">Reset Tracker</button>
+  <div class="maneuver-section">
+    <h3>Synergic Maneuver</h3>
+    <div class="synergy-cost">
+  {{#if (eq maneuverCost "Select at least 2 characters")}}
+    Select at least 2 characters
+  {{else}}
+    Cost: {{maneuverCost}} points
+  {{/if}}
+</div>
+    <button id="apply-synergy-cost">Apply Cost</button>
+  </div>
 </div>

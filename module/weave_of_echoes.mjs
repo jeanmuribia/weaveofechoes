@@ -13,7 +13,13 @@ import { SynergyTracker } from './synergy-tracker.js';
 /*  Init Hook                                   */
 /* -------------------------------------------- */
 
+
 Hooks.once('init', function () {
+ 
+
+  game.weaveOfEchoes = game.weaveOfEchoes || {};
+  game.weaveOfEchoes.additionalTrackers = {};
+
   console.log("Weave of Echoes | Initializing System");
 
   // Add utility classes to the global game object so that they're more easily accessible in global contexts.
@@ -88,154 +94,84 @@ Hooks.once('init', function () {
 /* -------------------------------------------- */
 /*  Ready Hook                                  */
 /* -------------------------------------------- */
-
-Hooks.on('getSceneControlButtons', (controls) => {
-  console.log("Weave of Echoes | getSceneControlButtons hook triggered");
+Hooks.once('ready', () => {
   if (game.user.isGM) {
-    let tokenControls = controls.find(c => c.name === "token");
-    if (tokenControls) {
-      console.log("Weave of Echoes | Adding Synergy Tracker buttons to the toolbar");
-
-      // Supprimer tous les boutons de synergy tracker existants
-      tokenControls.tools = tokenControls.tools.filter(tool => !tool.name.startsWith("synergy-tracker"));
-
-      // Ajouter les boutons pour chaque tracker pré-créé avec des numéros distincts
-      if (game.weaveOfEchoes && game.weaveOfEchoes.additionalTrackers) {
-        Object.entries(game.weaveOfEchoes.additionalTrackers).forEach(([trackerId, tracker], index) => {
-          tokenControls.tools.push({
-            name: trackerId,
-            title: `Synergy Tracker ${index + 1}`, // Affiche "Synergy Tracker 1", "Synergy Tracker 2", etc.
-            icon: "fas fa-circle", // Utilisez une icône appropriée
-            button: true,
-            onClick: () => tracker.render(true)
-          });
-          console.log(`Button added for Synergy Tracker ${index + 1}`); // Log pour confirmer l'ajout du bouton
-        });
-      }
-
-      // Utilisez render() uniquement, sans réinitialiser les contrôles pour éviter la boucle infinie
-      console.log("Rendering the SceneControls UI");
-      ui.controls.render(); // Rafraîchit l'interface utilisateur des contrôles de manière sûre
-    }
-  }
-});
-
-
-function generateRandomColor() {
-  const letters = '0123456789ABCDEF';
-  let color = '#';
-  for (let i = 0; i < 6; i++) {
-    color += letters[Math.floor(Math.random() * 16)];
-  }
-  return color;
-}
-
-function createNewSynergyTracker() {
-  const maxTrackers = 4;
-  const currentTrackers = Object.keys(game.weaveOfEchoes.additionalTrackers || {}).length + 1;
-
-  if (currentTrackers >= maxTrackers) {
-    ui.notifications.warn(`Maximum trackers created (${maxTrackers}).`);
-    return;
-  }
-
-  const trackerId = `synergy-tracker-${Date.now()}`;
-  const trackerColor = generateRandomColor(); // Générer une couleur unique pour le tracker
-
-  // Créez une nouvelle instance indépendante de SynergyTracker avec des données vierges
-  const newTracker = new SynergyTracker({
-    appId: trackerId,
-    data: {
-      currentSynergy: 0,
-      maxSynergy: 0,
-      characters: [],
-      color: trackerColor // Ajouter une couleur unique
-    }
-  });
-
-  game.weaveOfEchoes.additionalTrackers[trackerId] = newTracker;
-
-  // Sauvegarder le nouveau tracker et ses données
-  const savedTrackers = game.settings.get("weave_of_echoes", "savedTrackers") || {};
-  savedTrackers[trackerId] = {
-    currentSynergy: 0,
-    maxSynergy: 0,
-    characters: [],
-    color: trackerColor
-  };
-  game.settings.set("weave_of_echoes", "savedTrackers", savedTrackers);
-
-  // Mettre à jour les boutons
-  updateSynergyTrackerButtons();
-
-  newTracker.render(true);
-}
-
-
-
-
-Hooks.on('ready', async function() {
-  if (game.user.isGM) {
-    console.log("Weave of Echoes | Initializing Synergy Trackers");
-
-    game.weaveOfEchoes = game.weaveOfEchoes || {};
-    game.weaveOfEchoes.additionalTrackers = game.weaveOfEchoes.additionalTrackers || {};
-
-    const maxTrackers = 4;
-
-    for (let i = 1; i <= maxTrackers; i++) {
+    const colors = ['#FFB3BA', '#BAFFC9', '#BAE1FF', '#FFFFBA'];
+    // Nous n'ajoutons plus tous les personnages au groupe 1 par défaut
+    for (let i = 1; i <= 4; i++) {
       const trackerId = `synergy-tracker-${i}`;
-      const trackerColor = generateRandomColor();
+      const charactersInGroup = []; // Initialiser chaque groupe, y compris le groupe 1, comme vide
 
-      const newTracker = new SynergyTracker({
+      game.weaveOfEchoes.additionalTrackers[trackerId] = new SynergyTracker({
         appId: trackerId,
+        title: `Synergy Group ${i}`,
         data: {
           currentSynergy: 0,
           maxSynergy: 0,
-          characters: [],
-          color: trackerColor
+          characters: charactersInGroup,
+          color: colors[i - 1]
         }
       });
-
-      game.weaveOfEchoes.additionalTrackers[trackerId] = newTracker;
-      console.log(`Tracker created: ${trackerId} with color ${trackerColor}`, newTracker);
     }
-
-    console.log("Final list of all initialized trackers:", game.weaveOfEchoes.additionalTrackers);
-    
-    // Appeler la fonction pour mettre à jour les boutons
-    updateSynergyTrackerButtons();
   }
 });
 
-// Fonction pour mettre à jour les boutons de trackers dans la barre de contrôle
-function updateSynergyTrackerButtons() {
-  const controls = ui.controls.controls;
-  const tokenControls = controls.find(c => c.name === "token");
-
-  if (tokenControls) {
-    console.log("Weave of Echoes | Adding Synergy Tracker buttons to the toolbar");
-
-    // Supprimer les anciens boutons de synergy tracker
-    tokenControls.tools = tokenControls.tools.filter(tool => !tool.name.startsWith("synergy-tracker"));
-
-    // Ajouter les nouveaux boutons pour chaque tracker
-    Object.entries(game.weaveOfEchoes.additionalTrackers).forEach(([trackerId, tracker], index) => {
-      tokenControls.tools.push({
-        name: trackerId,
-        title: `Synergy Tracker ${index + 1}`,
-        icon: "fas fa-sync-alt",
-        button: true,
-        onClick: () => tracker.render(true)
-      });
-      console.log(`Button added for Synergy Tracker ${index + 1}`);
-    });
-
-    // Rafraîchir l'interface utilisateur après l'ajout des boutons
-    ui.controls.render(); // On force un rafraîchissement des contrôles sans réinitialiser l'état
+Hooks.on('getSceneControlButtons', (controls) => {
+  if (game.user.isGM) {
+    let tokenControls = controls.find(c => c.name === "token");
+    if (tokenControls) {
+      for (let i = 1; i <= 4; i++) {
+        tokenControls.tools.push({
+          name: `synergy-tracker-${i}`,
+          title: `Synergy Group ${i}`,
+          icon: "fas fa-users",
+          button: true,
+          onClick: () => {
+            const tracker = game.weaveOfEchoes.additionalTrackers[`synergy-tracker-${i}`];
+            if (tracker) tracker.render(true);
+            else ui.notifications.warn(`Synergy Tracker ${i} not initialized`);
+          }
+        });
+      }
+    }
   }
-}
+});
 
+Hooks.on('updateSynergyTracker', (actor) => {
+  for (const trackerId in game.weaveOfEchoes.additionalTrackers) {
+    const tracker = game.weaveOfEchoes.additionalTrackers[trackerId];
+    tracker.calculateMaxSynergy();
+    tracker.render(false); // Mise à jour visuelle du tracker
+  }
+});
+
+function selectMember(element) {
+  console.log("Before adding class:", element.classList); // Afficher les classes avant l'ajout
+
+  // Supprimer la classe 'selected' des autres membres
+  document.querySelectorAll('.member-item.selected').forEach(item => {
+      item.classList.remove('selected');
+      console.log("Removed selected class from:", item.textContent);
+  });
+
+  // Ajouter la classe 'selected' à l'élément cliqué
+  element.classList.add('selected');
+  console.log("After adding class:", element.classList); // Afficher les classes après l'ajout
+}
+// Ensure this code runs after the tracker is rendered
+Hooks.on('renderSynergyTracker', (app, html) => {
+  html.find('.member-item').click(function () {
+    console.log("Click event triggered for:", this.textContent); // Log when the click event is triggered
+    selectMember(this);
+  });
+});
+
+Handlebars.registerHelper('includes', function(array, value, options) {
+  if (array && array.includes(value)) {
+      return options.fn(this);
+  }
+  return options.inverse(this);
+});
 
 /* -------------------------------------------- */
 /*  Hotbar Macros                               */
