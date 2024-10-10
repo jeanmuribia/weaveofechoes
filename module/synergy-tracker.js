@@ -261,7 +261,7 @@ _addSelectedMembers(html) {
     this._updateTracker();
   }
 }
-
+a
 
   updateGroupMembers(html) {
     const selectedMembers = Array.from(html.find('input[name="group-member"]:checked'))
@@ -317,37 +317,55 @@ _addSelectedMembers(html) {
 }
 
 calculateManeuverCost() {
-  const selectedCharacters = this.data.selectedCharacters.map(name => game.actors.getName(name));
-  if (selectedCharacters.length < 2) {
-    return "Select at least 2 characters"; // Afficher le message si moins de deux personnages sont sélectionnés
+  // Vérifier si au moins deux personnages sont sélectionnés
+  if (this.data.selectedCharacters.length < 2) {
+    return "Select at least 2 characters";
   }
 
-  let cost = 0;
+  let synergyCost = 0;
 
-  for (let i = 0; i < selectedCharacters.length; i++) {
-    for (let j = i + 1; j < selectedCharacters.length; j++) {
-      const char1 = selectedCharacters[i];
-      const char2 = selectedCharacters[j];
+  // Fonction pour transformer les niveaux de relation en valeurs de coût
+  const transformRelationValue = (value) => {
+    switch (value) {
+      case 3: return 1;  // Love
+      case 2: return 2;  // Friendship
+      case 1: return 3;  // Liking
+      case 0: return 4;  // Indifference
+      case -1: return 5; // Displeasure
+      case -2: return 6; // Hostility
+      case -3: return 7; // Hatred
+      default: return 4; // Par défaut, Indifference
+    }
+  };
 
-      // Vérifier que les objets char1 et char2 sont bien définis
-      if (!char1 || !char2) {
-        console.warn(`Un des personnages est indéfini : ${char1}, ${char2}`);
-        continue; // Si l'un des personnages n'est pas défini, passer à la prochaine paire
-      }
+  // Parcourir chaque paire de membres sélectionnés
+  for (let i = 0; i < this.data.selectedCharacters.length; i++) {
+    for (let j = i + 1; j < this.data.selectedCharacters.length; j++) {
+      const member1 = this.data.selectedCharacters[i];
+      const member2 = this.data.selectedCharacters[j];
+      
+      const actor1 = game.actors.getName(member1);
+      const actor2 = game.actors.getName(member2);
 
-      const rel1 = char1.system?.relationships?.find(r => r.characterName === char2.name);
-      const rel2 = char2.system?.relationships?.find(r => r.characterName === char1.name);
+      // Récupérer les niveaux de relation et les transformer en valeurs de coût
+      const relationAB = transformRelationValue(actor1.system.relationships.find(rel => rel.characterName === member2)?.relationshipLevel || 0);
+      const relationBA = transformRelationValue(actor2.system.relationships.find(rel => rel.characterName === member1)?.relationshipLevel || 0);
 
-      if (rel1 && rel2) {
-        const level1 = parseInt(rel1.relationshipLevel);
-        const level2 = parseInt(rel2.relationshipLevel);
-        cost += 8 - Math.abs(level1) - Math.abs(level2);
+      // Ajouter les coûts individuels à la synergie totale
+      synergyCost += relationAB + relationBA;
+
+      // Appliquer le discount si les relations sont mutuellement positives
+      if (relationAB === relationBA && (relationAB <= 3)) { // Vérifier si Love-Love, Friendship-Friendship ou Liking-Liking
+        synergyCost -= 2; // Réduction de 2 points pour les relations mutuellement positives
       }
     }
   }
 
-  return Math.max(1, cost);
+  // Assurez-vous que le coût de synergie est toujours au moins 1
+  return Math.max(1, synergyCost);
 }
+
+
   updateSynergyBasedOnRelationships(updatedActor) {
     if (this.data.characters.includes(updatedActor.name)) {
       // Recalculer la synergie maximale et le coût de la manœuvre
