@@ -566,3 +566,72 @@ button {
 .add-member:hover {
   background-color: #45a049; /* Couleur un peu plus foncée au survol */
 }
+
+/* Synergy Section of the relationship Tab */
+.character-synergy-container {
+  font-family: 'Roboto', sans-serif;
+  padding: 15px;
+  border-radius: 10px;
+  background-color: rgba(0, 0, 0, 0.05);
+  margin-bottom: 20px;
+}
+
+.character-group-members {
+  margin-bottom: 15px;
+}
+
+.character-member-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  background-color: #f0f0f0;
+  padding: 8px;
+  margin-bottom: 4px;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.character-member-item:hover {
+  background-color: #e0e0e0;
+}
+
+.character-member-item.selected {
+  background-color: #4CAF50 !important;
+  color: white !important;
+  box-shadow: 0 0 5px rgba(0,0,0,0.3);
+}
+
+.character-member-item.selected::after {
+  content: '✓';
+  position: absolute;
+  right: 10px;
+  font-weight: bold;
+}
+
+.character-member-name {
+  font-weight: bold;
+}
+
+.character-synergy-circle {
+  display: flex;
+  justify-content: space-around;
+  margin-bottom: 20px;
+}
+
+.character-synergy-values {
+  width: 120px;
+  height: 120px;
+  border-radius: 60px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #f0f0f0;
+  font-size: 16px;
+  text-align: center;
+  padding: 10px;
+}
+
+.character-synergy-values.no-cost {
+  font-size: 14px;
+}

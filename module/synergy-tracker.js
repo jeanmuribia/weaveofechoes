@@ -1,3 +1,6 @@
+import { WoeActorSheet } from '../module/sheets/actor-sheet.mjs';
+
+
 export class SynergyTracker extends Application {
   // Initialisation de la liste globale des membres assignés
   static assignedMembers = new Set();
@@ -56,10 +59,22 @@ export class SynergyTracker extends Application {
     html.find('.add-member').click(this._onAddMember.bind(this)); 
   }
 
+  updateCharacterSheets() {
+    this.data.characters.forEach(charName => {
+      const actor = game.actors.getName(charName);
+      if (actor && actor.sheet) {
+        actor.sheet.render(false);
+      }
+    });
+  }
+
   _onIncreaseMaxSynergy(event) {
     event.preventDefault();
     this.data.maxSynergy++;
     this._updateTracker();
+    this.updateCharacterSheets(); 
+
+
   }
 
   _onDecreaseMaxSynergy(event) {
@@ -68,6 +83,7 @@ export class SynergyTracker extends Application {
       this.data.maxSynergy--;
       this.data.currentSynergy = Math.min(this.data.currentSynergy, this.data.maxSynergy);
       this._updateTracker();
+      this.updateCharacterSheets(); 
     }
   }
 
@@ -85,6 +101,7 @@ export class SynergyTracker extends Application {
     if (this.data.currentSynergy < this.data.maxSynergy) {
       this.data.currentSynergy++;
       this._updateTracker();
+      this.updateCharacterSheets(); 
     }
   }
 
@@ -93,6 +110,7 @@ export class SynergyTracker extends Application {
     if (this.data.currentSynergy > 0) {
       this.data.currentSynergy--;
       this._updateTracker();
+      this.updateCharacterSheets(); 
     }
   }
 
@@ -100,12 +118,14 @@ export class SynergyTracker extends Application {
     event.preventDefault();
     this.data.currentSynergy = 0;
     this._updateTracker();
+    this.updateCharacterSheets(); 
   }
 
   _onFillPool(event) {
     event.preventDefault();
     this.data.currentSynergy = this.data.maxSynergy;
     this._updateTracker();
+    this.updateCharacterSheets(); 
   }
 
   _onResetMaxValue(event) {
@@ -113,6 +133,7 @@ export class SynergyTracker extends Application {
     this.data.maxSynergy = this.calculateMaxSynergy();
     this.data.currentSynergy = Math.min(this.data.currentSynergy, this.data.maxSynergy);
     this._updateTracker();
+    this.updateCharacterSheets(); 
   }
 
   _onManageMembers(event) {
@@ -260,6 +281,8 @@ _addSelectedMembers(html) {
     this.data.maxSynergy = this.calculateMaxSynergy();
     this._updateTracker();
   }
+
+  Hooks.call('updateSynergyGroup', this);
 }
 a
 
@@ -278,7 +301,7 @@ a
     const groupCharacters = this.data.characters.map(name => game.actors.getName(name));
 
     // Définir le nombre de points de base en fonction du nombre de personnages dans le groupe
-    const pointsDeBase = groupCharacters.length <= 3 ? 4 : 3;
+    const pointsDeBase = groupCharacters.length <= 3 ? 0 : 0;
 
     // Ajouter les points de base pour chaque personnage du groupe
     synergyScore += pointsDeBase * groupCharacters.length;
@@ -372,6 +395,24 @@ calculateManeuverCost() {
       this.data.maxSynergy = this.calculateMaxSynergy();
       this.data.currentSynergy = Math.min(this.data.currentSynergy, this.data.maxSynergy);
       this._updateTracker();
+    }
+  }
+
+  toggleMemberSelection(characterName) {
+    const index = this.data.selectedCharacters.indexOf(characterName);
+    if (index > -1) {
+      // Si le personnage est déjà sélectionné, le désélectionner
+      this.data.selectedCharacters.splice(index, 1);
+    } else {
+      // Sinon, l'ajouter aux personnages sélectionnés
+      this.data.selectedCharacters.push(characterName);
+    }
+    this.calculateManeuverCost();
+    this.render(false);
+    // Mettre à jour la fiche de personnage concernée
+    const actor = game.actors.getName(characterName);
+    if (actor && actor.sheet) {
+      actor.sheet.render(false);
     }
   }
 }

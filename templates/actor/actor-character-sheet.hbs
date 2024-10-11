@@ -288,7 +288,38 @@
 <!-- Relationships Tab -->
 <div class="tab" data-tab="relationships">
   <h2>Relationships</h2>
-  
+  <div class="character-synergy-container">
+  <h3>Group Members</h3>
+ <div class="character-group-members">
+  {{#each groupMembers}}
+    {{#unless this.isCurrentActor}}
+      <div class="character-member-item {{#if this.isSelected}}selected{{/if}}" data-character="{{this.name}}">
+        <span class="character-member-name">{{this.name}}</span>
+      </div>
+    {{/unless}}
+  {{/each}}
+</div>
+  <div class="character-synergy-container">
+  <div class="character-synergy-circle">
+    <div>
+      <h4>Group Synergy</h4>
+      <div class="character-synergy-values">
+        <span>{{currentSynergy}}/{{maxSynergy}}</span>
+      </div>
+    </div>
+    <div>
+      <h4>Synergic Maneuver Cost</h4>
+     <div class="character-synergy-values {{#if maneuverCost}}has-cost{{else}}no-cost{{/if}}">
+  {{#if maneuverCost}}
+    <span>{{maneuverCost}}</span>
+  {{else}}
+    <span>Select at least one mate</span>
+  {{/if}}
+</div>
+    </div>
+  </div>
+</div>
+  </div>
   <!-- Button to Add a New Relationship -->
   <button id="add-relationship">Add Relationship</button>
 

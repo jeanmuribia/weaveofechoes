@@ -37,6 +37,14 @@ Hooks.on("createActor", async (actor, options, userId) => {
   }
 });
 
+Hooks.on('updateSynergyGroup', (tracker) => {
+  game.actors.forEach(actor => {
+    if (actor.sheet && actor.sheet instanceof WoeActorSheet) {
+      actor.sheet.render(false);
+    }
+  });
+});
+
 export class WoeActorSheet extends ActorSheet {
 
 
@@ -45,6 +53,8 @@ export class WoeActorSheet extends ActorSheet {
     this.selectedAttribute = null;
     this.selectedTemper = null;
     this.selectedContext = null;
+    this.selectedMembers = [];
+    this.maneuverCost = null;
   }
 
   static get defaultOptions() {
@@ -91,6 +101,13 @@ export class WoeActorSheet extends ActorSheet {
       { value: 3, label: "Love" }
     ];
 
+    context.groupMembers = this.getGroupMembers();
+  context.currentSynergy = this.getCurrentSynergy();
+  context.maxSynergy = this.getMaxSynergy();
+  context.maneuverCost = this.maneuverCost;
+  console.log("Prepared data:", context);
+  return context;
+
     return context;
   }
 
@@ -119,12 +136,17 @@ export class WoeActorSheet extends ActorSheet {
     // Dice roll event listeners for tempers and attributes
     this.addDiceListeners(html);
 
+    html.find('.character-member-item').on('click', this._onGroupMemberClick.bind(this));;
+
     //maneuver listener
     html.find('#maneuver-button').on('click', (event) => {
       event.preventDefault();
       this.openManeuverWindow();  // Call the method to open the maneuver modal
+    
+      html.find('.member-item').click(this._onMemberSelection.bind(this));
+      
   });
-
+     
     // Relationship management (view, add, edit, delete)
     this.displayRelationships(html);
     this.addRelationshipListeners(html);
@@ -826,6 +848,138 @@ addRelationshipListeners(html) {
         ${level.label}</label>
     `).join('');
   }
+
+  getGroupMembers() {
+    const tracker = this.getAssociatedSynergyTracker();
+    if (tracker) {
+      return tracker.data.characters
+        .filter(char => char !== this.actor.name)
+        .map(char => ({
+          name: char,
+          isSelected: this.selectedMembers ? this.selectedMembers.includes(char) : false
+        }));
+    }
+    return [];
+  }
+
+  _onGroupMemberClick(event) {
+    console.log("Group member clicked:", event.currentTarget.dataset.character);
+    const characterName = event.currentTarget.dataset.character;
+    const clickedElement = event.currentTarget;
+    
+    // Toggle la classe 'selected' sur l'élément cliqué
+    clickedElement.classList.toggle('selected');
+    
+    // Mise à jour de la liste des membres sélectionnés
+    const index = this.selectedMembers.indexOf(characterName);
+    if (index > -1) {
+      this.selectedMembers.splice(index, 1);
+    } else {
+      this.selectedMembers.push(characterName);
+    }
+  
+    this.updateManeuverCost();
+    this.render(false);  // Forcer le rendu pour mettre à jour l'interface
+  }
+
+  updateManeuverCost() {
+    console.log("Updating maneuver cost");
+    this.maneuverCost = this.calculateManeuverCost();
+    console.log("New maneuver cost:", this.maneuverCost);
+    this.render(false);
+  }
+
+  calculateRelationshipCost(actor1, actor2) {
+    // Implémenter la logique de calcul du coût basée sur les relations
+    // Ceci est un exemple simplifié, ajustez selon vos règles spécifiques
+    const relationship1 = actor1.system.relationships.find(r => r.characterName === actor2.name);
+    const relationship2 = actor2.system.relationships.find(r => r.characterName === actor1.name);
+    
+    if (relationship1 && relationship2) {
+      // Exemple de calcul, à ajuster selon vos besoins
+      return Math.abs(relationship1.relationshipLevel) + Math.abs(relationship2.relationshipLevel);
+    }
+    return null;
+  }
+
+  getCurrentSynergy() {
+    const tracker = this.getAssociatedSynergyTracker();
+    return tracker ? tracker.data.currentSynergy : 0;
+  }
+
+  getMaxSynergy() {
+    const tracker = this.getAssociatedSynergyTracker();
+    return tracker ? tracker.data.maxSynergy : 0;
+  }
+
+  getManeuverCost() {
+    const tracker = this.getAssociatedSynergyTracker();
+    return tracker ? tracker.calculateManeuverCost() : 0;
+  }
+
+ calculateManeuverCost() {
+  console.log("Selected members:", this.selectedMembers);
+  
+  if (this.selectedMembers.length < 1) return null;
+
+  let synergyCost = 0;
+  const transformRelationValue = (value) => {
+    switch (value) {
+      case 3: return 1;
+      case 2: return 2;
+      case 1: return 3;
+      case 0: return 4;
+      case -1: return 5;
+      case -2: return 6;
+      case -3: return 7;
+      default: return 4;
+    }
+  };
+
+  // Inclure le personnage actuel dans les calculs
+  const allMembers = [this.actor, ...this.selectedMembers.map(name => game.actors.getName(name))];
+
+  for (let i = 0; i < allMembers.length; i++) {
+    for (let j = i + 1; j < allMembers.length; j++) {
+      const member1 = allMembers[i];
+      const member2 = allMembers[j];
+      
+      if (member1 && member2) {
+        const relationAB = transformRelationValue(member1.system.relationships.find(rel => rel.characterName === member2.name)?.relationshipLevel || 0);
+        const relationBA = transformRelationValue(member2.system.relationships.find(rel => rel.characterName === member1.name)?.relationshipLevel || 0);
+        
+        synergyCost += relationAB + relationBA;
+        
+        if (relationAB === relationBA && (relationAB <= 3)) {
+          synergyCost -= 2;
+        }
+      }
+    }
+  }
+
+  console.log("Calculated synergy cost:", synergyCost);
+  return Math.max(1, synergyCost);
+}
+
+  getAssociatedSynergyTracker() {
+    for (const trackerId in game.weaveOfEchoes.additionalTrackers) {
+      const tracker = game.weaveOfEchoes.additionalTrackers[trackerId];
+      if (tracker.data.characters.includes(this.actor.name)) {
+        return tracker;
+      }
+    }
+    console.warn(`No associated synergy tracker found for ${this.actor.name}`);
+    return null;
+  }
+
+  _onMemberSelection(event) {
+    const characterName = event.currentTarget.dataset.character;
+    const tracker = this.getAssociatedSynergyTracker();
+    if (tracker) {
+      tracker.toggleMemberSelection(characterName);
+      this.render(false);
+    }
+  }
 }
 
 // Dice rolling logic
@@ -870,3 +1024,4 @@ function formatResult(result) {
       return result;  // No change for Stalemate
   }
 }
+
