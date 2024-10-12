@@ -737,3 +737,60 @@ button {
   background-color: #f0f0f0;
   border-radius: 5px;
 }
+
+
+.focus-points-container {
+  display: flex;
+  align-items: center;
+  margin-top: 10px;
+}
+
+.focus-points-circle {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background-color: #f0f0f0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  margin-right: 10px;
+}
+
+.focus-points-label {
+  font-size: 12px;
+}
+
+.focus-points-value {
+  font-size: 24px;
+  font-weight: bold;
+}
+
+.focus-points-visibility {
+  display: flex;
+  align-items: center;
+}
+
+.focus-tracker-content {
+  margin-bottom: 20px;
+}
+
+.focus-tracker-actor {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.focus-tracker-actor button {
+  margin-left: 5px;
+}
+
+.focus-tracker-group-selection {
+  margin-bottom: 20px;
+}
+
+.focus-tracker-group-selection label {
+  display: block;
+  margin-bottom: 5px;
+}
+

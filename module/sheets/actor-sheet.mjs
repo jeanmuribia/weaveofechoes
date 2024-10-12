@@ -109,9 +109,30 @@ export class WoeActorSheet extends ActorSheet {
     context.maneuverCost = this.calculateManeuverCost();
     context.isSynergyHidden = this.actor.getFlag('weave_of_echoes', 'synergyHidden') || false;
 
+    //focus point
+    this._prepareFocusPointsData(context);
+
     console.log("Prepared data:", context);
     return context;
+
+   
   }
+
+  _prepareFocusPointsData(sheetData) {
+    const actorData = sheetData;
+
+    // Ensure focus points data exists
+    if (!actorData.system.focusPoints) {
+      actorData.system.focusPoints = {
+        base: 0,
+        current: 0,
+        isVisible: false
+      };
+    }
+
+    sheetData.focusPoints = actorData.system.focusPoints;
+  }
+  
   // Activate Listeners for sheet interactions
   activateListeners(html) {
     super.activateListeners(html);
@@ -127,6 +148,12 @@ export class WoeActorSheet extends ActorSheet {
 
     // Enable editing for tempers and attributes
     this.enableAttributeEditing(html);
+
+    //Visibility of the focus points
+    html.find('input[name="system.focusPoints.isVisible"]').change(this._onFocusPointsVisibilityChange.bind(this));
+    // Add and Subtract Focus Points
+    html.find('.focus-add').click(this._onAddFocusPoints.bind(this));
+    html.find('.focus-subtract').click(this._onSubtractFocusPoints.bind(this));
 
     // Handle Wound listeners for attributes
     this.manageAttributeWounds(html);
@@ -147,6 +174,8 @@ export class WoeActorSheet extends ActorSheet {
       html.find('.member-item').click(this._onMemberSelection.bind(this));
       
   });
+
+    
      
     // Relationship management (view, add, edit, delete)
     this.displayRelationships(html);
@@ -333,6 +362,69 @@ disableTraumatizedTempers(html) {
   });
 }
 
+
+async _onFocusPointsVisibilityChange(event) {
+  event.preventDefault();
+  const isVisible = event.target.checked;
+  await this.actor.update({ "system.focusPoints.isVisible": isVisible });
+}
+
+async _onAddFocusPoints(event) {
+  event.preventDefault();
+  const currentFocus = this.actor.system.focusPoints.current;
+  await this.actor.update({ "system.focusPoints.current": currentFocus + 1 });
+}
+
+async _onSubtractFocusPoints(event) {
+  event.preventDefault();
+  const currentFocus = this.actor.system.focusPoints.current;
+  if (currentFocus > 0) {
+    await this.actor.update({ "system.focusPoints.current": currentFocus - 1 });
+  }
+}
+
+updateFocusPointsFromRelationships() {
+  const groupMembers = this.getGroupMembers().map(m => m.name);
+  this.calculateBaseFocusPoints(groupMembers);
+}
+
+  /**
+   * Calcule les Focus Points de base pour l'acteur
+   * @param {Array} groupMembers - Les membres du groupe sélectionnés dans le Focus Tracker
+   */
+  calculateBaseFocusPoints(groupMembers) {
+    let baseFocus = 0;
+    const relationships = this.actor.system.relationships || [];
+
+    relationships.forEach(relation => {
+      if (groupMembers.includes(relation.characterName)) {
+        switch (relation.relationshipLevel) {
+          case -3: // Hatred
+            baseFocus += 3;
+            break;
+          case -2: // Hostility
+            baseFocus += 2;
+            break;
+          case -1: // Dislike
+            baseFocus += 1;
+            break;
+        }
+      }
+    });
+
+    this.actor.update({ 
+      'system.focusPoints.base': baseFocus,
+      'system.focusPoints.current': Math.max(baseFocus, this.actor.system.focusPoints.current)
+    });
+  }
+    /**
+   * Modifie les Focus Points actuels
+   * @param {number} amount - La quantité à ajouter (ou soustraire si négatif)
+   */
+    modifyCurrentFocusPoints(amount) {
+      const newCurrent = Math.max(0, this.actor.system.focusPoints.current + amount);
+      this.actor.update({ 'system.focusPoints.current': newCurrent });
+    }
 
 
 

@@ -8,6 +8,7 @@ import { WoeItemSheet } from './sheets/item-sheet.mjs';
 import { preloadHandlebarsTemplates } from './helpers/templates.mjs';
 import { WOE } from './helpers/config.mjs';
 import { SynergyTracker } from './synergy-tracker.js';
+import { FocusTracker } from './focus-tracker.mjs';
 
 /* -------------------------------------------- */
 /*  Init Hook                                   */
@@ -97,10 +98,10 @@ Hooks.once('init', function () {
 Hooks.once('ready', () => {
   if (game.user.isGM) {
     const colors = ['#FFB3BA', '#BAFFC9', '#BAE1FF', '#FFFFBA'];
-    // Nous n'ajoutons plus tous les personnages au groupe 1 par défaut
+    // Initialisation des Synergy Trackers
     for (let i = 1; i <= 4; i++) {
       const trackerId = `synergy-tracker-${i}`;
-      const charactersInGroup = []; // Initialiser chaque groupe, y compris le groupe 1, comme vide
+      const charactersInGroup = [];
 
       game.weaveOfEchoes.additionalTrackers[trackerId] = new SynergyTracker({
         appId: trackerId,
@@ -113,6 +114,14 @@ Hooks.once('ready', () => {
         }
       });
     }
+
+    // Initialisation du Focus Tracker
+    game.weaveOfEchoes.focusTracker = new FocusTracker({
+      data: {
+        members: []  // Initialisation avec un tableau vide
+      }
+    });
+    game.weaveOfEchoes.focusTracker.render(true);
   }
 });
 
@@ -120,22 +129,25 @@ Hooks.on('getSceneControlButtons', (controls) => {
   if (game.user.isGM) {
     let tokenControls = controls.find(c => c.name === "token");
     if (tokenControls) {
-      for (let i = 1; i <= 4; i++) {
-        tokenControls.tools.push({
-          name: `synergy-tracker-${i}`,
-          title: `Synergy Group ${i}`,
-          icon: "fas fa-users",
-          button: true,
-          onClick: () => {
-            const tracker = game.weaveOfEchoes.additionalTrackers[`synergy-tracker-${i}`];
-            if (tracker) tracker.render(true);
-            else ui.notifications.warn(`Synergy Tracker ${i} not initialized`);
-          }
-        });
-      }
+      tokenControls.tools.push({
+        name: "focus-tracker",
+        title: "Focus Tracker",
+        icon: "fas fa-bullseye",
+        button: true,
+        onClick: () => game.weaveOfEchoes.focusTracker.render(true)
+      });
     }
   }
 });
+
+// Mettre à jour le Focus Tracker quand les relations changent
+Hooks.on('updateActor', (actor, changes, options, userId) => {
+  if (changes.system?.relationships && game.user.isGM) {
+    game.weaveOfEchoes.focusTracker.render();
+  }
+});
+
+
 
 Hooks.on('updateSynergyTracker', (actor) => {
   for (const trackerId in game.weaveOfEchoes.additionalTrackers) {

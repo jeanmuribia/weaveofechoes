@@ -59,3 +59,38 @@ As the GM, you'll have access to a "Generate Synergy Points" button on your scre
 
 Manual Synergy Points Management (GM Feature):
 As the GM, you'll also have the ability to manually add or remove synergy points for the characters. This will be done through + and - buttons, allowing you to adjust the synergy points as needed.
+
+
+
+D'accord, je comprends la nouvelle fonctionnalité de Focus Point que vous souhaitez implémenter. Voici une liste structurée des éléments à mettre en place pour cette fonctionnalité :
+
+Modifications de l'Actor Sheet (actor-character-sheet.hbs et actor-sheet.mjs) :
+a. Ajouter un cercle avec le label "Focus Points" affichant le nombre de points actuels.
+b. Implémenter une case à cocher pour la visibilité du Focus Point.
+c. Mettre à jour dynamiquement l'affichage des Focus Points en fonction des changements.
+Création du module Focus Tracker (focus-tracker.mjs et focus-tracker.hbs) :
+a. Créer une fenêtre similaire au Synergy Tracker.
+b. Implémenter une liste de personnages avec leurs Focus Points.
+c. Ajouter des boutons +, -, et "Generate" pour chaque personnage.
+d. Ajouter un bouton "Generate All Focus" en bas du module.
+e. Implémenter la logique de calcul des Focus Points basée sur les relations.
+Modifications de l'Actor (actor.mjs) :
+a. Ajouter des propriétés pour stocker les Focus Points (base, current, visibility).
+b. Implémenter des méthodes pour calculer et mettre à jour les Focus Points.
+Modifications du fichier principal (weave_of_echoes.mjs) :
+a. Intégrer le nouveau Focus Tracker au système.
+b. Ajouter des hooks pour mettre à jour les Focus Points lors des changements de relations ou de groupe.
+Mise à jour du CSS (weave_of_echoes.css) :
+a. Ajouter des styles pour le cercle de Focus Points sur l'Actor Sheet.
+b. Créer des styles pour le nouveau module Focus Tracker.
+Logique de calcul des Focus Points :
+a. Implémenter la formule de calcul basée sur les relations négatives.
+b. Mettre à jour dynamiquement les valeurs en fonction des changements de relations et de groupe.
+Gestion de la visibilité :
+a. Implémenter la logique pour cacher/afficher les Focus Points en fonction de la case à cocher.
+b. Assurer que seul le MJ et le propriétaire du personnage peuvent voir les Focus Points cachés.
+Intégration avec le système existant :
+a. S'assurer que le Focus Tracker fonctionne en harmonie avec le Synergy Tracker existant.
+b. Vérifier que les mises à jour des relations affectent correctement les Focus Points.
+
+Avant de commencer l'implémentation, il serait judicieux de créer des maquettes ou des diagrammes pour visualiser l'interface utilisateur et les flux de données. Ensuite, nous pourrons procéder à l'implémentation étape par étape, en commençant par les modifications de l'Actor et de l'Actor Sheet, puis en créant le nouveau module Focus Tracker.

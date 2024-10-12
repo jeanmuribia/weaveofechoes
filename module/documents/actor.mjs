@@ -12,6 +12,15 @@ export class WoeActor extends Actor {
       };
     }
 
+    //initialize Focus Points
+    if (!systemData.focusPoints) {
+      systemData.focusPoints = {
+        base: 0,
+        current: 0,
+        isVisible: false
+      };
+    }
+
     // Ensure attributes are initialized for all keys, including "mind" and "elementary"
     const attributes = ["body", "soul", "mind", "martial", "elementary", "rhetoric"];
     attributes.forEach(attr => {

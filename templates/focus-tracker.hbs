@@ -1,0 +1,24 @@
+{{!-- focus-tracker.hbs --}}
+
+<form>
+  <div class="focus-tracker-content">
+    <button id="manage-members">Manage Members</button>
+    <div class="member-list">
+  {{#each members}}
+  <div class="member-item">
+    {{this}}
+    <button class="remove-member" data-member="{{this}}">Remove</button>
+  </div>
+{{/each}}
+  </div>
+  <div class="focus-tracker-group-selection">
+    <h3>Select Group Members:</h3>
+    {{#each actors}}
+    <label>
+      <input type="checkbox" class="group-member-select" value="{{name}}" {{#if (includes ../selectedGroupMembers name)}}checked{{/if}}>
+      {{name}}
+    </label>
+    {{/each}}
+  </div>
+  <button class="focus-generate-all">Generate All Focus</button>
+</form>

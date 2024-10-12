@@ -64,6 +64,17 @@
     <button id="stamina-increase" type="button" style="margin-left: 5px;">+</button>
   </div>
 
+  <div class="focus-points-container">
+  <div class="focus-points-circle">
+    <span class="focus-points-label">Focus Points</span>
+    <span class="focus-points-value">{{system.focusPoints.current}}</span>
+  </div>
+  <label class="focus-points-visibility">
+    <input type="checkbox" name="system.focusPoints.isVisible" {{checked system.focusPoints.isVisible}}>
+    Show Focus Points
+  </label>
+</div>
+
   <!-- Tempers Section -->
 <h2>Tempers</h2>
 
