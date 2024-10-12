@@ -480,15 +480,6 @@ button {
   margin-bottom: 20px;
 }
 
-.member-item {
-  position: relative; /* Permet le positionnement absolu du bouton */
-  display: flex;
-  align-items: center;
-  background-color: #f0f0f0;
-  padding: 10px;
-  margin-bottom: 5px;
-  border-radius: 3px;
-}
 
 .member-name {
   font-weight: bold; /* Mettre le nom en gras */
@@ -634,4 +625,84 @@ button {
 
 .character-synergy-values.no-cost {
   font-size: 14px;
+}
+
+.grid-container {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  align-items: center;
+  gap: 20px; /* Augmenter l'espace entre les colonnes */
+}
+
+.eye-toggle-container, .remove-member-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.eye-toggle, .remove-member {
+  width: 24px; /* Légèrement plus grand pour une meilleure cliquabilité */
+  height: 24px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+}
+
+.eye-toggle {
+  margin-right: 10px; /* Augmenter l'espace à droite de l'icône de l'œil */
+}
+
+.remove-member {
+  background-color: red;
+  color: white;
+  border-radius: 50%;
+}
+
+
+.member-item {
+  flex-grow: 1;
+  background-color: #e0e0e0;
+  padding: 5px;
+  border-radius: 5px;
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width: 100%;
+  cursor: pointer;
+}
+
+.member-item:hover {
+  background-color: #d0d0d0;
+}
+
+.member-item.selected {
+  background-color: #4CAF50 !important;
+  color: white !important;
+}
+
+.eye-toggle i {
+  color: #000;
+  transition: color 0.2s ease-in-out;
+}
+
+.eye-toggle:hover i {
+  color: #d3d3d3;
+}
+
+.remove-member:hover {
+  background-color: #cc0000;
+}
+
+
+/* Optionnel : ajuster la taille du conteneur des membres si nécessaire */
+.member-item-container {
+  padding: 5px 0;
+}
+
+.member-name {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }

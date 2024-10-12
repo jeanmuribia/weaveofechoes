@@ -28,19 +28,22 @@ export class SynergyTracker extends Application {
   }
 
   getData() {
-    const maneuverCost = this.calculateManeuverCost();
+    const selectedCharactersObj = this.data.selectedCharacters.reduce((acc, char) => {
+      acc[char] = true;
+      return acc;
+    }, {});
+  
     return {
       currentSynergy: this.data.currentSynergy,
       maxSynergy: this.data.maxSynergy,
       characters: this.data.characters,
-      selectedCharacters: this.data.selectedCharacters,
+      selectedCharacters: selectedCharactersObj,
       color: this.data.color,
       title: this.options.title,
       appId: this.appId,
-      maneuverCost: maneuverCost // Afficher soit le coût, soit le message selon le nombre de personnages sélectionnés
+      maneuverCost: this.calculateManeuverCost()
     };
   }
-
   
   activateListeners(html) {
     super.activateListeners(html);
@@ -56,7 +59,8 @@ export class SynergyTracker extends Application {
     html.find('#apply-synergy-cost').click(this._onApplySynergyCost.bind(this));
     html.find('.member-item').click(this._onMemberSelection.bind(this));
     html.find('.remove-member').click(this._onRemoveMember.bind(this));
-    html.find('.add-member').click(this._onAddMember.bind(this)); 
+    html.find('.add-member').click(this._onAddMember.bind(this));
+    html.find('.eye-toggle').click(this._onEyeToggle.bind(this));
   }
 
   updateCharacterSheets() {
@@ -66,6 +70,23 @@ export class SynergyTracker extends Application {
         actor.sheet.render(false);
       }
     });
+  }
+
+  _onEyeToggle(event) {
+    event.preventDefault();
+    const button = $(event.currentTarget);
+    const characterName = button.data('character');
+  
+    // Toggle the eye icon
+    button.find('i').toggleClass('fa-eye fa-eye-slash');
+  
+    // Update the actor with GM-blocked state
+    const actor = game.actors.getName(characterName);
+    if (actor) {
+      const isBlocked = button.find('i').hasClass('fa-eye-slash');
+      actor.setFlag('weave_of_echoes', 'gmBlocked', isBlocked);
+      actor.sheet.render(false);  // Refresh actor sheet
+    }
   }
 
   _onIncreaseMaxSynergy(event) {
@@ -143,18 +164,23 @@ export class SynergyTracker extends Application {
 
   _onMemberSelection(event) {
     const characterName = event.currentTarget.dataset.character;
-    const index = this.data.selectedCharacters.indexOf(characterName);
-    if (index > -1) {
-        this.data.selectedCharacters.splice(index, 1);
-        event.currentTarget.classList.remove('selected');
-    } else {
-        this.data.selectedCharacters.push(characterName);
-        event.currentTarget.classList.add('selected');
+    
+    if (!Array.isArray(this.data.selectedCharacters)) {
+      this.data.selectedCharacters = [];
     }
-
-    // Mettre à jour les données avant le rendu pour s'assurer que l'état est conservé
-    this._updateTracker();
-}
+  
+    const index = this.data.selectedCharacters.indexOf(characterName);
+    
+    if (index > -1) {
+      // Si le personnage est déjà sélectionné, le désélectionner
+      this.data.selectedCharacters.splice(index, 1);
+    } else {
+      // Sinon, l'ajouter à la liste des personnages sélectionnés
+      this.data.selectedCharacters.push(characterName);
+    }
+  
+    this.render(false); // Re-rendre le tracker pour refléter les changements
+  }
 
 _onRemoveMember(event) {
   event.preventDefault();
