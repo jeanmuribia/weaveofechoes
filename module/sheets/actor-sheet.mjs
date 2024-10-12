@@ -1,5 +1,9 @@
 import { onManageActiveEffect, prepareActiveEffectCategories } from '../helpers/effects.mjs';
-
+// Helper personnalisé "includes"
+Handlebars.registerHelper('includes', function(array, value) {
+  if (!Array.isArray(array)) return false; // Si "array" n'est pas un tableau
+  return array.includes(value); // Retourne vrai si "value" est présent dans "array"
+});
 // Helper function to capitalize the first letter of a string
 function toUpperCaseValue(value) {
   if (!value) return '';
@@ -74,23 +78,22 @@ export class WoeActorSheet extends ActorSheet {
     return `systems/weave_of_echoes/templates/actor/actor-character-sheet.hbs`;
   }
 
-  // Prepare data and make sure system values are set correctly
   async getData() {
-    const context = super.getData();
-    const actorData = this.document.toObject(false);
-
+    const context = await super.getData();
+    const actorData = this.actor.toObject(false);
+  
     // Ensure tempers are initialized with baseValue and currentValue
     ['fire', 'water', 'earth', 'air'].forEach(temper => {
       if (!actorData.system.tempers[temper].baseValue) actorData.system.tempers[temper].baseValue = 'neutral';
       if (!actorData.system.tempers[temper].currentValue) actorData.system.tempers[temper].currentValue = 'neutral';
     });
-
+  
     // Available actors for relationship dropdown
     context.actors = game.actors.filter(actor => actor.id !== this.actor.id && actor.type === "character");
     context.system = actorData.system;
     context.actorName = this.actor.name;
-
-    //relationship Levels
+  
+    // Relationship Levels
     context.relationshipLevels = [
       { value: -3, label: "Hatred" },
       { value: -2, label: "Hostility" },
@@ -100,14 +103,14 @@ export class WoeActorSheet extends ActorSheet {
       { value: 2, label: "Friendship" },
       { value: 3, label: "Love" }
     ];
-
+  
     context.groupMembers = this.getGroupMembers();
-  context.currentSynergy = this.getCurrentSynergy();
-  context.maxSynergy = this.getMaxSynergy();
-  context.maneuverCost = this.maneuverCost;
-  console.log("Prepared data:", context);
-  return context;
-
+    context.currentSynergy = this.getCurrentSynergy();
+    context.maxSynergy = this.getMaxSynergy();
+    context.maneuverCost = this.actor.getFlag("weave_of_echoes", "maneuverCost") || "Select characters";
+    const tracker = this.getAssociatedSynergyTracker();
+    context.isSynergyVisible = tracker ? tracker.data.visibleToPlayers[this.actor.name] : false;
+  
     return context;
   }
 
@@ -143,7 +146,7 @@ export class WoeActorSheet extends ActorSheet {
       event.preventDefault();
       this.openManeuverWindow();  // Call the method to open the maneuver modal
     
-      html.find('.member-item').click(this._onMemberSelection.bind(this));
+      // html.find('.member-item').click(this._onMemberSelection.bind(this));
       
   });
      
@@ -197,6 +200,8 @@ export class WoeActorSheet extends ActorSheet {
   html.find('#martial-view').on('click', () => this.rollTemperOrAttribute('martial', 'attributes'));
   html.find('#elementary-view').on('click', () => this.rollTemperOrAttribute('elementary', 'attributes'));
   html.find('#rhetoric-view').on('click', () => this.rollTemperOrAttribute('rhetoric', 'attributes'));
+
+  html.find('.character-member-item').click(this._onGroupMemberClick.bind(this))
   }
 
   rollTemperOrAttribute(field, type) {
@@ -850,43 +855,50 @@ addRelationshipListeners(html) {
   }
 
   getGroupMembers() {
-    const tracker = this.getAssociatedSynergyTracker();
-    if (tracker) {
-      return tracker.data.characters
-        .filter(char => char !== this.actor.name)
-        .map(char => ({
-          name: char,
-          isSelected: this.selectedMembers ? this.selectedMembers.includes(char) : false
-        }));
-    }
-    return [];
+    return this.actor.getFlag("weave_of_echoes", "groupMembers") || [];
   }
+
 
   _onGroupMemberClick(event) {
-    console.log("Group member clicked:", event.currentTarget.dataset.character);
     const characterName = event.currentTarget.dataset.character;
-    const clickedElement = event.currentTarget;
+    let selectedMembers = this.actor.getFlag("weave_of_echoes", "selectedGroupMembers") || [];
     
-    // Toggle la classe 'selected' sur l'élément cliqué
-    clickedElement.classList.toggle('selected');
-    
-    // Mise à jour de la liste des membres sélectionnés
-    const index = this.selectedMembers.indexOf(characterName);
-    if (index > -1) {
-      this.selectedMembers.splice(index, 1);
+    if (selectedMembers.includes(characterName)) {
+      selectedMembers = selectedMembers.filter(name => name !== characterName);
     } else {
-      this.selectedMembers.push(characterName);
+      selectedMembers.push(characterName);
     }
-  
+    
+    this.actor.setFlag("weave_of_echoes", "selectedGroupMembers", selectedMembers);
     this.updateManeuverCost();
-    this.render(false);  // Forcer le rendu pour mettre à jour l'interface
+    this.render(false);
   }
 
+updateCharacterSelectionVisuals() {
+  // Récupérer tous les personnages de l'actor sheet
+  const characters = this.actor.system.relationships.map(rel => rel.characterName);
+
+  // Réinitialiser toutes les classes `synergy-highlight` pour chaque personnage
+  characters.forEach(character => {
+    const element = document.querySelector(`[data-character="${character}"]`);
+    if (element) {
+      element.classList.remove('synergy-highlight');
+    }
+  });
+
+  // Ajouter la classe `synergy-highlight` seulement aux personnages sélectionnés
+  this.selectedMembers.forEach(character => {
+    const element = document.querySelector(`[data-character="${character}"]`);
+    if (element) {
+      element.classList.add('synergy-highlight');
+    }
+  });
+}
+
   updateManeuverCost() {
-    console.log("Updating maneuver cost");
-    this.maneuverCost = this.calculateManeuverCost();
-    console.log("New maneuver cost:", this.maneuverCost);
-    this.render(false);
+    const selectedMembers = [this.actor.name, ...this.actor.getFlag("weave_of_echoes", "selectedGroupMembers") || []];
+    const cost = this.calculateManeuverCost(selectedMembers);
+    this.actor.setFlag("weave_of_echoes", "maneuverCost", cost);
   }
 
   calculateRelationshipCost(actor1, actor2) {
@@ -917,59 +929,61 @@ addRelationshipListeners(html) {
     return tracker ? tracker.calculateManeuverCost() : 0;
   }
 
- calculateManeuverCost() {
-  console.log("Selected members:", this.selectedMembers);
+  calculateManeuverCost() {
+  const selectedMembers = [this.actor.name, ...(this.actor.getFlag("weave_of_echoes", "selectedGroupMembers") || [])];
   
-  if (this.selectedMembers.length < 1) return null;
-
-  let synergyCost = 0;
-  const transformRelationValue = (value) => {
-    switch (value) {
-      case 3: return 1;
-      case 2: return 2;
-      case 1: return 3;
-      case 0: return 4;
-      case -1: return 5;
-      case -2: return 6;
-      case -3: return 7;
-      default: return 4;
-    }
-  };
-
-  // Inclure le personnage actuel dans les calculs
-  const allMembers = [this.actor, ...this.selectedMembers.map(name => game.actors.getName(name))];
-
-  for (let i = 0; i < allMembers.length; i++) {
-    for (let j = i + 1; j < allMembers.length; j++) {
-      const member1 = allMembers[i];
-      const member2 = allMembers[j];
-      
-      if (member1 && member2) {
-        const relationAB = transformRelationValue(member1.system.relationships.find(rel => rel.characterName === member2.name)?.relationshipLevel || 0);
-        const relationBA = transformRelationValue(member2.system.relationships.find(rel => rel.characterName === member1.name)?.relationshipLevel || 0);
-        
-        synergyCost += relationAB + relationBA;
-        
-        if (relationAB === relationBA && (relationAB <= 3)) {
-          synergyCost -= 2;
+  if (selectedMembers.length < 2) {
+    return "Select at least 1 other group member";
+  }
+  
+    let synergyCost = 0;
+    const relationshipValues = {
+      3: 1,  // Love
+      2: 2,  // Friendship
+      1: 3,  // Liking
+      0: 4,  // Indifference
+      "-1": 5, // Displeasure
+      "-2": 6, // Hostility
+      "-3": 7  // Hatred
+    };
+  
+    for (let i = 0; i < this.data.selectedCharacters.length; i++) {
+      for (let j = i + 1; j < this.data.selectedCharacters.length; j++) {
+        const char1 = game.actors.getName(this.data.selectedCharacters[i]);
+        const char2 = game.actors.getName(this.data.selectedCharacters[j]);
+  
+        if (char1 && char2) {
+          const relation1 = char1.system.relationships.find(r => r.characterName === char2.name);
+          const relation2 = char2.system.relationships.find(r => r.characterName === char1.name);
+  
+          console.log(`Relation between ${char1.name} and ${char2.name}:`, relation1, relation2);
+  
+          // Convertir relationshipLevel en nombre et l'utiliser comme clé pour relationshipValues
+          const cost1 = relationshipValues[Number(relation1?.relationshipLevel)] || 4;
+          const cost2 = relationshipValues[Number(relation2?.relationshipLevel)] || 4;
+  
+          console.log(`Costs: ${cost1}, ${cost2}`);
+  
+          synergyCost += cost1 + cost2;
+  
+          // Appliquer la réduction si les relations sont identiques et positives
+          if (relation1?.relationshipLevel === relation2?.relationshipLevel &&
+              [3, 2, 1].includes(Number(relation1?.relationshipLevel))) {
+            synergyCost -= 2;
+            console.log("Applied discount for matching positive relationships");
+          }
         }
       }
     }
+  
+    console.log("Final calculated synergy cost:", synergyCost);
+    return Math.max(1, synergyCost);
   }
 
-  console.log("Calculated synergy cost:", synergyCost);
-  return Math.max(1, synergyCost);
-}
-
   getAssociatedSynergyTracker() {
-    for (const trackerId in game.weaveOfEchoes.additionalTrackers) {
-      const tracker = game.weaveOfEchoes.additionalTrackers[trackerId];
-      if (tracker.data.characters.includes(this.actor.name)) {
-        return tracker;
-      }
-    }
-    console.warn(`No associated synergy tracker found for ${this.actor.name}`);
-    return null;
+    return Object.values(game.weaveOfEchoes.additionalTrackers).find(tracker => 
+      tracker.data.characters.includes(this.actor.name)
+    );
   }
 
   _onMemberSelection(event) {
@@ -1024,4 +1038,5 @@ function formatResult(result) {
       return result;  // No change for Stalemate
   }
 }
+
 

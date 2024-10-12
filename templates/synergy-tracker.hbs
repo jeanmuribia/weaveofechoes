@@ -23,21 +23,25 @@
     <button id="reset-max-value">Reset Max Value</button>
   </div>
   
- <div class="group-members-container">
+<div class="group-members-container">
   <h3>Group Members</h3>
-  <div class="add-member-container">
-    <button class="add-member">Add Members</button>
+  <button id="add-members" class="add-member">Add Members</button>
+{{#each characters}}
+  <div class="member-item" data-character="{{this}}">
+    <button class="synergy-character-button {{#if (lookup ../selectedCharacters this)}}selected synergy-highlight{{/if}}" data-character="{{this}}">
+      {{this}}
+    </button>
+    <button class="synergy-toggle-visibility" data-character="{{this}}">
+      {{#if (lookup ../visibleToPlayers this)}}
+        <i class="fas fa-eye"></i>
+      {{else}}
+        <i class="fas fa-eye-slash"></i>
+      {{/if}}
+    </button>
+    <button class="remove-member" data-character="{{this}}">-</button>
   </div>
-  <div class="group-members-list">
-    {{#each characters as |character|}}
-      <div class="member-item {{#includes ../selectedCharacters character}}selected{{/includes}}" data-character="{{character}}">
-        <span class="member-name">{{character}}</span>
-        <button class="remove-member" data-character="{{character}}">-</button>
-      </div>
-    {{/each}}
-  </div>
+{{/each}}
 </div>
-
   <div class="maneuver-section">
     <h3>Synergic Maneuver</h3>
     <div class="synergy-cost">

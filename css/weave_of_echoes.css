@@ -481,13 +481,25 @@ button {
 }
 
 .member-item {
-  position: relative; /* Permet le positionnement absolu du bouton */
   display: flex;
   align-items: center;
-  background-color: #f0f0f0;
-  padding: 10px;
   margin-bottom: 5px;
-  border-radius: 3px;
+}
+
+.character-button {
+  flex-grow: 1;
+  text-align: left;
+  padding: 5px 10px;
+  background-color: #f0f0f0; /* Couleur de fond de base */
+  color: black; /* Couleur du texte par défaut */
+  border: none;
+  border-radius: 4px 0 0 4px;
+  cursor: pointer;
+}
+
+.character-button.synergy-highlight {
+  background-color: #4CAF50; /* Vert pour la sélection */
+  color: white; /* Texte en blanc lors de la sélection */
 }
 
 .member-name {
@@ -495,33 +507,49 @@ button {
 }
 
 .remove-member {
-  position: absolute;
-  right: 10px; /* À quelques pixels de la bordure droite */
-  width: 20px;
-  height: 20px;
-  background-color: red;
-  color: white; /* Couleur du "-" */
-  border: none;
-  border-radius: 50%; /* Rend le bouton circulaire */
-  cursor: pointer;
+  border-radius: 50%; /* Bouton rond */
+  background-color: #f44336; /* Rouge pour supprimer */
+  color: white;
+  width: 30px;
+  height: 30px;
   display: flex;
-  justify-content: center;
   align-items: center;
-  font-weight: bold;
-  font-size: 16px; /* Taille du symbole "-" pour une meilleure visibilité */
+  justify-content: center;
 }
 
 .remove-member:hover {
   background-color: darkred; /* Changer la couleur lors du survol */
 }
-.member-item:hover {
-  background-color: #e0e0e0;
+
+
+.member-controls {
+  display: flex;
 }
 
-.member-item.selected {
-  background-color: #4CAF50 !important;
-  color: white !important;
-  border: 2px solid #45a049 !important;
+.toggle-visibility {
+  background-color: #f0f0f0; /* Couleur de fond par défaut */
+  color: black; /* Icône en noir */
+  border: none;
+  cursor: pointer;
+  border-radius: 50%; /* Bouton rond */
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.toggle-visibility:hover {
+  background-color: #e0e0e0; /* Couleur de fond au survol */
+}
+
+.toggle-visibility.active {
+  content: url('path-to-your-icon-barré'); /* Changer l'icône lors de la sélection */
+}
+
+
+.toggle-visibility, .remove-member {
+  margin-left: 5px;
 }
 
 #reset-max-value {
@@ -549,22 +577,23 @@ button {
 
 .add-member-container {
   display: flex;
-  justify-content: flex-end; /* Aligne le bouton "Add Members" à droite */
+  justify-content: center; /* Centrer le bouton */
   margin-bottom: 10px; /* Ajouter un espace entre le bouton et la liste des membres */
 }
 
 .add-member {
+  width: 100%;
+  margin-bottom: 10px;
+  padding: 5px;
   background-color: #4CAF50;
   color: white;
   border: none;
-  border-radius: 5px;
-  padding: 5px 10px;
+  border-radius: 4px;
   cursor: pointer;
-  font-weight: bold;
 }
 
 .add-member:hover {
-  background-color: #45a049; /* Couleur un peu plus foncée au survol */
+  background-color: #45a049;
 }
 
 /* Synergy Section of the relationship Tab */
@@ -596,13 +625,13 @@ button {
   background-color: #e0e0e0;
 }
 
-.character-member-item.selected {
+.character-member-item.synergy-highlight {
   background-color: #4CAF50 !important;
   color: white !important;
   box-shadow: 0 0 5px rgba(0,0,0,0.3);
 }
 
-.character-member-item.selected::after {
+.character-member-item.synergy-highlight::after {
   content: '✓';
   position: absolute;
   right: 10px;
@@ -634,4 +663,92 @@ button {
 
 .character-synergy-values.no-cost {
   font-size: 14px;
+}
+
+/* .character-member-item:not(.clickable) {
+  cursor: default;
+  opacity: 0.7;
+} */
+
+.hidden-synergy-message {
+  text-align: center;
+  font-style: italic;
+  color: #666;
+}
+
+.synergy-member-item {
+  display: flex;
+  justify-content: space-between; /* Place les boutons à droite */
+  align-items: center;
+  margin-bottom: 5px;
+}
+
+.synergy-character-info {
+  display: flex;
+  align-items: center;
+  flex: 1;
+}
+
+.synergy-member-controls {
+  display: flex;
+  gap: 5px; /* Espacement entre les boutons */
+}
+
+.synergy-character-button {
+  flex-grow: 1; /* Prend toute la place disponible pour le nom du personnage */
+  text-align: left;
+  padding: 5px 10px;
+  background-color: #f0f0f0; /* Couleur de fond de base */
+  color: black; /* Couleur du texte par défaut */
+  border: none;
+  border-radius: 4px 0 0 4px;
+  cursor: pointer;
+  margin-right: 5px; /* Espacement entre le bouton et les contrôles */
+}
+
+.synergy-character-button.synergy-highlight {
+  background-color: #4CAF50; /* Vert pour la sélection */
+  color: white; /* Texte en blanc lors de la sélection */
+}
+
+.synergy-toggle-visibility {
+  background-color: #f0f0f0; /* Couleur de fond par défaut */
+  color: black; /* Icône en noir */
+  border: none;
+  cursor: pointer;
+  border-radius: 50%; /* Bouton rond */
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.synergy-remove-member {
+  border-radius: 50%; /* Bouton rond */
+  background-color: #f44336; /* Rouge pour supprimer */
+  color: white;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.synergy-remove-member:hover {
+  background-color: darkred; /* Changer la couleur lors du survol */
+}
+
+.synergy-tracker-container .synergy-character-button.synergy-highlight {
+  background-color: #4CAF50 !important;
+  color: white !important;
+}
+
+.synergy-highlight {
+  background-color: #4CAF50; /* Couleur verte pour indiquer la sélection */
+  color: white; /* Texte en blanc */
+}
+.synergy-character-button.synergy-highlight {
+  background-color: #4CAF50 !important;
+  color: white !important;
 }

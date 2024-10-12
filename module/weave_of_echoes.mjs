@@ -145,19 +145,6 @@ Hooks.on('updateSynergyTracker', (actor) => {
   }
 });
 
-function selectMember(element) {
-  console.log("Before adding class:", element.classList); // Afficher les classes avant l'ajout
-
-  // Supprimer la classe 'selected' des autres membres
-  document.querySelectorAll('.member-item.selected').forEach(item => {
-      item.classList.remove('selected');
-      console.log("Removed selected class from:", item.textContent);
-  });
-
-  // Ajouter la classe 'selected' à l'élément cliqué
-  element.classList.add('selected');
-  console.log("After adding class:", element.classList); // Afficher les classes après l'ajout
-}
 // Ensure this code runs after the tracker is rendered
 Hooks.on('renderSynergyTracker', (app, html) => {
   html.find('.member-item').click(function () {
