@@ -168,24 +168,31 @@ export class SynergyTracker extends Application {
 
   _onMemberSelection(event) {
     const characterName = event.currentTarget.dataset.character;
-    
+   
     if (!Array.isArray(this.data.selectedCharacters)) {
       this.data.selectedCharacters = [];
     }
   
     const index = this.data.selectedCharacters.indexOf(characterName);
-    
+   
     if (index > -1) {
-      // Si le personnage est déjà sélectionné, le désélectionner
+      // Deselect the character
       this.data.selectedCharacters.splice(index, 1);
     } else {
-      // Sinon, l'ajouter à la liste des personnages sélectionnés
+      // Add the character to the selected list
       this.data.selectedCharacters.push(characterName);
     }
   
-    this.render(false); // Re-rendre le tracker pour refléter les changements
+    // Log the selected characters for debugging
+    console.log('Selected Characters in Synergy Tracker:', this.data.selectedCharacters);
+  
+    // Trigger hook for focus tracker to update
+    Hooks.call('updateSynergyGroup', this);
+  
+    // Re-render tracker to reflect changes
+    this.render(false);
   }
-
+  
 _onRemoveMember(event) {
   event.preventDefault();
   const characterName = event.currentTarget.dataset.character;
@@ -210,6 +217,7 @@ _onRemoveMember(event) {
   this.data.currentSynergy = Math.min(this.data.currentSynergy, this.data.maxSynergy);
 
   this._updateTracker();
+  Hooks.call('updateSynergyGroup', this);
 }
 
   _onApplySynergyCost(event) {
@@ -419,14 +427,15 @@ calculateManeuverCost() {
 }
 
 
-  updateSynergyBasedOnRelationships(updatedActor) {
-    if (this.data.characters.includes(updatedActor.name)) {
-      // Recalculer la synergie maximale et le coût de la manœuvre
+updateSynergyBasedOnRelationships(updatedActor) {
+  if (this.data.characters.includes(updatedActor.name)) {
+      // Récalculez la synergie maximale en fonction des relations mises à jour
       this.data.maxSynergy = this.calculateMaxSynergy();
       this.data.currentSynergy = Math.min(this.data.currentSynergy, this.data.maxSynergy);
       this._updateTracker();
-    }
+      this.updateCharacterSheets(); // Met à jour les fiches de personnage
   }
+}
 
   toggleMemberSelection(characterName) {
     const index = this.data.selectedCharacters.indexOf(characterName);

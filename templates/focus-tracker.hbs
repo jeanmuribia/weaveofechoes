@@ -1,24 +1,39 @@
-{{!-- focus-tracker.hbs --}}
+<div class="focus-tracker-container">
+  <h2>Group Focus Tracker</h2>
 
-<form>
-  <div class="focus-tracker-content">
-    <button id="manage-members">Manage Members</button>
-    <div class="member-list">
-  {{#each members}}
-  <div class="member-item">
-    {{this}}
-    <button class="remove-member" data-member="{{this}}">Remove</button>
+  {{#each members as |member|}}
+    <div class="member-item">
+      <!-- Affiche le nom à gauche et le base focus à droite -->
+      <div class="member-row">
+        <div class="member-name">{{member.name}}</div>
+        <div class="focus-circle-container">
+          <div class="focus-label">Base Focus</div>
+          <div class="focus-circle">{{member.baseFocus}}</div>
+        </div>
+      </div>
+
+      <!-- Affiche le current focus avec les boutons et le generate focus -->
+      <div class="member-row">
+        <div class="generate-focus-button">
+          <button class="focus-generate" data-actor-id="{{member.id}}">Generate Focus</button>
+        </div>
+        <div class="current-focus-section">
+  <div class="focus-label">Current Focus</div>
+  <div class="focus-circle-container">
+    <div class="focus-adjust-buttons">
+      <button class="focus-add" data-actor-id="{{member.id}}">+</button>
+      <button class="focus-subtract" data-actor-id="{{member.id}}">-</button>
+    </div>
+    <div class="focus-circle">{{member.currentFocus}}</div>
+    
   </div>
-{{/each}}
+</div>
+      </div>
+    </div>
+  {{/each}}
+
+  <!-- Bouton pour générer le focus pour tous -->
+  <div class="generate-all-button">
+    <button class="focus-generate-all">Generate All Focus</button>
   </div>
-  <div class="focus-tracker-group-selection">
-    <h3>Select Group Members:</h3>
-    {{#each actors}}
-    <label>
-      <input type="checkbox" class="group-member-select" value="{{name}}" {{#if (includes ../selectedGroupMembers name)}}checked{{/if}}>
-      {{name}}
-    </label>
-    {{/each}}
-  </div>
-  <button class="focus-generate-all">Generate All Focus</button>
-</form>
+</div>

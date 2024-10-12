@@ -98,6 +98,7 @@ Hooks.once('init', function () {
 Hooks.once('ready', () => {
   if (game.user.isGM) {
     const colors = ['#FFB3BA', '#BAFFC9', '#BAE1FF', '#FFFFBA'];
+    
     // Initialisation des Synergy Trackers
     for (let i = 1; i <= 4; i++) {
       const trackerId = `synergy-tracker-${i}`;
@@ -113,6 +114,11 @@ Hooks.once('ready', () => {
           color: colors[i - 1]
         }
       });
+
+      // Rendre automatiquement SynergyTracker 1 au démarrage
+      if (i === 1) {
+        game.weaveOfEchoes.additionalTrackers[trackerId].render(true);
+      }
     }
 
     // Initialisation du Focus Tracker
@@ -128,17 +134,41 @@ Hooks.once('ready', () => {
 Hooks.on('getSceneControlButtons', (controls) => {
   if (game.user.isGM) {
     let tokenControls = controls.find(c => c.name === "token");
+    
     if (tokenControls) {
+      // Ajoute le bouton pour le Synergy Tracker 1
+      tokenControls.tools.push({
+        name: "synergy-tracker-1",
+        title: "Synergy Tracker 1",
+        icon: "fas fa-users",  // Icône FontAwesome
+        button: true,
+        onClick: () => {
+          const tracker1 = game.weaveOfEchoes.additionalTrackers['synergy-tracker-1'];
+          if (tracker1) {
+            tracker1.render(true);
+          } else {
+            ui.notifications.warn(`Synergy Tracker 1 n'est pas disponible.`);
+          }
+        }
+      });
+
+      // Ajoute le bouton pour le Focus Tracker
       tokenControls.tools.push({
         name: "focus-tracker",
         title: "Focus Tracker",
-        icon: "fas fa-bullseye",
+        icon: "fas fa-bullseye",  // Icône FontAwesome
         button: true,
-        onClick: () => game.weaveOfEchoes.focusTracker.render(true)
+        onClick: () => {
+          if (!game.weaveOfEchoes.focusTracker) {
+            game.weaveOfEchoes.focusTracker = new FocusTracker();
+          }
+          game.weaveOfEchoes.focusTracker.render(true);
+        }
       });
     }
   }
 });
+
 
 // Mettre à jour le Focus Tracker quand les relations changent
 Hooks.on('updateActor', (actor, changes, options, userId) => {
@@ -147,7 +177,15 @@ Hooks.on('updateActor', (actor, changes, options, userId) => {
   }
 });
 
+Hooks.on('updateActor', (actor, changes, options, userId) => {
+  if (changes.system?.relationships && game.user.isGM) {
+      // Recalculer les Focus Points pour cet acteur
+      actor.calculateBaseFocusPoints(game.weaveOfEchoes.focusTracker.selectedGroupMembers);
 
+      // Rendre le Focus Tracker pour refléter les nouvelles valeurs
+      game.weaveOfEchoes.focusTracker.render();
+  }
+});
 
 Hooks.on('updateSynergyTracker', (actor) => {
   for (const trackerId in game.weaveOfEchoes.additionalTrackers) {

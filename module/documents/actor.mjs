@@ -63,6 +63,8 @@ export class WoeActor extends Actor {
     if (!systemData.relationships) {
       systemData.relationships = [];
     }
+
+    
   }
 
   /**
@@ -134,4 +136,30 @@ export class WoeActor extends Actor {
     // Create a new actor in the Foundry system
     await Actor.create(actorData);
   }
+
+  
 }
+WoeActor.prototype.calculateBaseFocusPoints = function (groupMembers) {
+  let baseFocus = 0;
+
+  groupMembers.forEach(memberName => {
+      const member = game.actors.getName(memberName);
+      const relation = this.system.relationships.find(r => r.characterName === memberName);
+
+      if (relation && relation.relationshipLevel < 0) {
+          baseFocus -= Math.abs(relation.relationshipLevel);  // Chaque relation négative réduit le focus
+      }
+  });
+
+  // Utiliser update pour mettre à jour les Focus Points de base
+  this.update({ 'system.focusPoints.base': Math.max(0, baseFocus) });
+};
+WoeActor.prototype.modifyCurrentFocusPoints = async function (amount) {
+  const newCurrent = Math.max(0, this.system.focusPoints.current + amount);
+  await this.update({ 'system.focusPoints.current': newCurrent });
+  
+  // Forcer le rendu de la fiche après la mise à jour
+  if (this.sheet) {
+    this.sheet.render(false); // Forcer un re-render
+  }
+};
