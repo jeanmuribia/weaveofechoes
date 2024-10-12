@@ -288,78 +288,87 @@
 <!-- Relationships Tab -->
 <div class="tab" data-tab="relationships">
   <h2>Relationships</h2>
-  <div class="character-synergy-container">
-  <h3>Group Members</h3>
- <div class="character-group-members">
-  {{#each groupMembers}}
-    {{#unless this.isCurrentActor}}
-      <div class="character-member-item {{#if this.isSelected}}selected{{/if}}" data-character="{{this.name}}">
-        <span class="character-member-name">{{this.name}}</span>
+  
+  <!-- Synergy Section -->
+  <div class="character-synergy-container {{#if isSynergyHidden}}hidden-by-gm{{/if}}">
+    <h3>Group Synergy</h3>
+    <div class="character-group-members">
+      {{#each groupMembers}}
+        {{#unless this.isCurrentActor}}
+          <div class="character-member-item {{#if ../isSynergyHidden}}disabled{{else}}{{#if this.isSelected}}selected{{/if}}{{/if}}" data-character="{{this.name}}">
+            <span class="character-member-name">{{this.name}}</span>
+          </div>
+        {{/unless}}
+      {{/each}}
+    </div>
+    <div class="character-synergy-circle">
+      <div>
+        <h4>Group Synergy</h4>
+        <div class="character-synergy-values">
+          {{#if isSynergyHidden}}
+            <span>Hidden by GM</span>
+          {{else}}
+            <span>{{currentSynergy}}/{{maxSynergy}}</span>
+          {{/if}}
+        </div>
       </div>
-    {{/unless}}
-  {{/each}}
-</div>
-  <div class="character-synergy-container">
-  <div class="character-synergy-circle">
-    <div>
-      <h4>Group Synergy</h4>
-      <div class="character-synergy-values">
-        <span>{{currentSynergy}}/{{maxSynergy}}</span>
+      <div>
+        <h4>Synergic Maneuver Cost</h4>
+        <div class="character-synergy-values {{#if isSynergyHidden}}hidden-cost{{else}}{{#if maneuverCost}}has-cost{{else}}no-cost{{/if}}{{/if}}">
+          {{#if isSynergyHidden}}
+            <span>Hidden by GM</span>
+          {{else}}
+            {{#if maneuverCost}}
+              <span>{{maneuverCost}}</span>
+            {{else}}
+              <span>Select at least one mate</span>
+            {{/if}}
+          {{/if}}
+        </div>
       </div>
     </div>
-    <div>
-      <h4>Synergic Maneuver Cost</h4>
-     <div class="character-synergy-values {{#if maneuverCost}}has-cost{{else}}no-cost{{/if}}">
-  {{#if maneuverCost}}
-    <span>{{maneuverCost}}</span>
-  {{else}}
-    <span>Select at least one mate</span>
-  {{/if}}
-</div>
-    </div>
   </div>
-</div>
+
+  <!-- Existing Relationships Section -->
+  <h3>Existing Relationships</h3>
+  <div id="relationship-list">
+    <!-- Relationships will be dynamically populated here -->
   </div>
+
   <!-- Button to Add a New Relationship -->
   <button id="add-relationship">Add Relationship</button>
 
   <!-- Form to Add or Edit a Relationship -->
   <div id="relationship-form" style="display: none;">
-    
     <!-- Player Name -->
-<label for="player-name-${index}">Player:</label>
-<div id="player-view-${index}" class="view-mode">${rel.playerName || "Click to edit Player Name"}</div>
-<input type="text" id="player-edit-${index}" class="edit-mode" style="display:none;" value="${rel.playerName || ""}" />
+    <label for="player-name">Player:</label>
+    <div id="player-view" class="view-mode">Click to edit Player Name</div>
+    <input type="text" id="player-edit" class="edit-mode" style="display:none;" />
 
-<!-- Character Name (Dropdown) -->
-<label for="character-name-${index}">Character:</label>
-<div id="character-view-${index}" class="view-mode">${rel.characterName || "Choose another character"}</div>
-<select id="character-edit-${index}" class="edit-mode" style="display:none;">
-  <option value="" disabled selected>Choose another character</option>
-  ${this.getAvailableCharactersOptions(rel.characterName)}
-</select>
+    <!-- Character Name (Dropdown) -->
+    <label for="character-name">Character:</label>
+    <div id="character-view" class="view-mode">Choose another character</div>
+    <select id="character-edit" class="edit-mode" style="display:none;">
+      <option value="" disabled selected>Choose another character</option>
+      {{#each ../actors}}
+        <option value="{{this.id}}">{{this.name}}</option>
+      {{/each}}
+    </select>
 
     <!-- Relationship Level (Radio Buttons) -->
     <label for="relationship-level">Relation:</label>
     <div id="relationship-level">
-      <label><input type="radio" name="relationship" value="-3"> Hatred </label>
-      <label><input type="radio" name="relationship" value="-2"> Hostility </label>
-      <label><input type="radio" name="relationship" value="-1"> Displeasure </label>
-      <label><input type="radio" name="relationship" value="0" checked> Indifference </label>
-      <label><input type="radio" name="relationship" value="1"> Liking </label>
-      <label><input type="radio" name="relationship" value="2"> Friendship </label>
-      <label><input type="radio" name="relationship" value="3"> Love </label>
+      {{#each relationshipLevels}}
+        <label>
+          <input type="radio" name="relationship" value="{{this.value}}" {{#if (eq this.value 0)}}checked{{/if}}>
+          {{this.label}}
+        </label>
+      {{/each}}
     </div>
     
     <button id="save-relationship">Save Relationship</button>
   </div>
-
-  <!-- List of Existing Relationships -->
-  <div id="relationship-list">
-    <!-- Relationships will be dynamically populated here -->
-  </div>
 </div>
-
 
       <!-- Biography Tab -->
       <div class="tab" data-tab="biography">

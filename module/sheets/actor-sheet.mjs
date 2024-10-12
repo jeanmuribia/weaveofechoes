@@ -46,8 +46,6 @@ Hooks.on('updateSynergyGroup', (tracker) => {
 });
 
 export class WoeActorSheet extends ActorSheet {
-
-
   constructor(...args) {
     super(...args);
     this.selectedAttribute = null;
@@ -55,6 +53,12 @@ export class WoeActorSheet extends ActorSheet {
     this.selectedContext = null;
     this.selectedMembers = [];
     this.maneuverCost = null;
+
+    Hooks.on('synergyVisibilityChanged', (actor, isHidden) => {
+      if (actor.id === this.actor.id) {
+        this.render(false);
+      }
+    });
   }
 
   static get defaultOptions() {
@@ -68,15 +72,12 @@ export class WoeActorSheet extends ActorSheet {
     });
   }
 
-
-
   get template() {
     return `systems/weave_of_echoes/templates/actor/actor-character-sheet.hbs`;
   }
 
-  // Prepare data and make sure system values are set correctly
   async getData() {
-    const context = super.getData();
+    const context = await super.getData();
     const actorData = this.document.toObject(false);
 
     // Ensure tempers are initialized with baseValue and currentValue
@@ -90,7 +91,7 @@ export class WoeActorSheet extends ActorSheet {
     context.system = actorData.system;
     context.actorName = this.actor.name;
 
-    //relationship Levels
+    // Relationship Levels
     context.relationshipLevels = [
       { value: -3, label: "Hatred" },
       { value: -2, label: "Hostility" },
@@ -101,16 +102,16 @@ export class WoeActorSheet extends ActorSheet {
       { value: 3, label: "Love" }
     ];
 
+    // Synergy data
     context.groupMembers = this.getGroupMembers();
-  context.currentSynergy = this.getCurrentSynergy();
-  context.maxSynergy = this.getMaxSynergy();
-  context.maneuverCost = this.maneuverCost;
-  console.log("Prepared data:", context);
-  return context;
+    context.currentSynergy = this.getCurrentSynergy();
+    context.maxSynergy = this.getMaxSynergy();
+    context.maneuverCost = this.calculateManeuverCost();
+    context.isSynergyHidden = this.actor.getFlag('weave_of_echoes', 'synergyHidden') || false;
 
+    console.log("Prepared data:", context);
     return context;
   }
-
   // Activate Listeners for sheet interactions
   activateListeners(html) {
     super.activateListeners(html);

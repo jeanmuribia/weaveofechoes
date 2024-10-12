@@ -28,6 +28,11 @@ export class SynergyTracker extends Application {
   }
 
   getData() {
+    const hiddenCharacters = this.data.characters.reduce((acc, char) => {
+      const actor = game.actors.getName(char);
+      acc[char] = actor?.getFlag('weave_of_echoes', 'synergyHidden') || false;
+      return acc;
+    }, {});
     const selectedCharactersObj = this.data.selectedCharacters.reduce((acc, char) => {
       acc[char] = true;
       return acc;
@@ -41,7 +46,8 @@ export class SynergyTracker extends Application {
       color: this.data.color,
       title: this.options.title,
       appId: this.appId,
-      maneuverCost: this.calculateManeuverCost()
+      maneuverCost: this.calculateManeuverCost(),
+      hiddenCharacters: hiddenCharacters,
     };
   }
   
@@ -74,19 +80,17 @@ export class SynergyTracker extends Application {
 
   _onEyeToggle(event) {
     event.preventDefault();
-    const button = $(event.currentTarget);
-    const characterName = button.data('character');
-  
-    // Toggle the eye icon
-    button.find('i').toggleClass('fa-eye fa-eye-slash');
-  
-    // Update the actor with GM-blocked state
+    const characterName = event.currentTarget.dataset.character;
+    const isHidden = $(event.currentTarget).find('i').toggleClass('fa-eye fa-eye-slash').hasClass('fa-eye-slash');
+    
     const actor = game.actors.getName(characterName);
     if (actor) {
-      const isBlocked = button.find('i').hasClass('fa-eye-slash');
-      actor.setFlag('weave_of_echoes', 'gmBlocked', isBlocked);
-      actor.sheet.render(false);  // Refresh actor sheet
+      actor.setFlag('weave_of_echoes', 'synergyHidden', isHidden);
+      // Notifier la fiche de personnage
+      Hooks.callAll('synergyVisibilityChanged', actor, isHidden);
     }
+    
+    // Pas besoin de mettre à jour l'affichage du SynergyTracker
   }
 
   _onIncreaseMaxSynergy(event) {

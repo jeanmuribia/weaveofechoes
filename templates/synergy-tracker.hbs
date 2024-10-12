@@ -28,28 +28,27 @@
     <div class="add-member-container">
       <button class="add-member">Add Members</button>
     </div>
-    <div class="group-members-list">
-      {{#each characters}}
-        <div class="member-item-container">
-          <div class="grid-container">
-            <div class="member-item {{#if (lookup ../selectedCharacters this)}}selected{{/if}}" data-character="{{this}}">
-              <span class="member-name">{{this}}</span>
-            </div>
-            <div class="eye-toggle-container">
-              <div class="eye-toggle" data-character="{{this}}">
-                <i class="fas fa-eye"></i>
-              </div>
-            </div>
-            <div class="remove-member-container">
-              <div class="remove-member" data-character="{{this}}">
-                -
-              </div>
-            </div>
+ <div class="group-members-list">
+  {{#each characters}}
+    <div class="member-item-container">
+      <div class="grid-container">
+        <div class="member-item {{#if (lookup ../selectedCharacters this)}}selected{{/if}}" data-character="{{this}}">
+          <span class="member-name">{{this}}</span>
+        </div>
+        <div class="eye-toggle-container">
+          <div class="eye-toggle" data-character="{{this}}">
+            <i class="fas fa-eye"></i>
           </div>
         </div>
-      {{/each}}
+        <div class="remove-member-container">
+          <div class="remove-member" data-character="{{this}}">
+            -
+          </div>
+        </div>
+      </div>
     </div>
-  </div>
+  {{/each}}
+</div>
 
   <div class="maneuver-section">
     <h3>Synergic Maneuver</h3>

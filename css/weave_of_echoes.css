@@ -706,3 +706,34 @@ button {
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
+.character-synergy-container.hidden-by-gm .character-group-members {
+  pointer-events: none;
+}
+
+.character-synergy-container.hidden-by-gm .character-member-item {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.character-synergy-container.hidden-by-gm .character-member-item:hover {
+  background-color: inherit; /* Annule l'effet de hover */
+}
+
+.character-synergy-container.hidden-by-gm .character-member-item.selected {
+  background-color: inherit; /* Annule l'effet de sélection */
+  color: inherit;
+  box-shadow: none;
+}
+
+.character-synergy-container.hidden-by-gm .character-member-item.selected::after {
+  content: none; /* Supprime le symbole de validation */
+}
+
+.synergy-hidden-message {
+  text-align: center;
+  font-weight: bold;
+  padding: 20px;
+  background-color: #f0f0f0;
+  border-radius: 5px;
+}
