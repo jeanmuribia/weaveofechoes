@@ -263,105 +263,437 @@ export class WoeActorSheet extends ActorSheet {
 
   
   openManeuverWindow() {
+    this.maneuverFocus = this.actor.system.focusPoints.current;
+    this.focusPointsUsed = 0;  // Initialize the focus points counter to 0
     const content = `
-      <div>
-        <h3>On which of your attributes are you relying on?</h3>
-        <div id="attribute-section">
-          <button class="attribute-choice" data-attribute="body">Body</button>
-          <button class="attribute-choice" data-attribute="soul">Soul</button>
-          <button class="attribute-choice" data-attribute="mind">Mind</button>
-          <button class="attribute-choice" data-attribute="martial">Martial</button>
-          <button class="attribute-choice" data-attribute="elementary">Elementary</button>
-          <button class="attribute-choice" data-attribute="rhetoric">Rhetoric</button>
+      <div class="maneuver-modal">
+        <h2 class="maneuver-title">Maneuver Launcher</h2>
+        
+        <div class="maneuver-grid">
+          <div class="section attribute-section">
+            <h3>On which of your attributes are you relying on?</h3>
+            <div id="attribute-section" class="button-group">
+              ${['body', 'soul', 'mind', 'martial', 'elementary', 'rhetoric'].map(attr => 
+                `<div class="attribute-choice die-${this.getDieType(attr, 'attributes')}" data-attribute="${attr}">
+                  <span>${attr}</span>
+                </div>`
+              ).join('')}
+            </div>
+            <div class="focus-checkbox-container" id="focus-attributes"></div>
+            <div class="die-display" id="attributes-die"></div>
+          </div>
+  
+          <div class="section temper-section">
+            <h3>What is your current state of mind?</h3>
+            <div id="temper-section" class="button-group">
+              ${['fire', 'water', 'earth', 'air'].map(temper => 
+                `<div class="temper-choice die-${this.getDieType(temper, 'tempers')}" data-temper="${temper}">
+                  <span>${temper}</span>
+                </div>`
+              ).join('')}
+            </div>
+            <div class="focus-checkbox-container" id="focus-tempers"></div>
+            <div class="die-display" id="tempers-die"></div>
+          </div>
+  
+          <div class="section context-section">
+            <h3>Is the context advantageous?</h3>
+            <div id="context-section" class="button-group">
+              <div class="context-choice die-malus" data-context="malus">Detrimental</div>
+              <div class="context-choice die-neutral" data-context="neutral">Neutral</div>
+              <div class="context-choice die-bonus" data-context="bonus">Favorable</div>
+              <div class="context-choice die-critical" data-context="critical">Highly beneficial</div>
+            </div>
+            <div class="die-display" id="context-die"></div>
+          </div>
         </div>
-
-        <h3>What is your current state of mind?</h3>
-        <div id="temper-section">
-          <button class="temper-choice" data-temper="fire">Fire</button>
-          <button class="temper-choice" data-temper="water">Water</button>
-          <button class="temper-choice" data-temper="earth">Earth</button>
-          <button class="temper-choice" data-temper="air">Air</button>
-        </div>
-
-        <h3>Is the context advantageous?</h3>
-        <div id="context-section">
-          <button class="context-choice" data-context="malus">Detrimental</button>
-          <button class="context-choice" data-context="neutral">Neutral</button>
-          <button class="context-choice" data-context="bonus">Favorable</button>
-          <button class="context-choice" data-context="critical">Highly beneficial</button>
+  
+        <div class="footer">
+          <div class="focus-counter">
+            <span id="maneuver-focus-number">${this.maneuverFocus}</span> focus points remaining
+          </div>
+          <div class="roll-dice-container">
+            <div class="roll-dice disabled">
+              <i class="fas fa-dice"></i> 
+              <span class="roll-text">Please answer all 3 questions</span>
+            </div>
+          </div>
         </div>
       </div>
     `;
-
+  
     let dialog = new Dialog({
       title: "Maneuver",
       content: content,
-      buttons: {
-        roll: {
-          label: "Please answer all 3 questions.",
-          callback: () => this.launchManeuver(),
-          disabled: true
-        }
-      },
+      buttons: {},
       render: (html) => {
         this.disableTraumatizedTempers(html);
 
-        html.find('.attribute-choice').on('click', (event) => {
-          this.selectedAttribute = $(event.currentTarget).data('attribute');
-          html.find('.attribute-choice').removeClass('selected');
-          $(event.currentTarget).addClass('selected');
-          this.updateRollButtonState(html);
-        });
-      
-        html.find('.temper-choice').on('click', (event) => {
-          this.selectedTemper = $(event.currentTarget).data('temper');
-          html.find('.temper-choice').removeClass('selected');
-          $(event.currentTarget).addClass('selected');
-          this.updateRollButtonState(html);
-        });
-      
-        html.find('.context-choice').on('click', (event) => {
-          this.selectedContext = $(event.currentTarget).data('context');
-          html.find('.context-choice').removeClass('selected');
-          $(event.currentTarget).addClass('selected');
-          this.updateRollButtonState(html);
-        });
-      }
-    });
+         // Handle click events for the checkboxes to track focus points
+      html.find('.focus-checkbox').on('change', (event) => {
+        if (event.target.checked) {
+          this.focusPointsUsed++;  // Increment when checked
+        } else {
+          this.focusPointsUsed--;  // Decrement when unchecked
+        }
+        console.log("Focus points used: ", this.focusPointsUsed);  // Debug log to check the counter
+      });
 
+        
+      html.find('.attribute-choice, .temper-choice').on('click', (event) => {
+        const $target = $(event.currentTarget);
+        const type = $target.hasClass('attribute-choice') ? 'attributes' : 'tempers';
+        const selectedItem = $target.data(type === 'attributes' ? 'attribute' : 'temper');
+      
+        // Deselect all other elements in the current section
+        html.find(`.${type}-choice`).removeClass('active');  // Remove active class from all
+        $target.addClass('active');  // Set the clicked one as active
+      
+        this[type === 'attributes' ? 'selectedAttribute' : 'selectedTemper'] = selectedItem;
+        this.updateFocusSection(html, selectedItem, type);
+        this.updateDieDisplay(html, type, selectedItem);
+        this.updateRollButtonState(html);
+      });
+  
+        html.find('.context-choice').on('click', (event) => {
+          event.preventDefault();
+          event.stopPropagation(); // Empêche la propagation de l'événement
+        
+          const selectedContext = $(event.currentTarget).data('context');
+          console.log(`Context selected: ${selectedContext}`); // Log le contexte sélectionné
+          this.selectedContext = selectedContext;
+        
+          // Pas de modifications sur les autres sections ici
+          this.updateDieDisplay(html, 'context', selectedContext);
+          this.updateActiveState(html, '.context-choice', event.currentTarget);
+          this.updateRollButtonState(html);
+        
+          // Aucune manipulation des checkboxes pour le contexte
+          console.log('Context click handled: no focus checkboxes should be affected');
+        });
+  
+        // Bouton de lancement
+        html.find('.roll-dice').on('click', () => this.launchManeuver());
+      },
+      close: () => {
+        this.selectedAttribute = null;
+        this.selectedTemper = null;
+        this.selectedContext = null;
+        this.selectedAttributeValue = null;
+        this.selectedTemperValue = null;
+        this.selectedContextValue = null;
+        this.focusPointsUsed = 0;  // Reset focus points used on modal close
+        this.maneuverFocus = this.actor.system.focusPoints.current; // Reset maneuver focus to current state
+      }
+    }, {
+      width: 600,
+      height: 'auto',
+      resizable: false
+    });
+  
     dialog.render(true);
   }
 
-  updateRollButtonState(html) {
-    const isAllSelected = this.selectedAttribute && this.selectedTemper && this.selectedContext;
-    const rollButton = html.parents('.dialog').find('button.dialog-button.roll');
+  updateActiveState(html, selector, activeElement) {
+    html.find(selector).removeClass('active');
+    $(activeElement).addClass('active');
+  }
 
+  updateFocusSection(html, selectedItem, type) {
+    if (type === 'context') {
+      console.log('Context selected: skipping focus section update for other sections');
+      return; // Skip context focus handling
+    }
+
+    const focusContainer = html.find(`#focus-${type}`);
+    if (focusContainer.length === 0) {
+      console.error(`Focus container not found for type: ${type}`);
+      return;
+    }
+
+    focusContainer.empty(); // Clear checkboxes for the selected section
+    let numCheckboxes = this.getNumCheckboxes(this.getDieType(selectedItem, type));
+
+    // Initialize focusPointsUsed counter if not already done
+    if (this.focusPointsUsed === undefined) {
+      this.focusPointsUsed = 0;
+    }
+
+    // Render the checkboxes and attach the appropriate listeners
+    for (let i = 0; i < numCheckboxes; i++) {
+      const checkbox = $(`<input type="checkbox" class="focus-checkbox" data-type="${type}" data-item="${selectedItem}" />`);
+      focusContainer.append(checkbox);
+
+      checkbox.on('change', (event) => {
+        // Prevent checking if no focus points are left
+        if (this.maneuverFocus === 0 && event.target.checked) {
+          event.preventDefault();
+          this.blipFocusCounter(); // Blip if no focus points left and trying to check
+          return;
+        }
+
+        const checkedBoxes = focusContainer.find(':checked').length;
+
+        const newValue = this.updateDieValueBasedOnFocus(type, this.getDieType(selectedItem, type), checkedBoxes);
+        this.updateDieDisplay(html, type, selectedItem, newValue);
+
+        // ** Handle focus points correctly for checking and unchecking **
+        if (event.target.checked) {
+          this.updateManeuverFocus(-1);  // Decrease focus when checking
+          this.focusPointsUsed++;  // Increase focus points used
+        } else {
+          this.updateManeuverFocus(1);   // Increase focus when unchecking
+          this.focusPointsUsed--;  // Decrease focus points used
+        }
+      });
+
+      // ** Blip effect for disabled checkboxes when clicked **
+      checkbox.on('click', (event) => {
+        if (checkbox.prop('disabled')) {
+          console.log("Disabled checkbox clicked");
+          this.blipFocusCounter();  // Trigger the blip effect for disabled checkboxes
+        }
+      });
+    }
+}
+
+
+  // Method to get the number of checkboxes based on the die type
+  getNumCheckboxes(dieType) {
+    switch (dieType) {
+      case 'malus':
+        return 3; // Malus has 3 checkboxes
+      case 'neutral':
+        return 2; // Neutral has 2 checkboxes
+      case 'bonus':
+        return 1;
+      case 'critical':
+        return 0; // Bonus and Critical have 1 checkbox
+      default:
+        return 0; // Default case
+    }
+  }
+
+  updateRollButtonState(html) {
+    const rollButton = html.find('.roll-dice');
+    const isAllSelected = this.selectedAttribute && this.selectedTemper && this.selectedContext;
+  
     if (isAllSelected) {
       rollButton.prop('disabled', false).html('<i class="fas fa-dice"></i> Roll the dice!');
     } else {
-      rollButton.prop('disabled', true).text('Please answer all 3 questions.');
+      rollButton.prop('disabled', true).html('<i class="fas fa-dice"></i> Please answer all 3 questions.');
     }
-    
-    // Force a re-render of the button
-    rollButton.trigger('change');
+  
+    rollButton.toggleClass('disabled', !isAllSelected);
   }
 
-// Disable any traumatized tempers in the maneuver modal
-disableTraumatizedTempers(html) {
-  const tempers = ['fire', 'water', 'earth', 'air'];
   
-  tempers.forEach(temper => {
-    if (this.actor.system.tempers[temper].wound) { // If trauma exists for this temper
-      const temperButton = html.find(`button[data-temper="${temper}"]`);
-      temperButton.prop('disabled', true).addClass('disabled').css({
-        'background-color': 'lightgrey',
-        'color': 'darkgrey',
-        'cursor': 'not-allowed'
-      });
+  // Count focus checkboxes based on dice type for attributes
+
+  getAttributeFocusCount(attribute) {
+    const attributeData = this.actor.system.attributes[attribute];
+    if (!attributeData) {
+      console.warn(`Attribute ${attribute} not found in actor data`);
+      return 0;
+    }
+    
+    switch (attributeData.currentValue) {
+      case 'malus': return 3;
+      case 'neutral': return 2;
+      case 'bonus': return 1;
+      case 'critical': return 0;
+      default: return 0;
+    }
+  }
+// Count focus checkboxes based on dice type for tempers
+getTemperFocusCount(temper) {
+  const temperData = this.actor.system.tempers[temper];
+  if (!temperData) {
+    console.warn(`Temper ${temper} not found in actor data`);
+    return 0;
+  }
+  
+  switch (temperData.currentValue) {
+    case 'malus': return 3;
+    case 'neutral': return 2;
+    case 'bonus': return 1;
+    case 'critical': return 0;
+    default: return 0;
+  }
+}
+
+// Count focus checkboxes based on dice type for contexts
+getContextFocusCount(context) {
+  switch (context) {
+    case 'malus': return 3; // Detrimental context has 3 checkboxes
+    case 'neutral': return 2; // Neutral context has 2 checkboxes
+    case 'bonus': return 1; // Favorable context has 1 checkbox
+    case 'critical': return 0; // Highly beneficial context has no checkboxes
+    default: return 0; // No checkboxes
+  }
+}
+
+blipFocusCounter() {
+  const focusCounter = document.querySelector('.focus-counter');
+
+  // Définir l'animation de blip en rouge et plus dure
+  focusCounter.style.transition = 'background-color 0.2s ease, transform 0.1s ease';
+  focusCounter.style.backgroundColor = 'rgba(255, 0, 0, 0.5)';
+  focusCounter.style.transform = 'scale(1.2)';
+
+  // Remettre à l'état normal après 300ms
+  setTimeout(() => {
+    focusCounter.style.backgroundColor = 'rgba(0, 0, 0, 0.1)';
+    focusCounter.style.transform = 'scale(1)';
+  }, 300);
+}
+  
+updateDieValueBasedOnFocus(type, baseValue, focusPoints) {
+  const dieValues = ['malus', 'neutral', 'bonus', 'critical'];
+  let index = dieValues.indexOf(baseValue);
+  index = Math.min(dieValues.length - 1, index + focusPoints);
+  return dieValues[index];
+}
+
+// Method to retrieve and handle focus point changes
+updateManeuverFocus(change) {
+  if (typeof change !== 'number' || isNaN(change)) {
+    console.error('Invalid change value for maneuverFocus:', change);
+    return;
+  }
+
+  // Ensure focus points never drop below 0
+  this.maneuverFocus = Math.max(0, this.maneuverFocus + change);
+
+  const maneuverFocusElement = document.getElementById('maneuver-focus-number');
+  if (maneuverFocusElement) {
+    maneuverFocusElement.textContent = this.maneuverFocus;
+  }
+
+  // If focus is at zero, disable the checkboxes
+  if (this.maneuverFocus <= 0) {
+    this.disableFocusCheckboxes();
+  } else {
+    this.enableFocusCheckboxes();
+  }
+}
+
+// Disable all focus checkboxes when focus is zero
+disableFocusCheckboxes() {
+  document.querySelectorAll('.focus-checkbox').forEach((checkbox) => {
+    checkbox.disabled = true;
+  });
+}
+
+// Enable focus checkboxes when there is enough focus
+enableFocusCheckboxes() {
+  document.querySelectorAll('.focus-checkbox').forEach((checkbox) => {
+    checkbox.disabled = false;
+  });
+}
+
+
+
+
+updateFocusDisplay() {
+  const maneuverFocusElement = document.getElementById('maneuver-focus-number');
+  if (maneuverFocusElement) {
+    maneuverFocusElement.textContent = `${this.maneuverFocus}`;
+  }
+
+  // Désactiver les checkboxes non cochées si le focus restant est à zéro
+  $('.focus-checkbox').each((index, checkbox) => {
+    if (!checkbox.checked && this.maneuverFocus === 0) {
+      $(checkbox).prop('disabled', true); // Désactive les checkboxes non cochées
+    } else {
+      $(checkbox).prop('disabled', false); // Réactive les checkboxes si le focus est disponible
     }
   });
 }
 
+// Ensure focus points are correctly counted
+getUsedFocus() {
+  const attributeFocus = this.getCheckedBoxes('attributes');
+  const temperFocus = this.getCheckedBoxes('tempers');
+  return attributeFocus + temperFocus;
+}
+
+getCheckedBoxes(type) {
+  return $(`#focus-${type}-section .focus-checkbox:checked`).length;
+}
+
+
+  
+  // Disable any traumatized tempers in the maneuver modal
+  disableTraumatizedTempers(html) {
+    const tempers = ['fire', 'water', 'earth', 'air'];
+  
+    tempers.forEach(temper => {
+      if (this.actor.system.tempers[temper].wound) { // If trauma exists for this temper
+        const temperButton = html.find(`.temper-choice[data-temper="${temper}"]`);
+        temperButton.prop('disabled', true).addClass('disabled').css({
+          'background-color': 'lightgrey',
+          'color': 'darkgrey',
+          'cursor': 'not-allowed',
+          'border': 'none', // Remove border to show disabled state
+        });
+      }
+    });
+  }
+  
+  updateDieDisplay(html, type, selectedItem, newValue) {
+    const dieDisplay = html.find(`#${type}-die`);
+    if (dieDisplay.length === 0) {
+      console.error(`Die display element not found for ${type}`);
+      return;
+    }
+    
+    let dieType = newValue || this.getDieType(selectedItem, type);
+    dieType = String(dieType).toLowerCase();
+    
+    dieDisplay.attr('class', 'die-display die-' + dieType);
+    dieDisplay.html(`<i class="fas fa-dice-d20"></i><span>${dieType.charAt(0).toUpperCase() + dieType.slice(1)}</span>`);
+
+    // Update the selected value
+    if (type === 'attributes') {
+      this.selectedAttribute = selectedItem;
+      this.selectedAttributeValue = dieType;
+    } else if (type === 'tempers') {
+      this.selectedTemper = selectedItem;
+      this.selectedTemperValue = dieType;
+    } else if (type === 'context') {
+      this.selectedContext = selectedItem;
+      this.selectedContextValue = dieType;
+    }
+
+    this.updateFocusDisplay();
+  }
+
+  
+ getDieType(type, category) {
+  if (category === 'attributes') {
+    return this.actor.system.attributes[type]?.currentValue || 'neutral';
+  } else if (category === 'tempers') {
+    return this.actor.system.tempers[type]?.currentValue || 'neutral';
+  } else if (category === 'context') {
+    return type;
+  }
+  return 'neutral';
+}
+
+updateRollButtonState(html) {
+  const rollButton = html.find('.roll-dice');
+  const isAllSelected = this.selectedAttribute && this.selectedTemper && this.selectedContext;
+
+  rollButton.toggleClass('disabled', !isAllSelected);
+  rollButton.find('.roll-text').text(isAllSelected ? 'Roll the dice!' : 'Please answer all 3 questions');
+
+  if (isAllSelected) {
+    rollButton.on('click', () => this.launchManeuver());
+  } else {
+    rollButton.off('click');
+  }
+}
 
 async _onFocusPointsVisibilityChange(event) {
   event.preventDefault();
@@ -428,47 +760,76 @@ updateFocusPointsFromRelationships() {
 
 
 
-// Launch the maneuver based on the selected options
-async launchManeuver() {
-  if (!this.selectedAttribute || !this.selectedTemper || !this.selectedContext) {
-    ui.notifications.error("You must answer all three questions.");
-    return;
-  }
-
-  // Retrieve the current values for the selected attribute, temper, and context
-  const attributeValue = this.actor.system.attributes[this.selectedAttribute]?.currentValue;
-  const temperValue = this.actor.system.tempers[this.selectedTemper]?.currentValue;
-
-  // Roll the dice for the attribute, temper, and context
-  const attributeResult = await rollDie(attributeValue);
-  const temperResult = await rollDie(temperValue);
-  const contextResult = await rollDie(this.selectedContext);
-
-  // Format the message
-  const message = `
-    <div class="maneuver-result">
-      <span class="maneuver-choices">
-        ${this.getColoredLabel(this.selectedAttribute, attributeValue)}, 
-        ${this.getColoredLabel(this.selectedTemper, temperValue)} & 
-        ${this.getColoredLabel(this.getContextName(this.selectedContext), this.selectedContext)} rolled:
-      </span>
-      <span class="maneuver-results">
-        ${attributeResult}, ${temperResult}, ${contextResult}
-      </span>
-    </div>
-  `;
-
-  // Display the results in the chat
-  ChatMessage.create({
-    content: message,
-    speaker: ChatMessage.getSpeaker({ actor: this.actor }),
-  });
-
-  // Reset selections
-  this.selectedAttribute = null;
-  this.selectedTemper = null;
-  this.selectedContext = null;
-}
+    async launchManeuver() {
+      if (!this.selectedAttribute || !this.selectedTemper || !this.selectedContext) {
+        ui.notifications.error("You must answer all three questions.");
+        return;
+      }
+    
+      console.log("Selected Attribute:", this.selectedAttribute, "Value:", this.selectedAttributeValue);
+      console.log("Selected Temper:", this.selectedTemper, "Value:", this.selectedTemperValue);
+      console.log("Selected Context:", this.selectedContext, "Value:", this.selectedContextValue);
+    
+      const attributeValue = this.selectedAttributeValue;
+      const temperValue = this.selectedTemperValue;
+      const contextValue = this.selectedContextValue;
+    
+      // Retrieve focus points used from the stored value during modal interaction
+      const usedFocus = this.focusPointsUsed || 0; // Default to 0 if undefined
+      console.log("Focus points used during maneuver:", usedFocus);
+    
+      // Log only if focus points are used
+      const focusMessage = usedFocus > 0 ? ` with ${usedFocus} focus points used` : '';
+    
+      await this.actor.update({ 'system.focusPoints.current': this.maneuverFocus });
+    
+      const attributeResult = await rollDie(attributeValue);
+      const temperResult = await rollDie(temperValue);
+      const contextResult = await rollDie(contextValue);
+    
+      const message = `
+        <div class="maneuver-result">
+          <span class="maneuver-choices">
+            ${this.getColoredLabel(this.selectedAttribute, attributeValue)}, 
+            ${this.getColoredLabel(this.selectedTemper, temperValue)} & 
+            ${this.getColoredLabel(this.getContextName(this.selectedContext), contextValue)} 
+            rolled${focusMessage}:
+          </span>
+          <span class="maneuver-results">
+            ${attributeResult}, ${temperResult}, ${contextResult}
+          </span>
+        </div>
+      `;
+    
+      ChatMessage.create({
+        content: message,
+        speaker: ChatMessage.getSpeaker({ actor: this.actor }),
+      });
+    
+      // Reset selections and focus points
+      this.selectedAttribute = null;
+      this.selectedTemper = null;
+      this.selectedContext = null;
+    
+      // Close the modal and reset focus
+      this.closeManeuverModal();
+    }
+    
+    
+  
+    closeManeuverModal() {
+      const modalElement = document.querySelector('.maneuver-modal');
+      if (modalElement) {
+        const dialogElement = modalElement.closest('.app.dialog');
+        if (dialogElement) {
+          dialogElement.remove();
+        }
+      }
+    
+      // Reset focusPointsUsed when modal is closed
+      console.log("Resetting focus points");
+      this.focusPointsUsed = 0;
+    }
 
 // Helper method to get the readable context name
 getContextName(contextType) {

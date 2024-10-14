@@ -33,7 +33,10 @@
   {{/each}}
 
   <!-- Bouton pour générer le focus pour tous -->
-  <div class="generate-all-button">
-    <button class="focus-generate-all">Generate All Focus</button>
-  </div>
+<div class="generate-all-button">
+    {{#if this.data.groupMembers.length}}
+        <button class="focus-generate-all">Generate All Focus</button>
+    {{else}}
+        <button disabled class="disabled-button">Please add characters to the synergy group to set focus.</button>
+    {{/if}}
 </div>

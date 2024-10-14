@@ -126,10 +126,10 @@ export class FocusTracker extends Application {
     updateGroupFromSynergy(selectedCharacters) {
         // Update group members
         this.data.groupMembers = selectedCharacters;
-
+    
         // Recalculate the base focus points as soon as the group is updated
         this.calculateBaseFocusPoints(selectedCharacters);
-
+    
         // Ensure the tracker is re-rendered with the updated members
         this.render(false);
     }
