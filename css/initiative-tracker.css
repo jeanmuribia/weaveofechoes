@@ -1,0 +1,258 @@
+/* Base Layout */
+.initiative-tracker {
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    font-family: "Roboto", sans-serif;
+}
+
+/* Control Buttons */
+.tracker-controls {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.tracker-controls button {
+    padding: 8px 16px;
+    background: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+}
+
+.tracker-controls button:hover {
+    background: #45a049;
+}
+
+/* Unassigned Section */
+.unassigned-section {
+    background: white;
+    border-radius: 8px;
+    padding: 10px;
+    margin-bottom: 15px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.unassigned-section h3 {
+    margin: 0 0 10px 0;
+    color: #2e7d32;
+    font-size: 16px;
+}
+
+.unassigned-characters {
+    min-height: 50px;
+    padding: 10px;
+    background: #f9f9f9;
+    border: 2px dashed #a5d6a7;
+    border-radius: 6px;
+}
+
+/* Character Tokens */
+.character-token {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #e8f5e9;
+    padding: 8px 12px;
+    border-radius: 6px;
+    margin-bottom: 5px;
+    border: 2px solid transparent;
+    cursor: move;
+    transition: all 0.2s ease;
+}
+
+.character-token:hover {
+    background: #c8e6c9;
+    border-color: #4caf50;
+    transform: translateY(-1px);
+}
+
+.character-token.dragging {
+    transform: scale(1.05);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    opacity: 0.8;
+}
+
+.char-name {
+    font-weight: 500;
+    color: #2e7d32;
+    font-size: 14px;
+}
+
+.token-controls {
+    display: flex;
+    gap: 5px;
+}
+
+.token-controls button {
+    background: none;
+    border: none;
+    color: #4CAF50;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 3px;
+    transition: all 0.2s ease;
+}
+
+.token-controls button:hover {
+    background: rgba(76, 175, 80, 0.1);
+    color: #2e7d32;
+}
+
+/* Group Container */
+.group-container {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    overflow: hidden;
+    margin-bottom: 15px;
+}
+
+.group-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 15px;
+    background: #e8f5e9;
+    border-bottom: 1px solid #c8e6c9;
+}
+
+.group-header h3 {
+    margin: 0;
+    color: #2e7d32;
+    font-size: 16px;
+    font-weight: 500;
+}
+
+.delete-group {
+    background: none;
+    border: none;
+    color: #e57373;
+    cursor: pointer;
+    padding: 5px;
+    border-radius: 3px;
+    transition: all 0.2s ease;
+}
+
+.delete-group:hover {
+    color: #f44336;
+    background: rgba(244, 67, 54, 0.1);
+}
+
+/* Drop Zone */
+.group-dropzone {
+    min-height: 80px;
+    padding: 15px;
+    background: #f9f9f9;
+    border: 2px dashed #a5d6a7;
+    border-radius: 6px;
+    margin: 10px;
+    transition: all 0.2s ease;
+}
+
+.group-dropzone.dragover {
+    background: #e8f5e9;
+    border-color: #4CAF50;
+    box-shadow: inset 0 0 0 2px #4CAF50;
+}
+
+.drop-hint {
+    color: #999;
+    text-align: center;
+    padding: 20px;
+    font-style: italic;
+}
+
+/* Character Selection Dialog */
+.character-select-dialog {
+    padding: 15px;
+}
+
+.character-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-height: 400px;
+    overflow-y: auto;
+    margin-bottom: 15px;
+    padding-right: 10px;
+}
+
+.character-select-item {
+    background: #e8f5e9;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+}
+
+.select-label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px;
+    cursor: pointer;
+    width: 100%;
+}
+
+.character-select-item:hover {
+    background: #c8e6c9;
+    transform: translateY(-1px);
+}
+
+.selection-name {
+    font-size: 14px;
+    color: #2e7d32;
+    font-weight: 500;
+}
+
+/* Dialog Controls */
+.dialog-controls {
+    display: flex;
+    justify-content: space-between;
+    padding-top: 10px;
+    border-top: 1px solid #ddd;
+}
+
+.dialog-controls button {
+    padding: 6px 12px;
+    background: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.dialog-controls button:hover {
+    background: #45a049;
+}
+
+.character-icon {
+    width: 32px; /* Ajustez la taille si besoin */
+    height: 32px;
+    border-radius: 8px; /* Coins légèrement arrondis */
+    margin-right: 10px;
+    object-fit: cover; /* Pour que l'image ne soit pas déformée */
+}
+.character-token {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.character-name-input {
+    font-size: 14px;
+    padding: 4px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    flex-grow: 0; /* Empêche le champ de s'étendre */
+    max-width: 150px; /* Réduit la largeur du champ de nom */
+}

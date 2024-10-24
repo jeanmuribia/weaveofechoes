@@ -1,0 +1,22 @@
+<template id="character-selector-template">
+    <div class="character-select-dialog">
+        <div class="character-list">
+            {{#each actors}}
+            <div class="character-select-item">
+                <label class="select-label">
+                    <input type="checkbox" data-actor-id="{{this.id}}">
+                    <span class="selection-name">{{this.name}}</span>
+                </label>
+            </div>
+            {{/each}}
+        </div>
+        <div class="dialog-controls">
+            <button type="button" data-action="select-all">
+                <i class="fas fa-users"></i> Select All
+            </button>
+            <button type="button" data-action="confirm">
+                <i class="fas fa-check"></i> Confirm
+            </button>
+        </div>
+    </div>
+</template>

@@ -33,7 +33,9 @@
     "module/weave_of_echoes.mjs",
     "module/synergy-tracker.js"
   ],
-  "styles": ["css/weave_of_echoes.css"],
+  "styles": ["css/weave_of_echoes.css",
+            "css/initiative-tracker.css"
+          ],
   "languages": [
     {
       "lang": "en",

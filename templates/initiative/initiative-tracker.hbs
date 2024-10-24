@@ -1,0 +1,69 @@
+<div class="initiative-tracker">
+    <div class="tracker-controls">
+        <button class="add-characters">
+            <i class="fas fa-user-plus"></i> Add Characters
+        </button>
+        <button class="add-group">
+            <i class="fas fa-layer-group"></i> Add Group
+        </button>
+    </div>
+
+    {{#if selectedCharacters}}
+    <div class="unassigned-section">
+        <h3>Characters to Assign</h3>
+        <div class="unassigned-characters">
+            {{#each selectedCharacters}}
+            <div class="character-token draggable" data-character-id="{{this.id}}">
+                <!-- Affichage de l'icône du personnage -->
+                <img src="{{this.img}}" class="character-icon" alt="{{this.name}}" />
+                <!-- Champ de texte pour changer le nom du personnage -->
+                <input type="text" class="character-name-input" value="{{this.name}}" data-character-id="{{this.id}}" />
+                <div class="token-controls">
+                    <button class="duplicate-char" data-character-id="{{this.id}}">
+                        <i class="fas fa-clone"></i>
+                    </button>
+                    <button class="delete-char" data-character-id="{{this.id}}">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
+            {{/each}}
+        </div>
+    </div>
+    {{/if}}
+
+    <div class="initiative-groups">
+        {{#each initiativeGroups}}
+        <div class="group-container" data-group-id="{{this.id}}">
+            <div class="group-header">
+                <h3>{{this.name}}</h3>
+                <button class="delete-group">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>
+            <div class="group-dropzone" data-group-id="{{this.id}}">
+                {{#if this.characters}}
+                    {{#each this.characters}}
+                    <div class="character-token" data-character-id="{{id}}">
+                        <!-- Affichage de l'icône du personnage -->
+                        <img src="{{img}}" class="character-icon" alt="{{name}}" />
+                        <!-- Champ de texte pour changer le nom du personnage -->
+                        <input type="text" class="character-name-input" value="{{name}}" data-character-id="{{id}}" />
+                        <div class="token-controls">
+                            <button class="duplicate-char" data-character-id="{{id}}">
+                                <i class="fas fa-clone"></i>
+                            </button>
+                            <button class="delete-char" data-character-id="{{id}}">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+                    {{/each}}
+                {{else}}
+                    <div class="drop-hint">Drop characters here</div>
+                {{/if}}
+            </div>
+        </div>
+        {{/each}}
+    </div>
+</div>

@@ -9,6 +9,7 @@ import { preloadHandlebarsTemplates } from './helpers/templates.mjs';
 import { WOE } from './helpers/config.mjs';
 import { SynergyTracker } from './synergy-tracker.js';
 import { FocusTracker } from './focus-tracker.mjs';
+import { InitiativeTracker } from './initiative/initiative-tracker.mjs';
 
 /* -------------------------------------------- */
 /*  Init Hook                                   */
@@ -20,6 +21,7 @@ Hooks.once('init', function () {
 
   game.weaveOfEchoes = game.weaveOfEchoes || {};
   game.weaveOfEchoes.additionalTrackers = {};
+  game.weaveOfEchoes.initiativeTracker = null;
 
   console.log("Weave of Echoes | Initializing System");
 
@@ -124,10 +126,13 @@ Hooks.once('ready', () => {
     // Initialisation du Focus Tracker
     game.weaveOfEchoes.focusTracker = new FocusTracker({
       data: {
-        members: []  // Initialisation avec un tableau vide
+        members: []
       }
     });
     game.weaveOfEchoes.focusTracker.render(true);
+
+    // Initialisation de l'Initiative Tracker
+    game.weaveOfEchoes.initiativeTracker = new InitiativeTracker();
   }
 });
 
@@ -165,10 +170,20 @@ Hooks.on('getSceneControlButtons', (controls) => {
           game.weaveOfEchoes.focusTracker.render(true);
         }
       });
+      
+      //ajoute le boutk
+      tokenControls.tools.push({
+        name: "initiative-tracker",
+        title: "Initiative Tracker",
+        icon: "fas fa-list-ol",
+        button: true,
+        onClick: () => {
+          game.weaveOfEchoes.initiativeTracker.render(true);
+        }
+      });
     }
   }
 });
-
 
 // Mettre à jour le Focus Tracker quand les relations changent
 Hooks.on('updateActor', (actor, changes, options, userId) => {
