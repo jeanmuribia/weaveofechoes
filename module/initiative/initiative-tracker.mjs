@@ -13,7 +13,12 @@ export class InitiativeTracker extends Application {
 
     constructor() {
         super();
-        this.initiativeGroups = [];
+
+        this.initiativeGroups = [{
+        id: foundry.utils.randomID(),
+        name: "Group 1",
+        characters: []
+    }];
         this.selectedCharacters = [];
         this.drawnInitiative = [];
         this.isInitiativeDrawn = false;
