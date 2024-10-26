@@ -86,9 +86,11 @@
     font-size: 14px;
 }
 
+
 .token-controls {
     display: flex;
     gap: 5px;
+    align-items: center;
 }
 
 .token-controls button {
@@ -236,12 +238,14 @@
 }
 
 .character-icon {
-    width: 32px; /* Ajustez la taille si besoin */
-    height: 32px;
-    border-radius: 8px; /* Coins légèrement arrondis */
-    margin-right: 10px;
-    object-fit: cover; /* Pour que l'image ne soit pas déformée */
+    width: 24px !important;  /* Force une taille fixe */
+    height: 24px !important; /* Force une taille fixe */
+    flex-shrink: 0;         /* Empêche le redimensionnement */
+    border-radius: 4px;
+    object-fit: cover;
+    background-color: #f0f0f0;
 }
+
 .character-token {
     display: flex;
     align-items: center;
@@ -255,4 +259,445 @@
     border-radius: 4px;
     flex-grow: 0; /* Empêche le champ de s'étendre */
     max-width: 150px; /* Réduit la largeur du champ de nom */
+}
+
+/* Draw Initiative Button */
+.draw-initiative-section {
+    text-align: center;
+    margin: 20px 0;
+}
+
+.draw-initiative {
+    background: #4a4a4a;
+    color: white;
+    padding: 12px 24px;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.draw-initiative:hover {
+    background: #5a5a5a;
+    transform: translateY(-2px);
+}
+
+.draw-initiative i {
+    font-size: 20px;
+}
+
+.setup-section {
+    transition: max-height 0.3s ease-in-out;
+    overflow: hidden;
+    max-height: 1000px;
+}
+
+.setup-section.minimized {
+    max-height: 0;
+}
+
+/* Container principal des cartes */
+
+/* Ajustement du conteneur */
+.initiative-cards-container {
+    display: flex;
+    gap: 30px; /* Augmente l'espace entre les cartes */
+    padding: 20px;
+    overflow-x: auto;
+    min-height: 300px;
+    align-items: flex-start;
+    position: relative;
+}
+/* Style de base des cartes */
+.initiative-card {
+    flex: 0 0 200px;
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    transition: transform 0.3s ease;
+    position: relative;
+    z-index: 1;
+    cursor: grab;
+}
+
+.initiative-card .card-header {
+    position: relative;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 4px 8px;
+}
+
+.initiative-card .active-toggle input {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+}
+
+/* Conteneur de l'image */
+.image-container {
+    position: relative;
+    width: calc(100% - 16px);
+    height: 160px;
+    margin: 8px;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+/* Style de l'image */
+.card-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    background-color: #f0f0f0;
+}
+
+
+/* Contenu de la carte */
+.card-content {
+    padding: 8px;
+}
+
+.card-name {
+    margin: 8px 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: #333;
+    text-align: center;
+}
+
+/* Compteur de menaces */
+.threat-counter {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: rgba(255, 140, 0, 0.9);
+    color: white;
+    padding: 5px 10px;
+    border-radius: 15px;
+    font-weight: bold;
+    cursor: pointer;
+    z-index: 2;
+}
+
+/* Styles des boutons */
+/* Contrôles de carte */
+.card-controls {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 12px;
+    padding: 8px;
+    border-top: 1px solid #eee;
+    margin-top: auto;
+}
+
+.card-controls button {
+    padding: 6px;
+    border: none;
+    background: none;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: background-color 0.2s ease;
+}
+
+.threat-button { color: #ff8c00; }
+.threat-button:hover { background: rgba(255, 215, 0, 0.1); }
+
+.ko-button { color: #808080; }
+.ko-button:hover { background: rgba(128, 128, 128, 0.1); }
+
+.delete-card { color: #ff4444; }
+.delete-card:hover { background: rgba(255, 68, 68, 0.1); }
+
+.expand-button:hover { background: rgba(0, 0, 0, 0.1); }
+
+
+.initiative-card.ko {
+    opacity: 0.6;
+    filter: grayscale(100%);
+}
+
+.initiative-card.expanded {
+    flex: 0 0 300px;
+    z-index: 2;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+}
+
+/* Désactivation des contrôles pendant le drag */
+.initiative-card.dragging .card-controls {
+    pointer-events: none;
+}
+
+/* Titre de la carte */
+.card-name {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: #333;
+    text-align: center;
+}
+
+/* Biographie expandable */
+.card-bio {
+    font-size: 14px;
+    color: #666;
+    max-height: 0;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    opacity: 0;
+}
+
+.initiative-card.expanded .card-bio {
+    max-height: 200px;
+    opacity: 1;
+    padding: 10px 0;
+}
+
+/* Image par défaut */
+/* img[src="icons/svg/mystery-man.svg"] {
+    background-color: #e0e0e0;
+    object-fit: contain;
+    padding: 10%;
+} */
+
+.initiative-card {
+    flex: 0 0 200px;
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    position: relative;
+    user-select: none;
+    transition: transform 0.3s ease;
+}
+
+
+/* Style pour la carte en cours de drag */
+.initiative-card.dragging {
+    opacity: 0.4;
+    position: fixed;
+    pointer-events: none;
+    transform: translate(-50%, -50%);
+    z-index: 1000;
+}
+
+/* Style pour les cartes qui se déplacent */
+.initiative-card:not(.dragging) {
+    transition: transform 0.3s ease;
+}
+
+.drag-handle {
+    cursor: grab;
+    width: 100%;
+}
+
+.drag-handle:active {
+    cursor: grabbing;
+}
+
+.initiative-card.dragging .drag-handle {
+    cursor: grabbing;
+}
+
+
+.card-gap {
+    flex: 0 0 200px;
+    height: 300px;
+    background: rgba(76, 175, 80, 0.1);
+    border: 2px dashed #4CAF50;
+    border-radius: 10px;
+    transition: all 0.2s ease;
+}
+
+.card-separator {
+    width: 4px;
+    height: 300px;
+    background-color: rgba(200, 200, 200, 0.3);
+    position: absolute;
+    top: 0;
+    transform: translateX(-50%); /* Centre le séparateur */
+    transition: all 0.2s ease;
+    z-index: 1;
+}
+
+.card-separator.active {
+    background-color: #4CAF50;
+    width: 6px;
+}
+
+.card-separator::before {
+    content: '';
+    position: absolute;
+    width: 20px; /* Zone de détection */
+    height: 100%;
+    left: -10px; /* Centré sur le séparateur */
+    background-color: transparent;
+}
+
+.quick-init {
+    background: none;
+    border: none;
+    color: #4CAF50;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 3px;
+    transition: all 0.2s ease;
+}
+
+.quick-init:hover {
+    background: rgba(76, 175, 80, 0.1);
+    color: #2e7d32;
+}
+
+.quick-init i {
+    font-size: 14px;
+}
+
+.token-controls {
+    display: flex;
+    gap: 5px;
+    align-items: center;
+}
+
+/* Style pour la carte active */
+.initiative-card.active-turn {
+    box-shadow: 0 0 0 2px #4CAF50, 0 2px 8px rgba(0,0,0,0.1);
+    transform: translateY(-2px);
+}
+
+/* Container pour le bouton de fin de tour */
+.end-turn-container {
+    display: flex;
+    justify-content: center;
+    padding: 15px;
+    margin-top: 10px;
+    border-top: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+
+/* Bouton de fin de tour */
+.end-turn-button {
+    padding: 8px 24px;
+    background: #4a4a4a;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s ease;
+    min-width: 120px;
+    max-width: 200px;
+}
+
+.end-turn-button:hover {
+    background: #5a5a5a;
+    transform: translateY(-1px);
+}
+
+.end-turn-button i {
+    font-size: 16px;
+}
+
+.end-turn-button:disabled {
+    background: #cccccc;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.initiative-turn-announcement {
+    background: rgba(74, 74, 74, 0.1);
+    border-radius: 4px;
+    padding: 10px;
+    margin: 5px 0;
+}
+
+.initiative-turn-announcement h3 {
+    margin: 0;
+    color: #4a4a4a;
+    font-size: 16px;
+    margin-bottom: 5px;
+}
+
+.initiative-turn-announcement p {
+    margin: 0;
+    color: #666;
+}
+
+.active-turn-indicator {
+    position: absolute;
+    top: -10px;
+    right: 8px;
+    background: #4CAF50;
+    color: white;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: bold;
+    z-index: 10;
+}
+
+.initiative-card.ko.active-turn {
+    animation: shake 0.5s;
+    animation-iteration-count: 1;
+}
+
+@keyframes shake {
+    0% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    75% { transform: translateX(5px); }
+    100% { transform: translateX(0); }
+}
+
+.initiative-controls {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    padding: 15px;
+    margin-top: 10px;
+}
+
+.end-turn-button, .end-action-button {
+    min-width: 120px;
+    padding: 8px 24px;
+    border: none;
+    border-radius: 4px;
+    font-size: 14px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.2s ease;
+}
+
+.end-turn-button {
+    background: #4a4a4a;
+    color: white;
+}
+
+.end-action-button {
+    background: #d32f2f;
+    color: white;
+}
+
+.end-turn-button:hover {
+    background: #5a5a5a;
+}
+
+.end-action-button:hover {
+    background: #e53935;
+}
+
+.end-turn-button:disabled,
+.end-action-button:disabled {
+    background: #cccccc;
+    cursor: not-allowed;
+    opacity: 0.7;
 }
