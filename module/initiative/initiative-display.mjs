@@ -24,113 +24,188 @@ export class InitiativeDisplay extends Application {
     }
 
     async updateDisplay(newCards) {
-        console.log("UpdateDisplay triggered with:", newCards);
-        if (this.isAnimating) return;
+        if (this.isAnimating || !newCards) return;
         this.isAnimating = true;
-
+    
+        console.log("1. Début updateDisplay");
+    
+        const isInitialDraw = this.currentCards.length === 0 && newCards.length > 0;
+        const movedCards = this._findMovedCards(this.currentCards, newCards);
+        console.log("2. Type d'animation:", isInitialDraw ? "Initial Draw" : "Card Movement", movedCards);
+    
         const oldCards = [...this.currentCards];
-        this.currentCards = newCards || [];
-
+        this.currentCards = newCards;
+        console.log("3. Données mises à jour");
+    
+        console.log("4. Avant render");
         await this.render(true);
-        
-        if (oldCards.length === 0 && this.currentCards.length > 0) {
-            await this._animateInitialDraw();
-        } else if (this._isEndTurn(oldCards, this.currentCards)) {
-            await this._animateEndTurn();
-        }
-
-        this.isAnimating = false;
-    }
-
-    _isEndTurn(oldCards, newCards) {
-        if (!oldCards.length || !newCards.length) return false;
-        return oldCards[0].id === newCards[newCards.length - 1].id;
-    }
-
-    async _animateInitialDraw() {
+        console.log("5. Après render");
+        await new Promise(resolve => setTimeout(resolve, 50));
+        console.log("6. Après timeout");
+    
         const container = this.element.find('.display-cards-container');
-        if (!container.length) return;
-
-        const cards = container.find('.display-card').toArray();
-        const startX = container.width() - 180;
-
-        // Stack cards initially
-        for (let i = 0; i < cards.length; i++) {
-            const card = $(cards[i]);
-            card.css({
-                position: 'absolute',
-                right: '20px',
-                top: '20px',
-                zIndex: cards.length - i,
-                transform: `rotate(${(i * 2) - 5}deg)`,
-                opacity: 0
-            });
+        const cards = container.find('.display-card');
+    
+        if (isInitialDraw) {
+            console.log("7A. Début animation initiale");
+            await this._animateInitialDraw(cards);
+            console.log("8A. Fin animation initiale");
+        } else if (movedCards.length > 0) {
+            console.log("7B. Début animation mouvement");
+            await this._animateCardMovement(cards, movedCards, oldCards);
+            console.log("8B. Fin animation mouvement");
         }
+    
+        this.isAnimating = false;
+        console.log("9. Fin updateDisplay");
+    }
 
-        // Force reflow
-        container[0].offsetHeight;
+    _findMovedCards(oldCards, newCards) {
+        const movedCards = [];
+        const oldPositions = new Map(oldCards.map((card, index) => [card.id, index]));
 
-        // Deal cards one by one
+        newCards.forEach((card, newIndex) => {
+            const oldIndex = oldPositions.get(card.id);
+            if (oldIndex !== undefined && oldIndex !== newIndex) {
+                movedCards.push({
+                    id: card.id,
+                    oldIndex,
+                    newIndex
+                });
+            }
+        });
+
+        return movedCards;
+    }
+
+    async _animateInitialDraw(cards) {
+        cards.css({
+            opacity: 0,
+            transform: 'translateY(20px)',
+            transition: 'none'
+        });
+
+        await new Promise(resolve => setTimeout(resolve, 50));
+
         for (let i = 0; i < cards.length; i++) {
+            const card = cards[i];
             await new Promise(resolve => {
                 setTimeout(() => {
-                    const card = $(cards[i]);
-                    card.css({
-                        transition: 'all 0.5s ease-out',
-                        position: 'relative',
-                        right: '0',
-                        top: '0',
-                        transform: 'rotate(0)',
+                    $(card).css({
+                        transition: 'all 0.3s ease-out',
                         opacity: 1,
-                        zIndex: 1
+                        transform: 'translateY(0)'
                     });
-
                     resolve();
-                }, i * 200);
+                }, i * 100);
             });
         }
     }
 
-    async _animateEndTurn() {
+    async _animateCardMovement(cards, movedCards, oldCards) {
+        console.log("Animation - Début configuration");
+        
+        const CARD_DIMENSIONS = {
+            width: 160,
+            height: 190
+        };
+        
         const container = this.element.find('.display-cards-container');
-        if (!container.length) return;
-
-        const cards = container.find('.display-card');
-        const firstCard = cards.first();
-        const cardWidth = firstCard.outerWidth(true);
-        const distance = (cards.length - 1) * cardWidth;
-
-        // Move first card to end
-        firstCard.css({
-            position: 'relative',
-            transition: 'transform 0.5s ease-out',
-            transform: `translateX(${distance}px)`,
-            zIndex: 10
-        });
-
-        // Move other cards left
-        cards.slice(1).each(function() {
-            $(this).css({
-                position: 'relative',
-                transition: 'transform 0.5s ease-out',
-                transform: 'translateX(-100%)'
+        
+        console.log("Animation - Fixation dimensions");
+        cards.each((index, card) => {
+            const $card = $(card);
+            $card.css({
+                transition: 'none',
+                width: `${CARD_DIMENSIONS.width}px`,
+                height: `${CARD_DIMENSIONS.height}px`,
+                flex: '0 0 auto'
             });
         });
-
-        await new Promise(resolve => setTimeout(resolve, 500));
-        await this.render(false);
+    
+        container[0].offsetHeight;
+        console.log("Animation - Positions initiales");
+    
+        cards.each((index, card) => {
+            const $card = $(card);
+            const cardId = $card.data('cardId');
+            const oldIndex = oldCards.findIndex(c => c.id === cardId);
+            
+            if (oldIndex !== -1) {
+                $card.css({
+                    position: 'absolute',
+                    left: `${oldIndex * (CARD_DIMENSIONS.width + 20)}px`
+                });
+            }
+        });
+    
+        console.log("Animation - Attente avant transition");
+        await new Promise(resolve => setTimeout(resolve, 50));
+    
+        console.log("Animation - Configuration transition");
+        cards.css({
+            transition: 'left 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+            position: 'absolute'
+        });
+    
+        console.log("Animation - Application nouvelles positions");
+        cards.each((index, card) => {
+            $(card).css({
+                left: `${index * (CARD_DIMENSIONS.width + 20)}px`
+            });
+        });
+    
+        console.log("Animation - Attente fin transition");
+        await new Promise(resolve => setTimeout(resolve, 400));
+    
+        console.log("Animation - Reset styles");
+        cards.css({
+            transition: '',
+            position: '',
+            left: ''
+        });
     }
 
     activateListeners(html) {
         super.activateListeners(html);
-
-        // Setup animation classes
-        html.find('.display-card').each((i, card) => {
-            if (i === 0) { // First card
-                $(card).css({
-                    animation: this.currentCards[0]?.isActive ? 'activePulse 2s infinite' : 'none'
-                });
-            }
+        
+        const container = html.find('.display-cards-container');
+        
+        // Style pour le conteneur scrollable
+        container.css({
+            display: 'flex',
+            gap: '20px',
+            padding: '10px 5px',
+            overflowX: 'auto',
+            overflowY: 'hidden',
+            minHeight: '220px',
+            width: '100%',
+            position: 'relative'
         });
+
+        // Ajout d'une règle CSS pour la scrollbar
+        const style = document.createElement('style');
+        style.textContent = `
+            .display-cards-container::-webkit-scrollbar {
+                width: 8px;
+                height: 8px;
+            }
+            .display-cards-container::-webkit-scrollbar-track {
+                background: rgba(255, 255, 255, 0.1);
+                border-radius: 4px;
+            }
+            .display-cards-container::-webkit-scrollbar-thumb {
+                background: rgba(255, 255, 255, 0.3);
+                border-radius: 4px;
+            }
+            .display-cards-container::-webkit-scrollbar-thumb:hover {
+                background: rgba(255, 255, 255, 0.5);
+            }
+            .display-cards-container {
+                scrollbar-width: thin;
+                scrollbar-color: rgba(255, 255, 255, 0.3) rgba(255, 255, 255, 0.1);
+            }
+        `;
+        document.head.appendChild(style);
     }
 }

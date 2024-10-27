@@ -138,16 +138,18 @@
 </div>
 
     <div class="initiative-controls">
-    <button class="end-turn-button" 
-        {{#unless drawnInitiative.length}}disabled{{/unless}}>
-        <i class="fas fa-step-forward"></i>
-        End Turn
+    {{#if isInitiativeDrawn}}
+    <button class="end-turn-button" {{#unless drawnInitiative.length}}disabled{{/unless}}>
+        <i class="fas fa-step-forward"></i> End Turn
     </button>
-    <button class="end-action-button" 
-        {{#unless drawnInitiative.length}}disabled{{/unless}}>
-        <i class="fas fa-stop-circle"></i>
-        End Action
+    <button class="end-action-button">
+        <i class="fas fa-stop"></i> End Action
     </button>
+    <button class="toggle-alerts" title="Toggle turn alerts">
+        <i class="fas fa-bell{{#unless alertsEnabled}}-slash{{/unless}}"></i> 
+        {{#if alertsEnabled}}Disable{{else}}Enable{{/if}} Alerts
+    </button>
+    {{/if}}
 </div>
 </div>
 {{/if}}

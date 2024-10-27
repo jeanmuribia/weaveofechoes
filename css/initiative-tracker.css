@@ -702,132 +702,255 @@
     opacity: 0.7;
 }
 
+.toggle-alerts {
+    min-width: 120px;
+    padding: 8px 24px;
+    background: #607d8b;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 14px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.2s ease;
+}
+
+.toggle-alerts:hover {
+    background: #78909c;
+}
+
+.toggle-alerts i {
+    font-size: 16px;
+}
+
+.toggle-alerts.disabled {
+    background: #b0bec5;
+}
+
 /* Container principal */
 .initiative-display {
-    padding: 15px;
+    padding: 20px;
     background: rgba(22, 22, 22, 0.95);
-    border-radius: 10px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    position: relative;
+    overflow: hidden;
 }
 
 /* Container des cartes */
 .display-cards-container {
-    position: relative;
     display: flex;
-    gap: 15px;
-    padding: 20px;
-    min-height: 180px;
-    transform-style: preserve-3d;
-    perspective: 1000px;
+    gap: 20px;
+    padding: 10px 5px;
+    min-height: 220px;
+    width: 100%;
+    position: relative;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.3) rgba(255, 255, 255, 0.1);
+    /* Assure que le conteneur accepte le défilement */
+    -webkit-overflow-scrolling: touch;
 }
 
-/* Style de base des cartes */
+.cards-wrapper {
+    position: relative;
+    width: 100%;
+    /* Permet le défilement horizontal tout en masquant le débordement vertical */
+    overflow-x: visible;
+    overflow-y: hidden;
+}
+
+
+/* Styles de la barre de défilement */
+.display-cards-container::-webkit-scrollbar {
+    height: 8px;
+}
+
+.display-cards-container::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+}
+
+.display-cards-container::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 4px;
+    transition: background-color 0.3s ease;
+}
+
+.display-cards-container::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.5);
+}
+
+
+/* Style de base des cartes avec dimensions fixes */
 .display-card {
-    flex: 0 0 160px;
-    padding: 12px;
-    border-radius: 10px;
+    /* Dimensions fixes et non-négociables */
+    width: 160px;
+    height: 190px;
+    min-width: 160px;
+    min-height: 190px;
+    max-width: 160px;
+    max-height: 190px;
+    
+    /* Flex qui respecte les dimensions fixes */
+    flex: 0 0 auto;
+    
+    /* Reste des styles */
+    padding: 16px;
+    border-radius: 12px;
     background: linear-gradient(145deg, #2d4b6b, #1e334d);
     border: 1px solid rgba(255, 255, 255, 0.1);
     display: flex;
     flex-direction: column;
     align-items: center;
+    
+    /* Transitions spécifiques plutôt que 'all' */
+    transition: 
+        transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+        opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+        box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    
+    /* Autres propriétés */
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    position: relative;
     transform-origin: center center;
     will-change: transform, opacity;
-    position: relative;
 }
-
 /* Image du personnage */
 .display-card-image {
-    width: 80px;
-    height: 80px;
+    width: 90px;
+    height: 90px;
     border-radius: 50%;
     overflow: hidden;
-    border: 2px solid rgba(255, 255, 255, 0.2);
-    margin-bottom: 10px;
+    border: 3px solid rgba(255, 255, 255, 0.2);
+    margin-bottom: 12px;
     background: #1a1a1a;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    transition: transform 0.3s ease;
+}
+
+.display-card:hover .display-card-image {
+    transform: scale(1.05);
 }
 
 .display-card-image img {
     width: 100%;
     height: 100%;
     object-fit: cover;
+    transition: filter 0.3s ease;
 }
 
 /* Nom du personnage */
 .display-card-name {
     color: white;
-    font-size: 1.1em;
-    font-weight: 500;
+    font-size: 1.2em;
+    font-weight: 600;
     text-align: center;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    margin-top: 8px;
+    transition: color 0.3s ease;
 }
 
 /* Indicateur de menaces */
 .display-threat-counter {
     position: absolute;
-    top: 5px;
-    right: 5px;
+    top: 8px;
+    right: 8px;
     background: #e74c3c;
     color: white;
-    width: 24px;
-    height: 24px;
+    width: 28px;
+    height: 28px;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
     font-weight: bold;
-    font-size: 0.9em;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    font-size: 1em;
+    box-shadow: 0 2px 8px rgba(231, 76, 60, 0.4);
     z-index: 2;
+    transition: transform 0.3s ease;
+}
+
+.display-threat-counter:hover {
+    transform: scale(1.1);
 }
 
 /* États des cartes */
 .display-card.active {
     border: 2px solid #4CAF50;
-    box-shadow: 0 0 15px rgba(76, 175, 80, 0.3);
+    box-shadow: 0 0 20px rgba(76, 175, 80, 0.3);
     animation: activePulse 2s infinite;
+    transform: translateY(-4px);
 }
 
 .display-card.ko {
     filter: grayscale(100%);
-    opacity: 0.6;
+    opacity: 0.5;
     transform: scale(0.95);
+}
+
+.display-card.ko .display-card-image {
+    border-color: rgba(255, 255, 255, 0.1);
 }
 
 /* Animations */
 @keyframes activePulse {
-    0% { box-shadow: 0 0 0 0 rgba(76, 175, 80, 0.7); }
-    50% { box-shadow: 0 0 15px 5px rgba(76, 175, 80, 0.5); }
-    100% { box-shadow: 0 0 0 0 rgba(76, 175, 80, 0.7); }
-}
-
-/* États d'animation */
-.display-card.enter {
-    animation: cardEnter 0.5s ease-out forwards;
-}
-
-.display-card.exit {
-    animation: cardExit 0.5s ease-out forwards;
+    0% {
+        box-shadow: 0 0 0 0 rgba(76, 175, 80, 0.7);
+    }
+    50% {
+        box-shadow: 0 0 20px 5px rgba(76, 175, 80, 0.5);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(76, 175, 80, 0.7);
+    }
 }
 
 @keyframes cardEnter {
-    from {
+    0% {
         opacity: 0;
-        transform: translateY(20px) scale(0.8);
+        transform: translateY(30px); 
     }
-    to {
+    100% {
         opacity: 1;
-        transform: translateY(0) scale(1);
+        transform: translateY(0); 
     }
 }
 
 @keyframes cardExit {
-    from {
+    0% {
         opacity: 1;
-        transform: translateY(0) scale(1);
+        transform: translateY(0); 
     }
-    to {
+    100% {
         opacity: 0;
-        transform: translateY(-20px) scale(0.8);
+        transform: translateY(-30px); 
+    }
+}
+
+/* Effets de survol */
+.display-card:not(.ko):hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+}
+
+.display-card.active:hover {
+    transform: translateY(-6px);
+}
+
+/* Animation de transition fluide */
+.display-card {
+    transform: scale(1);
+    transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1), transform 0.3s ease-in-out; 
+}
+
+/* Support du mode sombre */
+@media (prefers-color-scheme: dark) {
+    .initiative-display {
+        background: rgba(18, 18, 18, 0.97);
     }
 }
