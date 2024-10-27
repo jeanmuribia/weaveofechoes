@@ -123,6 +123,11 @@ export class InitiativeTracker extends Application {
         }
     
         this.render(true);
+
+        Hooks.callAll('updateInitiativeTracker', {
+            drawnInitiative: this.drawnInitiative,
+            isInitiativeDrawn: this.isInitiativeDrawn
+        });
     }
 
     _onEndAction(event) {
@@ -139,6 +144,11 @@ export class InitiativeTracker extends Application {
         this.drawnInitiative = [];
         this.isInitiativeDrawn = false;
         this.render(true);
+
+        Hooks.callAll('updateInitiativeTracker', {
+            drawnInitiative: this.drawnInitiative,
+            isInitiativeDrawn: this.isInitiativeDrawn
+        });
     }
     
     
@@ -163,6 +173,10 @@ export class InitiativeTracker extends Application {
             character.isActive = !character.isActive;
             this.render(false);
         }
+        Hooks.callAll('updateInitiativeTracker', {
+            drawnInitiative: this.drawnInitiative,
+            isInitiativeDrawn: this.isInitiativeDrawn
+        });
     }
 
     // Gestion des toggles de section
@@ -415,7 +429,8 @@ export class InitiativeTracker extends Application {
     // Initiative
     async _onDrawInitiative(event) {
         event.preventDefault();
-        
+        console.log("Draw Initiative button clicked");
+    
         if (this.selectedCharacters.length > 0) {
             ui.notifications.error(`Cannot draw initiative: ${this.selectedCharacters.length} characters are still unassigned!`);
             return;
@@ -429,7 +444,9 @@ export class InitiativeTracker extends Application {
         this.isInitiativeDrawn = true;
         this.drawnInitiative = [];
     
-        // Traiter les groupes et personnages comme avant
+        console.log("Initiative drawn for characters in groups:", this.initiativeGroups);
+    
+        // Continuer avec le traitement des groupes
         for (const group of this.initiativeGroups) {
             if (!group.characters?.length) continue;
     
@@ -455,14 +472,15 @@ export class InitiativeTracker extends Application {
             this.drawnInitiative.push(...shuffledCharacters);
         }
     
-        // Rendre la première carte active
+        // Vérifiez le contenu de drawnInitiative
+        console.log("Final drawnInitiative:", this.drawnInitiative);
+    
         if (this.drawnInitiative.length > 0) {
             this.drawnInitiative[0].isActive = true;
         }
     
         await this.render(true);
     
-        // Annoncer le début de l'action et le premier tour
         ChatMessage.create({
             content: `<div class="initiative-announcement">
                         <h2>Action Started!</h2>
@@ -470,6 +488,11 @@ export class InitiativeTracker extends Application {
                      </div>`,
             type: CONST.CHAT_MESSAGE_STYLES.OTHER,
             speaker: { alias: "Initiative Tracker" }
+        });
+    
+        Hooks.callAll('updateInitiativeTracker', {
+            drawnInitiative: this.drawnInitiative,
+            isInitiativeDrawn: this.isInitiativeDrawn
         });
     }
     
@@ -600,26 +623,32 @@ _setupInitiativeCardDragDrop(html) {
 
         const stopDragging = (e) => {
             if (!isDragging || !dragCard) return;
-            
+        
             const activeSeparator = container.querySelector('.card-separator.active');
             if (activeSeparator) {
                 const newIndex = parseInt(activeSeparator.dataset.index);
                 const currentIndex = Array.from(container.children)
                     .filter(el => el.classList.contains('initiative-card'))
                     .indexOf(card);
-
+        
                 console.log('Current index:', currentIndex, 'New index:', newIndex);
-
+        
                 if (newIndex !== currentIndex) {
                     const updatedOrder = [...this.drawnInitiative];
                     const [movedCard] = updatedOrder.splice(currentIndex, 1);
                     updatedOrder.splice(newIndex, 0, movedCard);
-                    
+        
                     this.drawnInitiative = updatedOrder;
                     this.render(true);
+        
+                    // Appeler le hook pour notifier les autres composants
+                    Hooks.callAll('updateInitiativeTracker', {
+                        drawnInitiative: this.drawnInitiative,
+                        isInitiativeDrawn: this.isInitiativeDrawn
+                    });
                 }
             }
-
+        
             isDragging = false;
             dragCard.remove();
             dragCard = null;
@@ -665,6 +694,10 @@ _updateCardOrder(draggedCard, mouseX) {
 
 
     this.render(true);
+    Hooks.callAll('updateInitiativeTracker', {
+        drawnInitiative: this.drawnInitiative,
+        isInitiativeDrawn: this.isInitiativeDrawn
+    });
 }
 
 _updateGhostPosition(mouseX, draggedCard) {
@@ -745,6 +778,10 @@ _updateCardOrder(draggedCard) {
     this.drawnInitiative = updatedOrder;
 
     this.render(true);
+    Hooks.callAll('updateInitiativeTracker', {
+        drawnInitiative: this.drawnInitiative,
+        isInitiativeDrawn: this.isInitiativeDrawn
+    });
 }
 
 
@@ -756,6 +793,10 @@ _updateCardOrder(draggedCard) {
             character.threats = (character.threats || 0) + 1;
             this.render(false);
         }
+        Hooks.callAll('updateInitiativeTracker', {
+            drawnInitiative: this.drawnInitiative,
+            isInitiativeDrawn: this.isInitiativeDrawn
+        });
     }
     
     _onRemoveThreat(event) {
@@ -765,6 +806,10 @@ _updateCardOrder(draggedCard) {
             character.threats--;
             this.render(false);
         }
+        Hooks.callAll('updateInitiativeTracker', {
+            drawnInitiative: this.drawnInitiative,
+            isInitiativeDrawn: this.isInitiativeDrawn
+        });
     }
     
     _onToggleKO(event) {
@@ -779,7 +824,7 @@ _updateCardOrder(draggedCard) {
         const remainingActive = this.drawnInitiative.filter(char => !char.isKO).length;
         
         if (remainingActive === 0) {
-            // Tous les personnages sont KO
+            // Tous les personnages sont KO, vider le tracker et mettre à jour l'affichage
             setTimeout(() => {
                 ChatMessage.create({
                     content: `<div class="initiative-announcement">
@@ -791,11 +836,17 @@ _updateCardOrder(draggedCard) {
                 });
     
                 setTimeout(() => {
-                    // Au lieu d'appeler _onEndAction, on vide directement
+                    // Vider le tracker et notifier
                     this.drawnInitiative = [];
                     this.isInitiativeDrawn = false;
                     this.render(true);
-                }, 1500);
+    
+                    // Mettre à jour le display
+                    Hooks.callAll('updateInitiativeTracker', {
+                        drawnInitiative: this.drawnInitiative,
+                        isInitiativeDrawn: this.isInitiativeDrawn
+                    });
+                }, 500);
             }, 500);
             return;
         } else if (this.drawnInitiative[0].id === character.id && character.isKO) {
@@ -813,7 +864,12 @@ _updateCardOrder(draggedCard) {
             }, 500);
         }
     
+        // Rendre et notifier pour tous les autres cas
         this.render(true);
+        Hooks.callAll('updateInitiativeTracker', {
+            drawnInitiative: this.drawnInitiative,
+            isInitiativeDrawn: this.isInitiativeDrawn
+        });
     }
     
     
@@ -821,5 +877,9 @@ _updateCardOrder(draggedCard) {
         const cardId = event.currentTarget.closest('.initiative-card').dataset.cardId;
         this.drawnInitiative = this.drawnInitiative.filter(c => c.id !== cardId);
         this.render(true);
+        Hooks.callAll('updateInitiativeTracker', {
+            drawnInitiative: this.drawnInitiative,
+            isInitiativeDrawn: this.isInitiativeDrawn
+        });
     }
 }

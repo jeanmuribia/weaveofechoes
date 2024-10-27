@@ -701,3 +701,133 @@
     cursor: not-allowed;
     opacity: 0.7;
 }
+
+/* Container principal */
+.initiative-display {
+    padding: 15px;
+    background: rgba(22, 22, 22, 0.95);
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* Container des cartes */
+.display-cards-container {
+    position: relative;
+    display: flex;
+    gap: 15px;
+    padding: 20px;
+    min-height: 180px;
+    transform-style: preserve-3d;
+    perspective: 1000px;
+}
+
+/* Style de base des cartes */
+.display-card {
+    flex: 0 0 160px;
+    padding: 12px;
+    border-radius: 10px;
+    background: linear-gradient(145deg, #2d4b6b, #1e334d);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    transform-origin: center center;
+    will-change: transform, opacity;
+    position: relative;
+}
+
+/* Image du personnage */
+.display-card-image {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    overflow: hidden;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    margin-bottom: 10px;
+    background: #1a1a1a;
+}
+
+.display-card-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* Nom du personnage */
+.display-card-name {
+    color: white;
+    font-size: 1.1em;
+    font-weight: 500;
+    text-align: center;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+/* Indicateur de menaces */
+.display-threat-counter {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    background: #e74c3c;
+    color: white;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 0.9em;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    z-index: 2;
+}
+
+/* États des cartes */
+.display-card.active {
+    border: 2px solid #4CAF50;
+    box-shadow: 0 0 15px rgba(76, 175, 80, 0.3);
+    animation: activePulse 2s infinite;
+}
+
+.display-card.ko {
+    filter: grayscale(100%);
+    opacity: 0.6;
+    transform: scale(0.95);
+}
+
+/* Animations */
+@keyframes activePulse {
+    0% { box-shadow: 0 0 0 0 rgba(76, 175, 80, 0.7); }
+    50% { box-shadow: 0 0 15px 5px rgba(76, 175, 80, 0.5); }
+    100% { box-shadow: 0 0 0 0 rgba(76, 175, 80, 0.7); }
+}
+
+/* États d'animation */
+.display-card.enter {
+    animation: cardEnter 0.5s ease-out forwards;
+}
+
+.display-card.exit {
+    animation: cardExit 0.5s ease-out forwards;
+}
+
+@keyframes cardEnter {
+    from {
+        opacity: 0;
+        transform: translateY(20px) scale(0.8);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+@keyframes cardExit {
+    from {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+    to {
+        opacity: 0;
+        transform: translateY(-20px) scale(0.8);
+    }
+}

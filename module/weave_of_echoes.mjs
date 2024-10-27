@@ -10,6 +10,7 @@ import { WOE } from './helpers/config.mjs';
 import { SynergyTracker } from './synergy-tracker.js';
 import { FocusTracker } from './focus-tracker.mjs';
 import { InitiativeTracker } from './initiative/initiative-tracker.mjs';
+import { InitiativeDisplay } from './initiative/initiative-display.mjs';
 
 /* -------------------------------------------- */
 /*  Init Hook                                   */
@@ -131,14 +132,26 @@ Hooks.once('ready', () => {
     });
     game.weaveOfEchoes.focusTracker.render(true);
 
-    // Initialisation de l'Initiative Tracker
-    game.weaveOfEchoes.initiativeTracker = new InitiativeTracker();
+    if (game.user.isGM) {
+      game.weaveOfEchoes.initiativeTracker = new InitiativeTracker();
   }
+  game.weaveOfEchoes.initiativeDisplay = new InitiativeDisplay();
+  game.weaveOfEchoes.initiativeDisplay.render(true);
+  if (game.weaveOfEchoes.initiativeTracker?.isInitiativeDrawn) {
+    Hooks.callAll('updateInitiativeTracker', {
+        drawnInitiative: game.weaveOfEchoes.initiativeTracker.drawnInitiative,
+        isInitiativeDrawn: game.weaveOfEchoes.initiativeTracker.isInitiativeDrawn
+    });
+}
+  }
+
+    
 });
 
 Hooks.on('getSceneControlButtons', (controls) => {
   if (game.user.isGM) {
     let tokenControls = controls.find(c => c.name === "token");
+    
     
     if (tokenControls) {
       // Ajoute le bouton pour le Synergy Tracker 1
@@ -207,6 +220,14 @@ Hooks.on('updateSynergyTracker', (actor) => {
     const tracker = game.weaveOfEchoes.additionalTrackers[trackerId];
     tracker.calculateMaxSynergy();
     tracker.render(false); // Mise à jour visuelle du tracker
+  }
+});
+
+Hooks.on('updateInitiativeTracker', (tracker) => {
+  console.log("updateInitiativeTracker hook triggered with:", tracker);
+
+  if (game.weaveOfEchoes.initiativeDisplay) {
+      game.weaveOfEchoes.initiativeDisplay.updateDisplay(tracker.drawnInitiative);
   }
 });
 
@@ -333,4 +354,47 @@ Hooks.on('renderJournalDirectory', (app, html) => {
       ui.notifications.warn(`Tracker ${trackerNumber} n'est pas disponible.`);
     }
   });
+
+  // Créer le bouton
+  const initiativeButton = $(`
+    <div class="action-buttons flexrow">
+      <button type="button" class="initiative-display-button">
+        <i class="fas fa-eye"></i> Initiative Display
+      </button>
+    </div>
+  `);
+  
+  // Ajouter le bouton en haut du panneau Journal
+  const journalHeader = html.find('.directory-header');
+  journalHeader.after(initiativeButton);
+  
+  // Ajouter l'événement de clic
+  initiativeButton.find('.initiative-display-button').click(() => {
+    if (game.weaveOfEchoes.initiativeDisplay) {
+      game.weaveOfEchoes.initiativeDisplay.render(true);
+    }
+  });
+
+  // Ajouter du style pour le bouton
+  initiativeButton.find('.initiative-display-button').css({
+    width: '100%',
+    margin: '4px 0',
+    background: '#4b4a44',
+    color: '#f0f0e0',
+    border: '1px solid #7a7971',
+    padding: '2px 4px',
+    borderRadius: '4px',
+    cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '8px'
+  });
+
+  // Ajouter un effet hover
+  initiativeButton.find('.initiative-display-button').hover(
+    function() { $(this).css('background', '#58574f'); },
+    function() { $(this).css('background', '#4b4a44'); }
+  );
 });
+

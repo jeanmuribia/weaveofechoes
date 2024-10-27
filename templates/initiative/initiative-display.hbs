@@ -1,0 +1,16 @@
+{{!-- initiative-display.hbs --}}
+<div class="initiative-display">
+    <div class="display-cards-container">
+        {{#each cards as |card|}}
+        <div class="display-card {{#if card.isKO}}ko{{/if}} {{#if card.isActive}}active{{/if}}" data-card-id="{{card.id}}">
+            <div class="display-card-image">
+                <img src="{{card.img}}" alt="{{card.name}}">
+                {{#if card.threats}}
+                <div class="display-threat-counter">{{card.threats}}</div>
+                {{/if}}
+            </div>
+            <div class="display-card-name">{{card.name}}</div>
+        </div>
+        {{/each}}
+    </div>
+</div>
