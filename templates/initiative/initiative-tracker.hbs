@@ -1,157 +1,146 @@
-<div class="initiative-tracker">
-    <div class="tracker-controls">
-        <button class="add-characters">
-            <i class="fas fa-user-plus"></i> Add Characters
-        </button>
-        <button class="add-group">
-            <i class="fas fa-layer-group"></i> Add Group
-        </button>
-        <button class="draw-initiative">
-            <i class="fas fa-dice"></i> Draw Initiative!
-        </button>
-    </div>
+<form class="initiative-tracker">
+    <!-- Navigation des onglets -->
+    <nav class="tabs" data-group="primary">
+        <a class="item active" data-tab="initiative"><i class="fas fa-dice-d20"></i> Initiative</a>
+        <a class="item" data-tab="opportunities"><i class="fas fa-star"></i> Opportunities</a>
+    </nav>
 
-    <div class="setup-section">
-        <div class="section-header">
-            <h2>Setup</h2>
-            <button class="toggle-setup" data-section="setup">
-                <i class="fas {{#if setupCollapsed}}fa-chevron-down{{else}}fa-chevron-up{{/if}}"></i>
+    <!-- Conteneur des onglets -->
+    <section class="sheet-body">
+        <!-- Onglet Initiative -->
+        <div class="tab active" data-tab="initiative">
+            <div class="tracker-controls">
+                <button class="add-characters"><i class="fas fa-user-plus"></i> Add Characters</button>
+                <button class="add-group"><i class="fas fa-layer-group"></i> Add Group</button>
+                <button class="draw-initiative"><i class="fas fa-dice"></i> Draw Initiative!</button>
+            </div>
+           <!-- Section Setup -->
+<div class="setup-section">
+    <div class="initiative-groups">
+        <div class="groups-header">
+            <h2>Groups</h2>
+            <button class="toggle-setup" title="Toggle Groups Display">
+                <i class="fas {{#if setupCollapsed}}fa-chevron-right{{else}}fa-chevron-down{{/if}}"></i>
             </button>
         </div>
-
-        <div class="section-content {{#if setupCollapsed}}collapsed{{/if}}">
-            {{#if selectedCharacters}}
-            <div class="unassigned-section">
-                <h3>Characters to Assign</h3>
-                <div class="unassigned-characters">
-                    {{#each selectedCharacters}}
-                    <div class="character-token" data-character-id="{{this.id}}">
-                        <img src="{{this.img}}" class="character-icon" alt="{{this.name}}" />
-                        <input type="text" class="character-name-input" value="{{this.name}}" data-character-id="{{this.id}}" />
-                        <div class="token-controls">
-                            <button class="duplicate-char" data-character-id="{{this.id}}">
-                                <i class="fas fa-clone"></i>
-                            </button>
-                            <button class="delete-char" data-character-id="{{this.id}}">
-                                <i class="fas fa-times"></i>
-                            </button>
-                        </div>
-                    </div>
-                    {{/each}}
-                </div>
-            </div>
-            {{/if}}
-
-            <div class="initiative-groups">
-                {{#each initiativeGroups}}
+        <div class="groups-container {{#if setupCollapsed}}hidden{{/if}}">
+            {{#each initiativeGroups}}
                 <div class="group-container" data-group-id="{{this.id}}">
                     <div class="group-header">
-                        <h3>{{this.name}}</h3>
-                        <button class="delete-group">
-                            <i class="fas fa-trash"></i>
-                        </button>
+                        <div class="header-content">
+                            <h3>{{this.name}}</h3>
+                            <button class="delete-group" title="Delete Group">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
                     </div>
                     <div class="group-dropzone" data-group-id="{{this.id}}">
                         {{#if this.characters}}
                             {{#each this.characters}}
-                            <div class="character-token" data-character-id="{{this.id}}">
-                                <img src="{{this.img}}" class="character-icon" alt="{{this.name}}" />
-                                <input type="text" class="character-name-input" value="{{this.name}}" data-character-id="{{this.id}}" />
-                                <div class="token-controls">
-                                    <button class="duplicate-char" data-character-id="{{this.id}}">
-                                        <i class="fas fa-clone"></i>
-                                    </button>
-                                    <button class="delete-char" data-character-id="{{this.id}}">
-                                        <i class="fas fa-times"></i>
-                                    </button>
+                                <div class="character-token" data-character-id="{{this.id}}">
+                                    <img src="{{this.img}}" class="character-icon" alt="{{this.name}}" />
+                                    <input type="text" class="character-name-input" value="{{this.name}}" data-character-id="{{this.id}}" />
+                                    <div class="token-controls">
+                                        <button class="duplicate-char" data-character-id="{{this.id}}">
+                                            <i class="fas fa-clone"></i>
+                                        </button>
+                                        <button class="delete-char" data-character-id="{{this.id}}">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    </div>
                                 </div>
-                            </div>
                             {{/each}}
                         {{else}}
                             <div class="drop-hint">Drop characters here</div>
                         {{/if}}
                     </div>
                 </div>
-                {{/each}}
-            </div>
+            {{/each}}
         </div>
     </div>
+</div>
 
-{{#if isInitiativeDrawn}}
-<div class="initiative-display-section">
-    <div class="section-header">
-        <h2>Initiative Order</h2>
-        <button class="toggle-initiative" data-section="initiative">
-            <i class="fas {{#if initiativeCollapsed}}fa-chevron-down{{else}}fa-chevron-up{{/if}}"></i>
-        </button>
-    </div>
 
- <div class="initiative-cards-container">
-    {{#each drawnInitiative}}
-    <div class="initiative-card 
-        {{#if expanded}}expanded{{/if}} 
-        {{#if isKO}}ko{{/if}} 
-        {{#if isActive}}active-turn{{/if}}" 
-        data-card-id="{{this.id}}">
-
-        {{#if isActive}}
-        <div class="active-turn-indicator">Active</div>
-        {{/if}}
-
-        <div class="card-header">
-            <div class="active-toggle">
-                <input type="checkbox" class="toggle-active" 
-                    {{#if isActive}}checked{{/if}} 
-                    {{#if isKO}}disabled{{/if}}>
-            </div>
-        </div>
-
-        <div class="drag-handle">
-            <div class="image-container">
-                {{#if threats}}
-                <div class="threat-counter">
-                    {{#if (gt threats 1)}}{{threats}}{{/if}} Threat
+            <!-- Section Initiative si tirée -->
+            {{#if isInitiativeDrawn}}
+                <div class="initiative-display-section">
+                    <div class="section-header">
+                        <h2>Initiative Order</h2>
+                    </div>
+                    <div class="initiative-cards-container">
+                        {{#each drawnInitiative}}
+                            <div class="initiative-card {{#if expanded}}expanded{{/if}} {{#if isKO}}ko{{/if}} {{#if isActive}}active-turn{{/if}}" data-card-id="{{this.id}}">
+                                {{#if isActive}}<div class="active-turn-indicator">Active</div>{{/if}}
+                                <div class="card-header">
+                                    <div class="active-toggle">
+                                        <input type="checkbox" class="toggle-active" {{#if isActive}}checked{{/if}} {{#if isKO}}disabled{{/if}}>
+                                    </div>
+                                </div>
+                                <div class="drag-handle">
+                                    <div class="image-container">
+                                        {{#if threats}}<div class="threat-counter">{{#if (gt threats 1)}}{{threats}}{{/if}} Threat</div>{{/if}}
+                                        <img src="{{this.img}}" class="card-image" alt="{{this.name}}" loading="lazy" />
+                                    </div>
+                                    <h3 class="card-name">{{this.name}}</h3>
+                                </div>
+                                <div class="card-controls interactive">
+                                    <button class="expand-button" title="Expand/Collapse"><i class="fas fa-expand-arrows-alt"></i></button>
+                                    <button class="threat-button" title="Add Threat"><i class="fas fa-exclamation-triangle"></i></button>
+                                    <button class="ko-button" title="Toggle KO"><i class="fas fa-skull"></i></button>
+                                    <button class="delete-card" title="Remove from Initiative"><i class="fas fa-times"></i></button>
+                                </div>
+                            </div>
+                        {{/each}}
+                    </div>
+                    <div class="initiative-controls">
+                        <button class="end-turn-button"><i class="fas fa-step-forward"></i> End Turn</button>
+                        <button class="end-action-button"><i class="fas fa-stop"></i> End Action</button>
+                        <button class="toggle-alerts" title="Toggle turn alerts">
+                            <i class="fas fa-bell{{#unless alertsEnabled}}-slash{{/unless}}"></i> 
+                            {{#if alertsEnabled}}Disable{{else}}Enable{{/if}} Alerts
+                        </button>
+                    </div>
                 </div>
-                {{/if}}
-                <img src="{{this.img}}" class="card-image" alt="{{this.name}}" loading="lazy" />
-            </div>
-            
-            <h3 class="card-name">{{this.name}}</h3>
+            {{/if}}
         </div>
 
-        <div class="card-controls interactive">
-            <button class="expand-button" title="Expand/Collapse">
-                <i class="fas fa-expand-arrows-alt"></i>
+        <!-- Onglet Opportunities -->
+        <div class="tab" data-tab="opportunities">
+            <div class="opportunities-content">
+    <div class="opportunities-header">
+        <div class="opportunities-controls">
+            <button class="create-opportunity">
+                <i class="fas fa-plus"></i> Create Opportunity
             </button>
-            <button class="threat-button" title="Add Threat">
-                <i class="fas fa-exclamation-triangle"></i>
-            </button>
-            <button class="ko-button" title="Toggle KO">
-                <i class="fas fa-skull"></i>
-            </button>
-            <button class="delete-card" title="Remove from Initiative">
-                <i class="fas fa-times"></i>
+            <button class="clear-opportunities" {{#unless opportunities.length}}disabled{{/unless}}>
+                <i class="fas fa-trash"></i> Clear All
             </button>
         </div>
     </div>
-    {{/each}}
+    <div class="opportunities-container">
+        {{#each opportunities}}
+            <div class="opportunity-card" data-id="{{this.id}}">
+                <div class="opportunity-points-circle">
+                    <span class="points-value">{{this.points}}</span>
+                </div>
+                <div class="opportunity-content">
+                    <input type="text" class="opportunity-name" value="{{this.name}}" placeholder="Opportunity Name"/>
+                    <div class="opportunity-controls">
+                        <button class="opportunity-increment" title="Add Point">
+                            <i class="fas fa-plus"></i>
+                        </button>
+                        <button class="opportunity-decrement" title="Remove Point">
+                            <i class="fas fa-minus"></i>
+                        </button>
+                        <button class="delete-opportunity" title="Delete Opportunity">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        {{/each}}
+    </div>
 </div>
-
-    <div class="initiative-controls">
-    {{#if isInitiativeDrawn}}
-    <button class="end-turn-button" {{#unless drawnInitiative.length}}disabled{{/unless}}>
-        <i class="fas fa-step-forward"></i> End Turn
-    </button>
-    <button class="end-action-button">
-        <i class="fas fa-stop"></i> End Action
-    </button>
-    <button class="toggle-alerts" title="Toggle turn alerts">
-        <i class="fas fa-bell{{#unless alertsEnabled}}-slash{{/unless}}"></i> 
-        {{#if alertsEnabled}}Disable{{else}}Enable{{/if}} Alerts
-    </button>
-    {{/if}}
-</div>
-</div>
-{{/if}}
-
-</div>
+        </div>
+    </section>
+</form>

@@ -31,41 +31,203 @@
     background: #45a049;
 }
 
-/* Unassigned Section */
-.unassigned-section {
-    background: white;
+/* Groups sections */
+.initiative-groups {
+    border: 1px solid rgba(0, 0, 0, 0.1);
     border-radius: 8px;
-    padding: 10px;
-    margin-bottom: 15px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    overflow: hidden;
+    margin-top: 10px;
 }
 
-.unassigned-section h3 {
-    margin: 0 0 10px 0;
-    color: #2e7d32;
-    font-size: 16px;
+.groups-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    background: rgba(0, 0, 0, 0.05);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
 }
 
-.unassigned-characters {
-    min-height: 50px;
-    padding: 10px;
-    background: #f9f9f9;
-    border: 2px dashed #a5d6a7;
+.groups-header h2 {
+    margin: 0;
+    font-size: 1.1em;
+    color: #4a4a4a;
+}
+
+.toggle-setup {
+    background: none;
+    border: none;
+    padding: 4px 8px;
+    cursor: pointer;
+    color: #666;
+    transition: all 0.2s ease;
+}
+
+.toggle-setup:hover {
+    color: #333;
+}
+
+.groups-container {
+    transition: all 0.3s ease-out;
+    max-height: 1000px;
+    overflow: hidden;
+}
+
+.groups-container.hidden {
+    max-height: 0;
+    padding: 0;
+    margin: 0;
+}
+
+.group-container {
+    margin: 10px;
+    background: #fff;
     border-radius: 6px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.group-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    background: #e8f5e9;
+    border-top-left-radius: 6px;
+    border-top-right-radius: 6px;
+}
+
+.group-header h3 {
+    margin: 0;
+    color: #2e7d32;
+}
+
+.character-token {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px;
+    background: #f5f5f5;
+    border-radius: 4px;
+    margin: 5px 0;
+}
+
+.character-icon {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.character-name-input {
+    flex: 1;
+    padding: 4px 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+.token-controls {
+    display: flex;
+    gap: 4px;
+}
+
+.token-controls button {
+    background: none;
+    border: none;
+    padding: 4px;
+    cursor: pointer;
+    color: #666;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+}
+
+.token-controls button:hover {
+    background: rgba(0,0,0,0.05);
+    color: #333;
+}
+
+/* Nouveaux styles unifiés pour le drag & drop */
+.group-dropzone {
+    min-height: 60px;
+    padding: 15px;
+    border: 2px dashed rgba(0, 0, 0, 0.1);
+    border-radius: 6px;
+    margin: 10px;
+    background: rgba(255, 255, 255, 0.5);
+    transition: all 0.2s ease;
+}
+
+.group-dropzone.dragover {
+    background: rgba(76, 175, 80, 0.1);
+    border-color: #4CAF50;
+    border-style: solid;
+}
+
+.drop-hint {
+    color: #999;
+    text-align: center;
+    padding: 15px;
+    font-style: italic;
+    display: block;
+    width: 100%;
+}
+
+.drop-indicator {
+    width: 6px;
+    height: 200px;
+    background: rgba(200, 200, 200, 0.2);
+    margin: 0 -3px;
+    border-radius: 3px;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+    align-self: center;
+}
+
+.drop-indicator.active {
+    width: 8px;
+    background: #4CAF50;
+    box-shadow: 0 0 10px rgba(76, 175, 80, 0.5);
+}
+
+.initiative-card[draggable=true] .drag-handle {
+    cursor: grab;
+}
+
+.initiative-card[draggable=true] .drag-handle:active {
+    cursor: grabbing;
 }
 
 /* Character Tokens */
 .character-token {
+    cursor: grab;
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    background: #e8f5e9;
+    gap: 10px;
     padding: 8px 12px;
-    border-radius: 6px;
-    margin-bottom: 5px;
-    border: 2px solid transparent;
-    cursor: move;
-    transition: all 0.2s ease;
+    background: #f5f5f5;
+    border-radius: 4px;
+    margin: 5px 0;
+    width: calc(100% - 10px); /* S'assurer que le token prend toute la largeur */
+}
+
+.character-token:active {
+    cursor: grabbing;
+}
+
+.character-name-input {
+    flex: 1;
+    min-width: 150px; /* Largeur minimum */
+    width: auto; /* Permettre l'extension */
+    padding: 4px 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+.token-controls {
+    display: flex;
+    gap: 4px;
+    flex-shrink: 0; /* Empêcher la compression des contrôles */
 }
 
 .character-token:hover {
@@ -75,9 +237,8 @@
 }
 
 .character-token.dragging {
-    transform: scale(1.05);
-    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-    opacity: 0.8;
+    opacity: 0.5;
+    cursor: grabbing;
 }
 
 .char-name {
@@ -117,20 +278,49 @@
     margin-bottom: 15px;
 }
 
-.group-header {
+.groups-header {
     display: flex;
-    justify-content: space-between;
     align-items: center;
-    padding: 10px 15px;
-    background: #e8f5e9;
-    border-bottom: 1px solid #c8e6c9;
+    padding: 8px 12px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+    background: transparent;
 }
 
-.group-header h3 {
+.groups-header h2 {
     margin: 0;
-    color: #2e7d32;
-    font-size: 16px;
-    font-weight: 500;
+    font-size: 1em;
+    color: #666;
+    flex: 1;
+}
+
+.toggle-setup {
+    background: transparent;
+    border: none;
+    padding: 6px;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    opacity: 0.7;
+    transition: all 0.2s ease;
+    border-radius: 4px;
+}
+
+.toggle-setup:hover {
+    opacity: 1;
+    background: rgba(0, 0, 0, 0.05);
+}
+
+.toggle-setup i {
+    font-size: 14px;
+    color: #4a4a4a;
+    transition: transform 0.2s ease;
+}
+
+.toggle-setup.collapsed i {
+    transform: rotate(-90deg);
 }
 
 .delete-group {
@@ -148,29 +338,6 @@
     background: rgba(244, 67, 54, 0.1);
 }
 
-/* Drop Zone */
-.group-dropzone {
-    min-height: 80px;
-    padding: 15px;
-    background: #f9f9f9;
-    border: 2px dashed #a5d6a7;
-    border-radius: 6px;
-    margin: 10px;
-    transition: all 0.2s ease;
-}
-
-.group-dropzone.dragover {
-    background: #e8f5e9;
-    border-color: #4CAF50;
-    box-shadow: inset 0 0 0 2px #4CAF50;
-}
-
-.drop-hint {
-    color: #999;
-    text-align: center;
-    padding: 20px;
-    font-style: italic;
-}
 
 /* Character Selection Dialog */
 .character-select-dialog {
@@ -252,14 +419,6 @@
     gap: 10px;
 }
 
-.character-name-input {
-    font-size: 14px;
-    padding: 4px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    flex-grow: 0; /* Empêche le champ de s'étendre */
-    max-width: 150px; /* Réduit la largeur du champ de nom */
-}
 
 /* Draw Initiative Button */
 .draw-initiative-section {
@@ -954,3 +1113,359 @@
         background: rgba(18, 18, 18, 0.97);
     }
 }
+
+
+/* Opportuinities tab */
+/* Styles de base pour le système d'onglets */
+.tracker-tabs {
+    display: flex;
+    padding: 0;
+    margin-bottom: 10px;
+    border-bottom: 1px solid #ddd;
+    background: transparent;
+}
+
+.tracker-tabs button {
+    background: none;
+    border: none;
+    padding: 10px 20px;
+    cursor: pointer;
+    margin-right: 5px;
+    border-radius: 4px 4px 0 0;
+    color: #666;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.tracker-tabs button.active {
+    background: #4CAF50;
+    color: white;
+    border-bottom: 2px solid #388E3C;
+}
+
+.tracker-tabs button:hover:not(.active) {
+    background: rgba(76, 175, 80, 0.1);
+    color: #4CAF50;
+}
+
+/* Styles pour le contenu des onglets */
+.tab-content {
+    position: relative;
+    padding: 10px;
+}
+
+.tab-content .tab {
+    display: none;
+}
+
+.tab-content .tab.active {
+    display: block;
+}
+
+/* Styles spécifiques pour l'onglet Opportunities */
+.opportunity-tab {
+    padding: 20px;
+}
+
+.opportunities-header {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px;
+    border-bottom: 1px solid #ddd;
+}
+
+.opportunities-controls {
+    display: flex;
+    gap: 10px;
+}
+
+.create-opportunity, .clear-opportunities {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s ease;
+}
+
+.create-opportunity {
+    background: #4CAF50;
+    color: white;
+}
+
+.clear-opportunities {
+    background: #f44336;
+    color: white;
+}
+
+.create-opportunity:hover { background: #43A047; }
+.clear-opportunities:hover { background: #E53935; }
+.clear-opportunities:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+}
+
+.opportunities-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 16px;
+    padding: 16px;
+}
+
+.opportunity-card {
+    background: #fff;
+    border-radius: 8px;
+    padding: 16px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    min-height: 200px;
+}
+
+.opportunity-points-circle {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: #4CAF50;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 24px;
+    font-weight: bold;
+}
+
+.opportunity-content {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.opportunity-name {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+.opportunity-controls {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+}
+
+.opportunity-controls button {
+    width: 32px;
+    height: 32px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.opportunity-increment { background: #4CAF50; color: white; }
+.opportunity-decrement { background: #f44336; color: white; }
+.delete-opportunity { background: #757575; color: white; }
+
+.opportunity-creator {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 4px 0;
+    font-size: 0.9em;
+    color: #666;
+}
+
+.select-creator {
+    background: none;
+    border: none;
+    color: #4CAF50;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 3px;
+    transition: all 0.2s ease;
+}
+
+.select-creator:hover {
+    background: rgba(76, 175, 80, 0.1);
+}
+
+.creator-selection-form {
+    margin: 10px 0;
+}
+
+.creator-selection-form select {
+    width: 100%;
+    padding: 8px;
+    border-radius: 4px;
+    border: 1px solid #ddd;
+}
+
+/* Styles pour la grille de sélection du créateur */
+.creator-selection-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: 10px;
+    padding: 10px;
+}
+
+.creator-option {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.creator-option:hover {
+    background: rgba(76, 175, 80, 0.1);
+}
+
+.creator-option.selected {
+    background: rgba(76, 175, 80, 0.2);
+    outline: 2px solid #4CAF50;
+}
+
+.creator-option img {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    margin-bottom: 8px;
+}
+
+/* Styles pour la section des opportunités dans le display */
+.display-opportunities-container {
+    margin-top: 20px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    padding-top: 20px;
+}
+
+.section-title {
+    color: #fff;
+    margin-bottom: 10px;
+    padding-left: 10px;
+    font-size: 1.2em;
+}
+
+.display-points-circle {
+    width: 90px;
+    height: 90px;
+    background: #4CAF50;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 12px;
+    border: 3px solid rgba(255, 255, 255, 0.2);
+}
+
+.points-value {
+    color: white;
+    font-size: 2em;
+    font-weight: bold;
+}
+
+.display-creator {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.9em;
+    text-align: center;
+    margin-top: 8px;
+}
+
+.display-tabs {
+    display: flex;
+    gap: 10px;
+    padding: 10px;
+    margin-bottom: 10px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.display-tabs .item {
+    padding: 8px 16px;
+    color: rgba(255, 255, 255, 0.7);
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.display-tabs .item:hover {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+}
+
+.display-tabs .item.active {
+    background: rgba(255, 255, 255, 0.3);
+    color: white;
+}
+
+.display-tabs .item i {
+    font-size: 14px;
+}
+
+/* Style spécifique pour les cartes d'opportunité */
+.display-cards-container.opportunities {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 20px;
+    padding: 20px;
+}
+
+.display-card.opportunity {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+    background: linear-gradient(145deg, #2d4b6b, #1e334d);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.display-points-circle {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: #4CAF50;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 15px;
+}
+
+.points-value {
+    color: white;
+    font-size: 24px;
+    font-weight: bold;
+}
+
+.tab[data-tab="opportunities"] {
+    display: none;
+}
+
+.tab[data-tab="opportunities"].active {
+    display: block;
+}
+
+/* Animation des cartes */
+.display-card {
+    transition: opacity 0.3s ease-out, transform 0.3s ease-out;
+}
+
+.display-card.entering {
+    opacity: 0;
+    transform: translateY(20px);
+}
+
+

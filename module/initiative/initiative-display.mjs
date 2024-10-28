@@ -1,3 +1,4 @@
+// Dans InitiativeDisplay
 export class InitiativeDisplay extends Application {
     static get defaultOptions() {
         return foundry.utils.mergeObject(super.defaultOptions, {
@@ -9,55 +10,108 @@ export class InitiativeDisplay extends Application {
             width: 800,
             height: "auto",
             classes: ['initiative-display-window'],
-            title: 'Initiative Display'
+            title: 'Initiative Display',
+            tabs: [{
+                navSelector: ".display-tabs",
+                contentSelector: ".display-content",
+                initial: "initiative"
+            }]
         });
     }
 
     constructor() {
         super();
         this.currentCards = [];
+        this.currentOpportunities = [];
         this.isAnimating = false;
+        this.activeTab = "initiative";
+        
+        // Un seul hook pour tout gérer
+        Hooks.on('updateInitiativeTracker', this._onUpdate.bind(this));
     }
 
-    getData() {
-        return { cards: this.currentCards };
-    }
 
-    async updateDisplay(newCards) {
-        if (this.isAnimating || !newCards) return;
-        this.isAnimating = true;
+    async _onUpdate(data) {
+        console.log("🎲 Receiving update:", data);
     
-        console.log("1. Début updateDisplay");
-    
-        const isInitialDraw = this.currentCards.length === 0 && newCards.length > 0;
-        const movedCards = this._findMovedCards(this.currentCards, newCards);
-        console.log("2. Type d'animation:", isInitialDraw ? "Initial Draw" : "Card Movement", movedCards);
-    
-        const oldCards = [...this.currentCards];
-        this.currentCards = newCards;
-        console.log("3. Données mises à jour");
-    
-        console.log("4. Avant render");
-        await this.render(true);
-        console.log("5. Après render");
-        await new Promise(resolve => setTimeout(resolve, 50));
-        console.log("6. Après timeout");
-    
-        const container = this.element.find('.display-cards-container');
-        const cards = container.find('.display-card');
-    
-        if (isInitialDraw) {
-            console.log("7A. Début animation initiale");
-            await this._animateInitialDraw(cards);
-            console.log("8A. Fin animation initiale");
-        } else if (movedCards.length > 0) {
-            console.log("7B. Début animation mouvement");
-            await this._animateCardMovement(cards, movedCards, oldCards);
-            console.log("8B. Fin animation mouvement");
+        if (data.opportunities) {
+            this.currentOpportunities = data.opportunities;
         }
     
+        if (data.drawnInitiative) {
+            const oldCards = [...this.currentCards];
+            const isInitialDraw = oldCards.length === 0;
+    
+            this.currentCards = data.drawnInitiative;
+            
+            await this.render(true);
+    
+            // Animation uniquement si on est dans l'onglet initiative
+            if (this.activeTab === "initiative") {
+                const cards = this.element.find('.display-cards-container .display-card');
+                if (isInitialDraw && cards.length > 0) {
+                    await this._animateInitialDraw(cards);
+                }
+            }
+        } else {
+            await this.render(true);
+        }
+    }
+    
+    async _handleUpdate(data) {
+        console.log("🎲 Receiving update:", data);
+
+        if (data.opportunities) {
+            this.currentOpportunities = data.opportunities;
+        }
+
+        if (data.drawnInitiative) {
+            const oldCards = [...this.currentCards];
+            const movedCards = this._findMovedCards(oldCards, data.drawnInitiative);
+            const isInitialDraw = oldCards.length === 0;
+
+            this.currentCards = data.drawnInitiative;
+            
+            await this.render(true);
+
+            if (this.activeTab === "initiative") {
+                if (isInitialDraw) {
+                    await this._animateInitialDraw();
+                } else if (movedCards.length > 0) {
+                    await this._animateCardMovement(movedCards, oldCards);
+                }
+            }
+        } else {
+            await this.render(true);
+        }
+    }
+
+    async _animateInitialDraw() {
+        if (this.isAnimating) return;
+        this.isAnimating = true;
+
+        const cards = this.element.find('.display-cards-container .display-card');
+        if (!cards.length) return;
+
+        cards.css({
+            opacity: 0,
+            transform: 'translateY(20px)',
+            transition: 'none'
+        });
+
+        cards[0].offsetHeight; // Force reflow
+
+        for (let i = 0; i < cards.length; i++) {
+            const card = cards[i];
+            $(card).css({
+                transition: 'all 0.2s ease-out',
+                opacity: 1,
+                transform: 'translateY(0)'
+            });
+            await new Promise(resolve => setTimeout(resolve, 50));
+        }
+
         this.isAnimating = false;
-        console.log("9. Fin updateDisplay");
     }
 
     _findMovedCards(oldCards, newCards) {
@@ -78,54 +132,19 @@ export class InitiativeDisplay extends Application {
         return movedCards;
     }
 
-    async _animateInitialDraw(cards) {
+    async _animateCardMovement(movedCards, oldCards) {
+        if (this.isAnimating) return;
+        this.isAnimating = true;
+
+        const cards = this.element.find('.display-card');
+        const CARD_WIDTH = 160;
+        const CARD_GAP = 20;
+
         cards.css({
-            opacity: 0,
-            transform: 'translateY(20px)',
+            position: 'absolute',
             transition: 'none'
         });
 
-        await new Promise(resolve => setTimeout(resolve, 50));
-
-        for (let i = 0; i < cards.length; i++) {
-            const card = cards[i];
-            await new Promise(resolve => {
-                setTimeout(() => {
-                    $(card).css({
-                        transition: 'all 0.3s ease-out',
-                        opacity: 1,
-                        transform: 'translateY(0)'
-                    });
-                    resolve();
-                }, i * 100);
-            });
-        }
-    }
-
-    async _animateCardMovement(cards, movedCards, oldCards) {
-        console.log("Animation - Début configuration");
-        
-        const CARD_DIMENSIONS = {
-            width: 160,
-            height: 190
-        };
-        
-        const container = this.element.find('.display-cards-container');
-        
-        console.log("Animation - Fixation dimensions");
-        cards.each((index, card) => {
-            const $card = $(card);
-            $card.css({
-                transition: 'none',
-                width: `${CARD_DIMENSIONS.width}px`,
-                height: `${CARD_DIMENSIONS.height}px`,
-                flex: '0 0 auto'
-            });
-        });
-    
-        container[0].offsetHeight;
-        console.log("Animation - Positions initiales");
-    
         cards.each((index, card) => {
             const $card = $(card);
             const cardId = $card.data('cardId');
@@ -133,46 +152,61 @@ export class InitiativeDisplay extends Application {
             
             if (oldIndex !== -1) {
                 $card.css({
-                    position: 'absolute',
-                    left: `${oldIndex * (CARD_DIMENSIONS.width + 20)}px`
+                    left: `${oldIndex * (CARD_WIDTH + CARD_GAP)}px`
                 });
             }
         });
-    
-        console.log("Animation - Attente avant transition");
+
         await new Promise(resolve => setTimeout(resolve, 50));
-    
-        console.log("Animation - Configuration transition");
+
         cards.css({
-            transition: 'left 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-            position: 'absolute'
+            transition: 'left 0.4s cubic-bezier(0.4, 0, 0.2, 1)'
         });
-    
-        console.log("Animation - Application nouvelles positions");
+
         cards.each((index, card) => {
             $(card).css({
-                left: `${index * (CARD_DIMENSIONS.width + 20)}px`
+                left: `${index * (CARD_WIDTH + CARD_GAP)}px`
             });
         });
-    
-        console.log("Animation - Attente fin transition");
+
         await new Promise(resolve => setTimeout(resolve, 400));
-    
-        console.log("Animation - Reset styles");
+
         cards.css({
-            transition: '',
             position: '',
+            transition: '',
             left: ''
         });
+
+        this.isAnimating = false;
+    }
+
+    getData() {
+        return {
+            cards: this.currentCards || [],
+            opportunities: this.currentOpportunities || [],
+            activeTab: this.activeTab
+        };
     }
 
     activateListeners(html) {
         super.activateListeners(html);
         
-        const container = html.find('.display-cards-container');
-        
-        // Style pour le conteneur scrollable
-        container.css({
+        const tabs = new Tabs({
+            navSelector: ".display-tabs",
+            contentSelector: ".display-content",
+            initial: this.activeTab,
+            callback: (event, html, tab) => {
+                this.activeTab = tab;
+            }
+        });
+        tabs.bind(html[0]);
+
+        this._setupContainerStyles(html);
+    }
+
+    _setupContainerStyles(html) {
+        const containers = html.find('.display-cards-container');
+        containers.css({
             display: 'flex',
             gap: '20px',
             padding: '10px 5px',
@@ -182,30 +216,10 @@ export class InitiativeDisplay extends Application {
             width: '100%',
             position: 'relative'
         });
+    }
 
-        // Ajout d'une règle CSS pour la scrollbar
-        const style = document.createElement('style');
-        style.textContent = `
-            .display-cards-container::-webkit-scrollbar {
-                width: 8px;
-                height: 8px;
-            }
-            .display-cards-container::-webkit-scrollbar-track {
-                background: rgba(255, 255, 255, 0.1);
-                border-radius: 4px;
-            }
-            .display-cards-container::-webkit-scrollbar-thumb {
-                background: rgba(255, 255, 255, 0.3);
-                border-radius: 4px;
-            }
-            .display-cards-container::-webkit-scrollbar-thumb:hover {
-                background: rgba(255, 255, 255, 0.5);
-            }
-            .display-cards-container {
-                scrollbar-width: thin;
-                scrollbar-color: rgba(255, 255, 255, 0.3) rgba(255, 255, 255, 0.1);
-            }
-        `;
-        document.head.appendChild(style);
+    close(options={}) {
+        Hooks.off('updateInitiativeTracker', this._handleUpdate);
+        return super.close(options);
     }
 }

@@ -1,17 +1,43 @@
 <div class="initiative-display">
-    <div class="display-cards-container">
-        {{#each cards}}
-        <div class="display-card {{#if isActive}}active{{/if}} {{#if isKO}}ko{{/if}}" 
-             data-card-id="{{id}}" 
-             style="transition: all 0.5s ease-out;">
-            <div class="display-card-image">
-                <img src="{{img}}" alt="{{name}}">
-                {{#if threats}}
-                <div class="display-threat-counter">{{threats}}</div>
-                {{/if}}
+    <nav class="display-tabs tabs" data-group="display">
+        <a class="item active" data-tab="initiative"><i class="fas fa-dice-d20"></i> Initiative</a>
+        <a class="item" data-tab="opportunities"><i class="fas fa-star"></i> Opportunities</a>
+    </nav>
+
+    <div class="display-content">
+        <div class="tab active" data-tab="initiative">
+            <div class="display-cards-container">
+                {{#each cards}}
+                    <div class="display-card" data-card-id="{{this.id}}">
+                        <img src="{{this.img}}" class="display-card-image"/>
+                        <div class="display-card-name">{{this.name}}</div>
+                        {{#if this.threats}}
+                            <div class="display-threat-counter">{{this.threats}}</div>
+                        {{/if}}
+                        {{#if this.isKO}}
+                            <div class="display-ko-indicator">KO</div>
+                        {{/if}}
+                    </div>
+                {{/each}}
             </div>
-            <div class="display-card-name">{{name}}</div>
         </div>
-        {{/each}}
+
+        <div class="tab" data-tab="opportunities">
+            {{#if opportunities}}
+                <div class="display-cards-container opportunities">
+                    {{#each opportunities}}
+                        <div class="display-card opportunity" data-id="{{this.id}}">
+                            <div class="display-points-circle">
+                                <span class="points-value">{{this.points}}</span>
+                            </div>
+                            <div class="display-card-name">{{this.name}}</div>
+                            {{#if this.creator}}
+                                <div class="display-creator">{{this.creator.name}}</div>
+                            {{/if}}
+                        </div>
+                    {{/each}}
+                </div>
+            {{/if}}
+        </div>
     </div>
 </div>

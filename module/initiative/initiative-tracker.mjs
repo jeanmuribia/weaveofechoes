@@ -1,4 +1,5 @@
 export class InitiativeTracker extends Application {
+    static MAX_OPPORTUNITY_NAME_LENGTH = 20;
     static get defaultOptions() {
         return foundry.utils.mergeObject(super.defaultOptions, {
             id: 'initiative-tracker',
@@ -7,9 +8,21 @@ export class InitiativeTracker extends Application {
             width: 720,
             height: 800,
             resizable: true,
-            classes: ['initiative-tracker-window']
+            classes: ['initiative-tracker-window'],
+            tabs: [{
+                navSelector: ".tracker-tabs",
+                contentSelector: ".tab-content",
+                initial: "initiative"
+            }]
         });
     }
+
+    static initialize() {
+        game.weaveOfEchoes = game.weaveOfEchoes || {};
+        game.weaveOfEchoes.InitiativeTracker = this;
+        game.weaveOfEchoes.InitiativeDisplay = InitiativeDisplay;
+    }
+    
 
     constructor() {
         super();
@@ -25,6 +38,8 @@ export class InitiativeTracker extends Application {
         this.setupCollapsed = false;
         this.initiativeCollapsed = false;
         this.alertsEnabled = true; // Nouvelle propriété pour gérer les alertes
+        this.opportunities = [];
+        this.currentTab="initiative";
     }
 
     getData(options = {}) {
@@ -33,26 +48,42 @@ export class InitiativeTracker extends Application {
         return {
             initiativeGroups: this.initiativeGroups,
             selectedCharacters: this.selectedCharacters,
-            drawnInitiative: this.drawnInitiative,  // Plus de mapping ici
+            drawnInitiative: this.drawnInitiative,
             isInitiativeDrawn: this.isInitiativeDrawn,
             setupCollapsed: this.setupCollapsed,
             initiativeCollapsed: this.initiativeCollapsed,
-            alertsEnabled: this.alertsEnabled
+            alertsEnabled: this.alertsEnabled,
+            opportunities: this.opportunities,  
+            currentTab: this._currentTab
         };
     }
 
     activateListeners(html) {
         super.activateListeners(html);
     
+        // Initialisation des onglets
+    const tabs = new Tabs({
+        navSelector: ".tabs",
+        contentSelector: ".sheet-body",
+        initial: "initiative",
+        callback: (event, html, tab) => {
+            // Callback optionnel lors du changement d'onglet
+            console.log(`Tab changed to: ${tab}`);
+        }
+    });
+    tabs.bind(html[0]);
+    
+        // Écouteurs d'événements pour les contrôles de l'onglet Initiative
         html.on('click', '.add-characters', this._onAddCharacters.bind(this));
         html.on('click', '.add-group', this._onAddGroup.bind(this));
         html.on('click', '.draw-initiative', this._onDrawInitiative.bind(this));
+        html.on('click', '.delete-group', this._onDeleteGroup.bind(this));
         html.on('click', '.delete-char', this._onDeleteCharacter.bind(this));
         html.on('click', '.duplicate-char', this._onDuplicateCharacter.bind(this));
-        html.on('click', '.delete-group', this._onDeleteGroup.bind(this));
-        html.on('change', '.character-name-input', this._onNameChange.bind(this));
         html.on('click', '.toggle-setup', this._onToggleSetup.bind(this));
         html.on('click', '.toggle-initiative', this._onToggleInitiative.bind(this));
+    
+        // Écouteurs d'événements pour les cartes d'initiative
         html.on('click', '.expand-button', this._onExpandCard.bind(this));
         html.on('click', '.threat-button', this._onAddThreat.bind(this));
         html.on('click', '.threat-counter', this._onRemoveThreat.bind(this));
@@ -61,32 +92,51 @@ export class InitiativeTracker extends Application {
         html.on('click', '.end-turn-button', this._onEndTurn.bind(this));
         html.on('change', '.toggle-active', this._onToggleActive.bind(this));
         html.on('click', '.end-action-button', this._onEndAction.bind(this));
+    
+        // Gestion des alertes
         html.on('click', '.toggle-alerts', () => this._toggleAlerts());
     
-        // Setup drag & drop uniquement si nécessaire
+        this._setupOpportunityListeners(html)
+    
+    html.find('.clear-opportunities').on('click', (ev) => {
+        ev.preventDefault();
+        this._onClearOpportunities(ev);
+    });
+    
+    html.find('.opportunity-name').on('change', (ev) => {
+        ev.preventDefault();
+        this._onEditOpportunityName(ev);
+    });
+    
+    html.find('.delete-opportunity').on('click', (ev) => {
+        ev.preventDefault();
+        this._onDeleteOpportunity(ev);
+    });
+        // Configuration de drag & drop pour les groupes
         this._setupGroupDragDrop(html);
+    
+        // Configuration de drag & drop et boutons d'initiative rapide si l'initiative est tirée
         if (this.isInitiativeDrawn) {
             this._setupInitiativeCardDragDrop(html);
-        }
-
-        if (this.isInitiativeDrawn) {
             this._addQuickInitiativeButton(html);
         }
     }
+    
+    
 
+    // Modification de la méthode updateState
     async updateState(shouldRender = true) {
-        // Si une mise à jour est déjà en cours, ne pas en démarrer une autre
         if (this.isUpdating) return;
         this.isUpdating = true;
-
+        
         try {
-            // Appeler le hook une seule fois
+            // Émettre l'événement de mise à jour avec toutes les données
             await Hooks.callAll('updateInitiativeTracker', {
                 drawnInitiative: this.drawnInitiative,
+                opportunities: this.opportunities,
                 isInitiativeDrawn: this.isInitiativeDrawn
             });
-        
-            // Render seulement si shouldRender est true
+            
             if (shouldRender) {
                 await this.render(true);
             }
@@ -94,72 +144,82 @@ export class InitiativeTracker extends Application {
             this.isUpdating = false;
         }
     }
-    
-    _onEndTurn(event, isAutoPass = false) {
-        if (event) event.preventDefault();
-        if (!this.drawnInitiative.length) return;
-    
-        // Trouver toutes les cartes actives
-        const activeCards = this.drawnInitiative.filter(char => char.isActive);
-        if (activeCards.length === 0) return;
-    
-        // Retirer toutes les cartes actives de l'ordre actuel
-        this.drawnInitiative = this.drawnInitiative.filter(char => !char.isActive);
-    
-        // Désactiver les cartes et les ajouter à la fin
-        activeCards.forEach(card => {
-            card.isActive = false;
-            this.drawnInitiative.push(card);
-        });
-    
-        // Trouver le prochain personnage non-KO
-        let nextActiveFound = false;
-        let i = 0;
-        
-        while (i < this.drawnInitiative.length && !nextActiveFound) {
-            const char = this.drawnInitiative[i];
-            
-            if (char.isKO) {
-                // Si le personnage est KO, on l'envoie à la fin et on continue
-                if (this.alertsEnabled) {
-                    ChatMessage.create({
-                        content: `<div class="initiative-announcement"><h3>${char.name} is KO and skips their turn!</h3></div>`,
-                        type: CONST.CHAT_MESSAGE_STYLES.OTHER,
-                        speaker: { alias: "Initiative Tracker" }
-                    });
-                }
-                
-                // Retirer le personnage KO et le mettre à la fin
-                const [koChar] = this.drawnInitiative.splice(i, 1);
-                this.drawnInitiative.push(koChar);
-                
-                // Ne pas incrémenter i car nous avons un nouveau personnage à cette position
-                continue;
+
+_checkAndUpdateActiveState() {
+    if (!this.drawnInitiative.length) return;
+
+    // Vérifier si la première carte est KO
+    if (this.drawnInitiative[0].isKO) {
+        // Déplacer la carte KO à la fin
+        const [koCard] = this.drawnInitiative.splice(0, 1);
+        this.drawnInitiative.push(koCard);
+
+        // Chercher la prochaine carte non-KO
+        for (const char of this.drawnInitiative) {
+            if (!char.isKO) {
+                char.isActive = true;
+                break;
             }
-            
-            // Si on trouve un personnage non-KO, on l'active
-            char.isActive = true;
-            nextActiveFound = true;
-            
-            // Annoncer le nouveau tour
-            if (!isAutoPass && this.alertsEnabled) {
-                this._announceNewTurn();
-            }
-            
-            i++;
         }
+    } else if (!this.drawnInitiative.some(c => c.isActive)) {
+        // Si aucune carte n'est active et que la première n'est pas KO
+        this.drawnInitiative[0].isActive = true;
+    }
+}
+
+_onEndTurn(event, isAutoPass = false) {
+    if (event) event.preventDefault();
+    if (!this.drawnInitiative.length) return;
+
+    // Trouver la carte active actuelle
+    const activeCard = this.drawnInitiative.find(char => char.isActive);
+    if (!activeCard) return;
+
+    // Désactiver la carte et la déplacer à la fin
+    activeCard.isActive = false;
+    this.drawnInitiative = [
+        ...this.drawnInitiative.filter(c => c.id !== activeCard.id),
+        activeCard
+    ];
+
+    // Vérifier et activer la nouvelle première carte
+    this._processNextTurn(isAutoPass);
+    this.updateState();
+}
     
-        // Si aucun personnage actif n'est trouvé et les alertes sont activées
-        if (!nextActiveFound && this.alertsEnabled) {
+_processNextTurn(isAutoPass = false) {
+    const firstCard = this.drawnInitiative[0];
+    if (!firstCard) return;
+
+    if (firstCard.isKO) {
+        // Déplacer la carte KO à la fin sans l'activer
+        this.drawnInitiative = [
+            ...this.drawnInitiative.slice(1),
+            firstCard
+        ];
+
+        if (this.alertsEnabled && !isAutoPass) {
             ChatMessage.create({
-                content: `<div class="initiative-announcement"><h3>All characters are KO!</h3></div>`,
-                type: CONST.CHAT_MESSAGE_STYLES.WARNING,
+                content: `<div class="initiative-turn-announcement"><h3>${firstCard.name} is KO and skips their turn!</h3></div>`,
+                type: CONST.CHAT_MESSAGE_STYLES.OTHER,
                 speaker: { alias: "Initiative Tracker" }
             });
         }
-    
-        this.updateState();
+
+        // Récursion pour vérifier la carte suivante
+        return this._processNextTurn(isAutoPass);
+    } else {
+        // Activer la carte non-KO
+        firstCard.isActive = true;
+        if (this.alertsEnabled && !isAutoPass) {
+            ChatMessage.create({
+                content: `<div class="initiative-turn-announcement"><h3>${firstCard.name}'s Turn</h3></div>`,
+                type: CONST.CHAT_MESSAGE_STYLES.OTHER,
+                speaker: { alias: "Initiative Tracker" }
+            });
+        }
     }
+}   
     _onEndAction(event) {
         if (event) event.preventDefault();
     
@@ -315,7 +375,8 @@ export class InitiativeTracker extends Application {
         });
     }
 
-    async _processSelectedActors(actorIds) {
+      // Modification de la méthode pour ajouter directement au premier groupe
+      async _processSelectedActors(actorIds) {
         const newCharacters = actorIds.map(id => {
             const actor = game.actors.get(id);
             return {
@@ -325,7 +386,15 @@ export class InitiativeTracker extends Application {
                 img: actor.img
             };
         });
-        this.selectedCharacters.push(...newCharacters);
+
+        // Ajouter directement les personnages au premier groupe
+        if (this.initiativeGroups.length > 0) {
+            if (!this.initiativeGroups[0].characters) {
+                this.initiativeGroups[0].characters = [];
+            }
+            this.initiativeGroups[0].characters.push(...newCharacters);
+        }
+        this.render(true);
     }
 
     // Groupe et manipulation des personnages
@@ -372,31 +441,32 @@ export class InitiativeTracker extends Application {
     }
 
     _setupGroupDragDrop(html) {
-        const draggables = html.find('.character-token').get();
         const dropZones = html.find('.group-dropzone').get();
+        const draggables = html.find('.character-token').get();
         const self = this;
     
-        draggables.forEach(draggable => {
-            draggable.setAttribute('draggable', true);
-            
-            draggable.addEventListener('dragstart', function(e) {
-                draggable.classList.add('dragging');
-                e.dataTransfer.setData('text/plain', this.dataset.characterId);
-            });
-    
-            draggable.addEventListener('dragend', function() {
-                draggable.classList.remove('dragging');
-                html.find('.group-dropzone').removeClass('dragover');
-            });
-        });
-    
-        dropZones.forEach(dropZone => {
-            dropZone.addEventListener('drop', async function(e) {
+        dropZones.forEach(zone => {
+            zone.addEventListener('dragenter', (e) => {
                 e.preventDefault();
-                this.classList.remove('dragover');
+                zone.classList.add('dragover');
+            });
+    
+            zone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                zone.classList.add('dragover');
+            });
+    
+            zone.addEventListener('dragleave', (e) => {
+                e.preventDefault();
+                zone.classList.remove('dragover');
+            });
+    
+            zone.addEventListener('drop', async (e) => {
+                e.preventDefault();
+                zone.classList.remove('dragover');
                 
                 const characterId = e.dataTransfer.getData('text/plain');
-                const targetGroupId = this.dataset.groupId;
+                const targetGroupId = zone.dataset.groupId;
                 
                 let character = self.selectedCharacters.find(c => c.id === characterId);
                 let sourceGroupIndex = -1;
@@ -425,9 +495,44 @@ export class InitiativeTracker extends Application {
                 if (!targetGroup.characters) targetGroup.characters = [];
                 targetGroup.characters.push(character);
             
-                // Remplacer le render par updateState
                 await self.updateState();
             });
+        });
+    
+        draggables.forEach(draggable => {
+            draggable.setAttribute('draggable', true);
+            
+            draggable.addEventListener('dragstart', (e) => {
+                draggable.classList.add('dragging');
+                e.dataTransfer.setData('text/plain', draggable.dataset.characterId);
+            });
+    
+            draggable.addEventListener('dragend', () => {
+                draggable.classList.remove('dragging');
+                html.find('.group-dropzone').removeClass('dragover');
+            });
+        });
+    }
+
+    _setupDropIndicators(container) {
+        // Nettoyer les indicateurs existants
+        container.querySelectorAll('.drop-indicator').forEach(i => i.remove());
+        
+        // Créer un indicateur initial
+        const addIndicator = (position) => {
+            const indicator = document.createElement('div');
+            indicator.className = 'drop-indicator';
+            indicator.dataset.position = position.toString();
+            return indicator;
+        };
+    
+        // Ajouter avant la première carte
+        container.insertBefore(addIndicator(0), container.firstChild);
+    
+        // Ajouter entre chaque carte
+        const cards = container.querySelectorAll('.initiative-card');
+        cards.forEach((card, index) => {
+            card.insertAdjacentElement('afterend', addIndicator(index + 1));
         });
     }
     // Initiative
@@ -518,138 +623,104 @@ _setupInitiativeCardDragDrop(html) {
     const container = html.find('.initiative-cards-container').get(0);
     if (!container) return;
 
-    let isDragging = false;
     let draggedCard = null;
+    let draggedElement = null;
     let dragImage = null;
-    let originalIndex = -1;
+    let startX, startY;
 
-    // Fonction pour positionner les séparateurs
-    const setupSeparators = () => {
-        // Nettoyer les séparateurs existants
-        container.querySelectorAll('.card-separator').forEach(sep => sep.remove());
-        
-        const cards = [...container.querySelectorAll('.initiative-card')];
-        
-        // Créer les séparateurs entre les cartes
-        cards.forEach((card, index) => {
-            const separator = document.createElement('div');
-            separator.className = 'card-separator';
-            separator.dataset.index = index;
-            container.appendChild(separator);
+    const cards = container.querySelectorAll('.initiative-card');
+    cards.forEach(card => {
+        const handle = card.querySelector('.drag-handle');
+        if (!handle) return;
 
-            // Positionner le séparateur au centre
-            if (index < cards.length) {
-                const currentRect = card.getBoundingClientRect();
-                const nextCard = cards[index + 1];
-                
-                if (nextCard) {
-                    const nextRect = nextCard.getBoundingClientRect();
-                    const containerRect = container.getBoundingClientRect();
-                    const center = (currentRect.right + nextRect.left) / 2;
-                    separator.style.left = `${center - containerRect.left}px`;
-                }
-            }
-        });
-
-        // Ajouter le séparateur final
-        if (cards.length > 0) {
-            const lastCard = cards[cards.length - 1];
-            const finalSeparator = document.createElement('div');
-            finalSeparator.className = 'card-separator';
-            finalSeparator.dataset.index = cards.length;
-            container.appendChild(finalSeparator);
-
-            const lastRect = lastCard.getBoundingClientRect();
-            const containerRect = container.getBoundingClientRect();
-            finalSeparator.style.left = `${(lastRect.right - containerRect.left) + 15}px`;
-        }
-    };
-
-    // Fonction pour mettre à jour les séparateurs actifs
-    const updateActiveSeparator = (mouseX) => {
-        const separators = container.querySelectorAll('.card-separator');
-        let activeFound = false;
-
-        separators.forEach(separator => {
-            const rect = separator.getBoundingClientRect();
-            const hitZone = 15;
-
-            if (!activeFound && Math.abs(mouseX - rect.left) < hitZone) {
-                separator.classList.add('active');
-                activeFound = true;
-            } else {
-                separator.classList.remove('active');
-            }
-        });
-    };
-
-    // Configuration du drag pour chaque carte
-    const setupDrag = (card) => {
-        const dragHandle = card.querySelector('.drag-handle');
-        if (!dragHandle) return;
-
-        dragHandle.addEventListener('mousedown', (e) => {
-            if (e.target.closest('.card-controls') || this.isUpdating) return;
+        handle.addEventListener('mousedown', (e) => {
+            if (e.target.closest('.card-controls')) return;
             e.preventDefault();
-
-            isDragging = true;
+            
             draggedCard = card;
-            originalIndex = Array.from(container.children)
-                .filter(el => el.classList.contains('initiative-card'))
-                .indexOf(card);
+            draggedElement = this.drawnInitiative.find(c => c.id === card.dataset.cardId);
+            startX = e.clientX;
+            startY = e.clientY;
 
-            // Créer l'image de drag
+            // Créer une copie pour l'image de drag
             dragImage = card.cloneNode(true);
-            dragImage.classList.add('dragging');
             dragImage.style.position = 'fixed';
-            dragImage.style.width = `${card.offsetWidth}px`;
+            dragImage.style.zIndex = '10000';
             dragImage.style.pointerEvents = 'none';
+            dragImage.style.width = `${card.offsetWidth}px`;
             dragImage.style.opacity = '0.7';
             document.body.appendChild(dragImage);
 
+            // Style de la carte originale
             card.style.opacity = '0.3';
 
-            // Positionner l'image initiale
-            dragImage.style.left = `${e.clientX - (dragImage.offsetWidth / 2)}px`;
-            dragImage.style.top = `${e.clientY - (dragImage.offsetHeight / 2)}px`;
+            document.addEventListener('mousemove', onMouseMove);
+            document.addEventListener('mouseup', onMouseUp);
+        });
+    });
+
+    const onMouseMove = (e) => {
+        if (!draggedCard || !dragImage) return;
+
+        dragImage.style.left = `${e.clientX - dragImage.offsetWidth / 2}px`;
+        dragImage.style.top = `${e.clientY - dragImage.offsetHeight / 2}px`;
+
+        const targetCard = findTargetCard(e.clientX, cards);
+        resetCardStyles();
+
+        if (targetCard) {
+            const rect = targetCard.getBoundingClientRect();
+            const isAfter = e.clientX > rect.left + rect.width / 2;
+            
+            if (isAfter) {
+                targetCard.style.borderRight = '3px solid var(--color-border-highlight)';
+            } else {
+                targetCard.style.borderLeft = '3px solid var(--color-border-highlight)';
+            }
+        }
+    };
+
+    const findTargetCard = (x, cards) => {
+        return Array.from(cards).find(card => {
+            if (card === draggedCard) return false;
+            const rect = card.getBoundingClientRect();
+            return x >= rect.left && x <= rect.right;
         });
     };
 
-    const onMouseMove = (e) => {
-        if (!isDragging || !dragImage) return;
-
-        // Mettre à jour la position de l'image de drag
-        dragImage.style.left = `${e.clientX - (dragImage.offsetWidth / 2)}px`;
-        dragImage.style.top = `${e.clientY - (dragImage.offsetHeight / 2)}px`;
-
-        // Mettre à jour le séparateur actif
-        updateActiveSeparator(e.clientX);
+    const resetCardStyles = () => {
+        cards.forEach(card => {
+            card.style.borderLeft = '';
+            card.style.borderRight = '';
+        });
     };
 
-    const onMouseUp = async () => {
-        if (!isDragging) return;
+    const onMouseUp = async (e) => {
+        if (!draggedCard) return;
 
-        const activeSeparator = container.querySelector('.card-separator.active');
-        if (activeSeparator) {
-            const newIndex = parseInt(activeSeparator.dataset.index);
-            
-            if (newIndex !== originalIndex) {
+        const targetCard = findTargetCard(e.clientX, cards);
+        if (targetCard) {
+            const targetIndex = Array.from(cards).indexOf(targetCard);
+            const currentIndex = Array.from(cards).indexOf(draggedCard);
+            const rect = targetCard.getBoundingClientRect();
+            const isAfter = e.clientX > rect.left + rect.width / 2;
+
+            if (currentIndex !== targetIndex) {
+                const newIndex = isAfter ? targetIndex + 1 : targetIndex;
                 const updatedOrder = [...this.drawnInitiative];
-                const [movedCard] = updatedOrder.splice(originalIndex, 1);
+                const [movedCard] = updatedOrder.splice(currentIndex, 1);
                 
-                // Désactiver la carte si elle était active
                 if (movedCard.isActive) {
                     movedCard.isActive = false;
                 }
                 
                 updatedOrder.splice(newIndex, 0, movedCard);
                 this.drawnInitiative = updatedOrder;
-
                 await this.updateState();
             }
         }
 
-        // Nettoyage
+        // Cleanup
         if (dragImage) {
             dragImage.remove();
             dragImage = null;
@@ -658,32 +729,44 @@ _setupInitiativeCardDragDrop(html) {
             draggedCard.style.opacity = '';
             draggedCard = null;
         }
-        isDragging = false;
-        originalIndex = -1;
-
-        // Nettoyer les séparateurs actifs
-        container.querySelectorAll('.card-separator').forEach(sep => sep.classList.remove('active'));
-    };
-
-    // Setup initial
-    setupSeparators();
-    container.querySelectorAll('.initiative-card').forEach(setupDrag);
-
-    // Event listeners globaux
-    document.addEventListener('mousemove', onMouseMove);
-    document.addEventListener('mouseup', onMouseUp);
-
-    // Gestion du redimensionnement
-    window.addEventListener('resize', setupSeparators);
-
-    // Cleanup when the app closes
-    this.dragDropCleanup = () => {
+        resetCardStyles();
         document.removeEventListener('mousemove', onMouseMove);
         document.removeEventListener('mouseup', onMouseUp);
-        window.removeEventListener('resize', setupSeparators);
     };
 }
+_getDragAfterElement(container, y) {
+    const draggableElements = [...container.querySelectorAll('.initiative-card:not(.dragging)')];
+    
+    return draggableElements.reduce((closest, child) => {
+        const box = child.getBoundingClientRect();
+        const offset = y - box.top - box.height / 2;
+        
+        if (offset < 0 && offset > closest.offset) {
+            return { offset: offset, element: child };
+        } else {
+            return closest;
+        }
+    }, { offset: Number.NEGATIVE_INFINITY }).element;
+}
 
+async _verifyInitiativeOrder() {
+    const firstCard = this.drawnInitiative[0];
+    if (!firstCard) return;
+
+    if (firstCard.isKO) {
+        // Déplacer la carte KO à la fin sans message
+        this.drawnInitiative = [
+            ...this.drawnInitiative.slice(1),
+            firstCard
+        ];
+        await this._verifyInitiativeOrder();
+    } else if (!firstCard.isActive && !this.drawnInitiative.some(c => c.isActive)) {
+        // Si aucune carte n'est active et que la première n'est pas KO
+        firstCard.isActive = true;
+    }
+
+    this.updateState();
+}
 // N'oubliez pas d'ajouter dans close() :
 close() {
     if (this.dragDropCleanup) {
@@ -818,62 +901,354 @@ _onRemoveThreat(event) {
     this.updateState();
 }
     
-    _onToggleKO(event) {
-        const cardId = event.currentTarget.closest('.initiative-card').dataset.cardId;
-        const character = this.drawnInitiative.find(c => c.id === cardId);
-        if (!character) return;
-    
-        character.isKO = !character.isKO;
-        character.isActive = false;
-    
-        // Vérifier combien de personnages non-KO il reste
-        const remainingActive = this.drawnInitiative.filter(char => !char.isKO).length;
-        
-        if (remainingActive === 0) {
-            // Tous les personnages sont KO, vider le tracker et mettre à jour l'affichage
-            setTimeout(() => {
+_onToggleKO(event) {
+    const cardId = event.currentTarget.closest('.initiative-card').dataset.cardId;
+    const character = this.drawnInitiative.find(c => c.id === cardId);
+    if (!character) return;
+
+    const wasKO = character.isKO;
+    character.isKO = !wasKO;
+
+    // Si le personnage devient KO
+    if (character.isKO) {
+        // Désactiver si actif
+        if (character.isActive) {
+            character.isActive = false;
+        }
+
+        // Si c'est la première carte, la déplacer à la fin et traiter le tour suivant
+        if (this.drawnInitiative[0].id === character.id) {
+            this.drawnInitiative = [
+                ...this.drawnInitiative.slice(1),
+                character
+            ];
+            this._processNextTurn();
+        }
+
+        // Vérifier si tous les personnages sont KO
+        if (this.drawnInitiative.every(char => char.isKO)) {
+            if (this.alertsEnabled) {
                 ChatMessage.create({
-                    content: `<div class="initiative-announcement">
-                                <h2>All characters are KO!</h2>
-                                <h3>Action Ends</h3>
-                             </div>`,
+                    content: `<div class="initiative-turn-announcement"><h3>All characters are KO! End of Action.</h3></div>`,
                     type: CONST.CHAT_MESSAGE_STYLES.WARNING,
                     speaker: { alias: "Initiative Tracker" }
                 });
-    
-                setTimeout(() => {
-                    // Vider le tracker et notifier
-                    this.drawnInitiative = [];
-                    this.isInitiativeDrawn = false;
-    
-                    // Mettre à jour le display
-                    this.updateState();
-                }, 500);
-            }, 500);
+            }
+            this._onEndAction();
             return;
-        } else if (this.drawnInitiative[0].id === character.id && character.isKO) {
-            // Si le personnage actif devient KO, passer au suivant
-            ChatMessage.create({
-                content: `<div class="initiative-announcement">
-                            <h3>${character.name} is KO and skips their turn!</h3>
-                         </div>`,
-                type: CONST.CHAT_MESSAGE_STYLES.OTHER,
-                speaker: { alias: "Initiative Tracker" }
-            });
-            
-            setTimeout(() => {
-                this._onEndTurn(null, true);
-            }, 500);
         }
-    
-        // Rendre et notifier pour tous les autres cas
-        this.updateState();
     }
-    
-    
+
+    this.updateState();
+}
+
+
     _onDeleteCard(event) {
         const cardId = event.currentTarget.closest('.initiative-card').dataset.cardId;
         this.drawnInitiative = this.drawnInitiative.filter(c => c.id !== cardId);
         this.updateState();
     }
+
+    //Opportunity system//
+    _onAddOpportunity(event) {
+        event.preventDefault();
+        const newOpportunity = {
+            id: foundry.utils.randomID(),
+            name: `Opportunity ${this.opportunities.length + 1}`,
+            points: 0
+        };
+        this.opportunities.push(newOpportunity);
+        this.render(true);
+    }
+
+    _onClearOpportunities(event) {
+        event.preventDefault();
+        const d = new Dialog({
+            title: "Clear All Opportunities",
+            content: "<p>Are you sure you want to remove all opportunities?</p>",
+            buttons: {
+                yes: {
+                    icon: '<i class="fas fa-trash"></i>',
+                    label: "Yes, clear all",
+                    callback: () => {
+                        this.opportunities = [];
+                        this.render(true);
+                    }
+                },
+                no: {
+                    icon: '<i class="fas fa-times"></i>',
+                    label: "Cancel"
+                }
+            },
+            default: "no"
+        });
+        d.render(true);
+    }
+
+    _onDeleteOpportunity(event) {
+        const id = event.currentTarget.closest('.opportunity-card').dataset.id;
+        this.opportunities = this.opportunities.filter(o => o.id !== id);
+        this.render(true);
+    }
+
+
+    _onEditOpportunityName(event) {
+        event.preventDefault();
+        event.stopPropagation();
+        
+        const card = event.currentTarget.closest('.opportunity-card');
+        const id = card?.dataset.id;
+        const newName = event.currentTarget.value.trim();
+        
+        if (id && newName) {
+            const opportunity = this.opportunities.find(o => o.id === id);
+            if (opportunity) {
+                opportunity.name = newName;
+                event.currentTarget.blur(); // Défocus le champ
+                
+                // Mise à jour immédiate
+                this._renderOpportunities();
+                
+                // Mise à jour du display
+                const displayApp = Object.values(ui.windows).find(w => w instanceof game.weaveOfEchoes.InitiativeDisplay);
+                if (displayApp) {
+                    displayApp.updateDisplay(null, this.opportunities);
+                }
+            }
+        }
+    }
+
+    _incrementOpportunityPoints(event) {
+        const id = event.currentTarget.closest('.opportunity-token').dataset.id;
+        const opportunity = this.opportunities.find(o => o.id === id);
+        if (opportunity) {
+            opportunity.points++;
+            this.render(true);
+        }
+    }
+
+    _decrementOpportunityPoints(event) {
+        const id = event.currentTarget.closest('.opportunity-token').dataset.id;
+        const opportunity = this.opportunities.find(o => o.id === id);
+        if (opportunity && opportunity.points > 0) {
+            opportunity.points--;
+            this.render(true);
+        }
+    }
+
+    _setupOpportunityListeners(html) {
+        // Création d'opportunité
+        html.find('.create-opportunity').on('click', (ev) => {
+            ev.preventDefault();
+            const newOpportunity = {
+                id: foundry.utils.randomID(),
+                name: `Opportunity ${this.opportunities.length + 1}`,
+                points: 0,
+                creator: null
+            };
+            this.opportunities.push(newOpportunity);
+            this._renderOpportunities();
+        });
+    
+        // Gestion du nom
+        html.find('.opportunity-name').on('keydown', (ev) => {
+            if (ev.key === 'Enter') {
+                ev.preventDefault();
+                ev.stopPropagation();
+                ev.target.blur();
+            }
+        });
+    
+        html.find('.opportunity-name').on('change', (ev) => {
+            ev.preventDefault();
+            const card = ev.target.closest('.opportunity-card');
+            if (!card) return;
+            
+            const id = card.dataset.id;
+            const opportunity = this.opportunities.find(o => o.id === id);
+            if (opportunity) {
+                opportunity.name = ev.target.value.trim();
+                // Pas de render complet, juste mise à jour du display
+                Hooks.call('updateInitiativeTracker', {
+                    opportunities: this.opportunities
+                });
+            }
+        });
+    
+        // Gestion des points
+        html.find('.opportunity-increment').on('click', (ev) => {
+            ev.preventDefault();
+            const id = ev.target.closest('.opportunity-card').dataset.id;
+            const opportunity = this.opportunities.find(o => o.id === id);
+            if (opportunity) {
+                opportunity.points++;
+                this._renderOpportunities();
+            }
+        });
+    
+        html.find('.opportunity-decrement').on('click', (ev) => {
+            ev.preventDefault();
+            const id = ev.target.closest('.opportunity-card').dataset.id;
+            const opportunity = this.opportunities.find(o => o.id === id);
+            if (opportunity && opportunity.points > 0) {
+                opportunity.points--;
+                this._renderOpportunities();
+            }
+        });
+    
+        // Créateur
+        html.find('.select-creator').on('click', (ev) => {
+            ev.preventDefault();
+            const id = ev.target.closest('.opportunity-card').dataset.id;
+            if (id) this._showCreatorSelectionDialog(id);
+        });
+    
+        // Clear All
+        html.find('.clear-opportunities').on('click', (ev) => {
+            ev.preventDefault();
+            if (this.opportunities.length > 0) {
+                const d = new Dialog({
+                    title: "Clear All Opportunities",
+                    content: "<p>Are you sure you want to remove all opportunities?</p>",
+                    buttons: {
+                        yes: {
+                            icon: '<i class="fas fa-trash"></i>',
+                            label: "Yes",
+                            callback: () => {
+                                this.opportunities = [];
+                                this._renderOpportunities();
+                            }
+                        },
+                        no: {
+                            icon: '<i class="fas fa-times"></i>',
+                            label: "No"
+                        }
+                    },
+                    default: "no"
+                });
+                d.render(true);
+            }
+        });
+    }
+    
+    _renderOpportunities() {
+        const opportunitiesTab = this.element.find('.tab[data-tab="opportunities"]');
+        const content = `
+            <div class="opportunities-content">
+                <div class="opportunities-header">
+                    <button class="create-opportunity">
+                        <i class="fas fa-plus"></i> Create Opportunity
+                    </button>
+                    <button class="clear-opportunities" ${!this.opportunities.length ? 'disabled' : ''}>
+                        <i class="fas fa-trash"></i> Clear All
+                    </button>
+                </div>
+                <div class="opportunities-container">
+                    ${this.opportunities.map(opp => `
+                        <div class="opportunity-card" data-id="${opp.id}">
+                            <div class="opportunity-points-circle">
+                                <span class="points-value">${opp.points}</span>
+                            </div>
+                            <div class="opportunity-content">
+                                <input type="text" 
+                                    class="opportunity-name" 
+                                    value="${opp.name}"
+                                    maxlength="${InitiativeTracker.MAX_OPPORTUNITY_NAME_LENGTH}"
+                                />
+                                <div class="opportunity-controls">
+                                    <button class="opportunity-increment" title="Add Point">
+                                        <i class="fas fa-plus"></i>
+                                    </button>
+                                    <button class="opportunity-decrement" title="Remove Point">
+                                        <i class="fas fa-minus"></i>
+                                    </button>
+                                    <button class="delete-opportunity" title="Delete">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                                <div class="opportunity-creator">
+                                    ${opp.creator 
+                                        ? `<span>Created by: ${opp.creator.name}</span>`
+                                        : `<span class="no-creator">No Creator</span>`
+                                    }
+                                    <button class="select-creator" title="Select Creator">
+                                        <i class="fas fa-user-edit"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        `;
+        
+        opportunitiesTab.html(content);
+        this._setupOpportunityListeners(this.element);
+    
+        // Mise à jour du display
+        Hooks.call('updateInitiativeTracker', {
+            opportunities: this.opportunities
+        });
+
+        this.updateState(false);
+    }
+    
+    async _showCreatorSelectionDialog(opportunityId) {
+        const actors = game.actors.filter(a => a.type === "character" || a.type === "npc");
+        const opportunity = this.opportunities.find(o => o.id === opportunityId);
+        
+        const content = `
+            <div class="creator-selection-grid">
+                ${actors.map(actor => `
+                    <div class="creator-option" data-actor-id="${actor.id}">
+                        <img src="${actor.img}" alt="${actor.name}">
+                        <span class="creator-name">${actor.name}</span>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+    
+        const dialog = new Dialog({
+            title: "Select Opportunity Creator",
+            content,
+            buttons: {},
+            render: (html) => {
+                // Ajouter les listeners après le rendu
+                html.find('.creator-option').on('click', async (ev) => {
+                    const actorId = ev.currentTarget.dataset.actorId;
+                    if (actorId) {
+                        const creator = game.actors.get(actorId);
+                        opportunity.creator = {
+                            id: creator.id,
+                            name: creator.name,
+                            img: creator.img
+                        };
+                        await this._renderOpportunities();
+                        dialog.close();
+                    }
+                });
+            }
+        }, {width: 400});
+    
+        dialog.render(true);
+    }
+
+    close(options={}) {
+        // Nettoyer tous les écouteurs d'événements
+        if (this.element) {
+            const container = this.element.find('.initiative-cards-container').get(0);
+            if (container) {
+                container.querySelectorAll('.initiative-card').forEach(card => {
+                    card.removeAttribute('draggable');
+                    // Supprimer explicitement les écouteurs d'événements
+                    ['dragstart', 'dragend', 'dragover', 'drop'].forEach(event => {
+                        card.replaceWith(card.cloneNode(true));
+                    });
+                });
+            }
+        }
+        
+        return super.close(options);
+    }
+
 }
