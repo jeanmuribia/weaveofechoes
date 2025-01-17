@@ -21,25 +21,29 @@ export class WoeActor extends Actor {
       };
     }
 
+    
     // Ensure attributes are initialized for all keys, including "mind" and "elementary"
-    const attributes = ["body", "soul", "mind", "martial", "elementary", "rhetoric"];
-    attributes.forEach(attr => {
+    const attributes = ["body", "martial", "soul", "elementary", "mind", "rhetoric"];
+   
+    attributes.forEach((attr, index) => {
       if (!systemData.attributes[attr]) {
-        systemData.attributes[attr] = {}; // Ensure the attribute object exists
+        systemData.attributes[attr] = {}; // Assure que l'objet existe
       }
       if (!systemData.attributes[attr].baseValue) {
-        systemData.attributes[attr].baseValue = "neutral"; // Default base value
+        systemData.attributes[attr].baseValue = "neutral"; // Valeur par défaut
       }
       if (!systemData.attributes[attr].currentValue) {
         systemData.attributes[attr].currentValue = systemData.attributes[attr].baseValue;
       }
-      if (!systemData.attributes[attr].wounds) {
-        systemData.attributes[attr].wounds = {
-          wound1: false,
-          wound2: false,
-          wound3: false
+      if (!systemData.attributes[attr].injuries) {
+        systemData.attributes[attr].injuries = {
+          injury1: false,
+          injury2: false,
+          injury3: false,
         };
       }
+      // Ajoute l'ordre explicite
+      systemData.attributes[attr].order = index + 1;
     });
 
     // Initialize tempers for fire, water, earth, and air
@@ -54,8 +58,8 @@ export class WoeActor extends Actor {
       if (!systemData.tempers[temper].currentValue) {
         systemData.tempers[temper].currentValue = systemData.tempers[temper].baseValue; // Default currentValue to baseValue
       }
-      if (!systemData.tempers[temper].wound) {
-        systemData.tempers[temper].wound = false; // Default to no trauma
+      if (!systemData.tempers[temper].injury) {
+        systemData.tempers[temper].injury = false; // Default to no trauma
       }
     });
 
@@ -101,32 +105,32 @@ export class WoeActor extends Actor {
           body: {
             baseValue: "neutral",
             currentValue: "neutral",
-            wounds: { wound1: false, wound2: false, wound3: false }
+            injuries: { injury1: false, injury2: false, injury3: false }
           },
           soul: {
             baseValue: "neutral",
             currentValue: "neutral",
-            wounds: { wound1: false, wound2: false, wound3: false }
+            injuries: { injury1: false, injury2: false, injury3: false }
           },
           mind: {
             baseValue: "neutral",
             currentValue: "neutral",
-            wounds: { wound1: false, wound2: false, wound3: false }
+            injuries: { injury1: false, injury2: false, injury3: false }
           },
           martial: {
             baseValue: "neutral",
             currentValue: "neutral",
-            wounds: { wound1: false, wound2: false, wound3: false }
+            injuries: { injury1: false, injury2: false, injury3: false }
           },
           elementary: {
             baseValue: "neutral",
             currentValue: "neutral",
-            wounds: { wound1: false, wound2: false, wound3: false }
+            injuries: { injury1: false, injury2: false, injury3: false }
           },
           rhetoric: {
             baseValue: "neutral",
             currentValue: "neutral",
-            wounds: { wound1: false, wound2: false, wound3: false }
+            injuries: { injury1: false, injury2: false, injury3: false }
           }
         },
         relationships: [] // Default relationships array
@@ -163,3 +167,24 @@ WoeActor.prototype.modifyCurrentFocusPoints = async function (amount) {
     this.sheet.render(false); // Forcer un re-render
   }
 };
+
+Handlebars.registerHelper("capitalize", function (str) {
+  if (typeof str !== "string") return "";
+  return str.charAt(0).toUpperCase() + str.slice(1);
+});
+
+Handlebars.registerHelper('sort', function (context, field) {
+  if (!Array.isArray(context)) return [];
+  return context.sort((a, b) => {
+    if (a[field] < b[field]) return -1;
+    if (a[field] > b[field]) return 1;
+    return 0;
+  });
+});
+
+Handlebars.registerHelper('objectToArray', function (obj) {
+  if (typeof obj !== 'object') return [];
+  return Object.keys(obj).map(key => {
+    return { ...obj[key], key }; // Ajoute la clé pour accéder dans le Handlebars
+  });
+});

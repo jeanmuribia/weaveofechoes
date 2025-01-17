@@ -82,6 +82,10 @@ export class InitiativeTracker extends Application {
         html.on('click', '.duplicate-char', this._onDuplicateCharacter.bind(this));
         html.on('click', '.toggle-setup', this._onToggleSetup.bind(this));
         html.on('click', '.toggle-initiative', this._onToggleInitiative.bind(this));
+        html.find('.delete-char').on('click', this._onDeleteCharacter.bind(this));
+        html.find('.duplicate-char').on('click', this._onDuplicateCharacter.bind(this));
+        html.find('.expand-button').on('click', this._onExpandCard.bind(this));
+        html.find('.delete-opportunity').on('click', this._onDeleteOpportunity.bind(this));
     
         // Écouteurs d'événements pour les cartes d'initiative
         html.on('click', '.expand-button', this._onExpandCard.bind(this));
@@ -426,10 +430,40 @@ _processNextTurn(isAutoPass = false) {
         this.render(true);
     }
     _onDeleteCharacter(event) {
+        event.preventDefault();  // Add this line
         const characterId = event.currentTarget.dataset.characterId;
-        this.selectedCharacters = this.selectedCharacters.filter(c => c.id !== characterId);
+        const groupId = event.currentTarget.closest('.group-container').dataset.groupId;
+        
+        // Find the group and remove the character
+        const group = this.initiativeGroups.find(g => g.id === groupId);
+        if (group && group.characters) {
+            group.characters = group.characters.filter(c => c.id !== characterId);
+        }
+        
         this.render(true);
     }
+    
+    _onDuplicateCharacter(event) {
+        event.preventDefault();  // Add this line
+        const characterId = event.currentTarget.dataset.characterId;
+        const groupId = event.currentTarget.closest('.group-container').dataset.groupId;
+        
+        // Find the group and the character
+        const group = this.initiativeGroups.find(g => g.id === groupId);
+        const originalCharacter = group?.characters?.find(c => c.id === characterId);
+        
+        if (group && originalCharacter) {
+            const duplicatedCharacter = {
+                ...originalCharacter,
+                id: foundry.utils.randomID(),
+                name: `${originalCharacter.name} (Copy)`
+            };
+            
+            group.characters.push(duplicatedCharacter);
+            this.render(true);
+        }
+    }
+    
 
     _onNameChange(event) {
         const {characterId, value} = event.currentTarget.dataset;
@@ -600,23 +634,19 @@ _processNextTurn(isAutoPass = false) {
 
 
 _onExpandCard(event) {
+    event.preventDefault();  // Add this line
+    event.stopPropagation(); // Add this line
+    
     const card = event.currentTarget.closest('.initiative-card');
     const cardId = card.dataset.cardId;
     const character = this.drawnInitiative.find(c => c.id === cardId);
+    
     if (character) {
         character.expanded = !character.expanded;
-        // Remplacer le render par updateState
-        this.updateState(false); // false car on veut juste une mise à jour visuelle
+        // Use updateState instead of render
+        this.updateState(true);
     }
 }
-
-    _shuffleArray(array) {
-        for (let i = array.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [array[i], array[j]] = [array[j], array[i]];
-        }
-        return array;
-    }
 
 // Dans la méthode _setupInitiativeCardDragDrop
 _setupInitiativeCardDragDrop(html) {
@@ -626,76 +656,114 @@ _setupInitiativeCardDragDrop(html) {
     let draggedCard = null;
     let draggedElement = null;
     let dragImage = null;
-    let startX, startY;
+    let initialX, initialY;
+    let currentX, currentY;
+    let xOffset = 0;
+    let yOffset = 0;
 
     const cards = container.querySelectorAll('.initiative-card');
+    
+    // Ajouter les transitions CSS pour tous les cartes
     cards.forEach(card => {
-        const handle = card.querySelector('.drag-handle');
-        if (!handle) return;
-
-        handle.addEventListener('mousedown', (e) => {
-            if (e.target.closest('.card-controls')) return;
-            e.preventDefault();
-            
-            draggedCard = card;
-            draggedElement = this.drawnInitiative.find(c => c.id === card.dataset.cardId);
-            startX = e.clientX;
-            startY = e.clientY;
-
-            // Créer une copie pour l'image de drag
-            dragImage = card.cloneNode(true);
-            dragImage.style.position = 'fixed';
-            dragImage.style.zIndex = '10000';
-            dragImage.style.pointerEvents = 'none';
-            dragImage.style.width = `${card.offsetWidth}px`;
-            dragImage.style.opacity = '0.7';
-            document.body.appendChild(dragImage);
-
-            // Style de la carte originale
-            card.style.opacity = '0.3';
-
-            document.addEventListener('mousemove', onMouseMove);
-            document.addEventListener('mouseup', onMouseUp);
-        });
+        card.style.transition = 'transform 0.3s ease, opacity 0.3s ease';
     });
 
-    const onMouseMove = (e) => {
+    function createDragImage(sourceCard) {
+        const rect = sourceCard.getBoundingClientRect();
+        const image = sourceCard.cloneNode(true);
+        
+        image.style.position = 'fixed';
+        image.style.top = '0';
+        image.style.left = '0';
+        image.style.width = `${rect.width}px`;
+        image.style.height = `${rect.height}px`;
+        image.style.zIndex = '10000';
+        image.style.pointerEvents = 'none';
+        image.style.opacity = '0.9';
+        image.style.transform = 'scale(1.05)';
+        image.style.transition = 'none';
+        image.classList.add('dragging-image');
+
+        document.body.appendChild(image);
+        return image;
+    }
+
+    function setTranslate(element, xPos, yPos) {
+        element.style.transform = `translate3d(${xPos}px, ${yPos}px, 0)`;
+    }
+
+    function handleMouseDown(e) {
+        if (e.target.closest('.card-controls') || e.button !== 0) return;
+        e.preventDefault();
+
+        const handle = e.target.closest('.drag-handle');
+        if (!handle) return;
+
+        draggedCard = e.target.closest('.initiative-card');
+        draggedElement = this.drawnInitiative.find(c => c.id === draggedCard.dataset.cardId);
+        
+        initialX = e.clientX;
+        initialY = e.clientY;
+        
+        // Créer et positionner l'image de drag
+        dragImage = createDragImage(draggedCard);
+        const rect = draggedCard.getBoundingClientRect();
+        setTranslate(dragImage, rect.left, rect.top);
+        
+        // Appliquer le style à la carte d'origine
+        draggedCard.style.opacity = '0.3';
+        draggedCard.classList.add('dragging');
+
+        document.addEventListener('mousemove', handleMouseMove);
+        document.addEventListener('mouseup', handleMouseUp);
+    }
+
+    function handleMouseMove(e) {
         if (!draggedCard || !dragImage) return;
 
-        dragImage.style.left = `${e.clientX - dragImage.offsetWidth / 2}px`;
-        dragImage.style.top = `${e.clientY - dragImage.offsetHeight / 2}px`;
+        e.preventDefault();
+
+        currentX = e.clientX - initialX;
+        currentY = e.clientY - initialY;
+
+        xOffset = currentX;
+        yOffset = currentY;
+
+        setTranslate(dragImage, e.clientX - dragImage.offsetWidth / 2, e.clientY - dragImage.offsetHeight / 2);
 
         const targetCard = findTargetCard(e.clientX, cards);
-        resetCardStyles();
+        updateDropIndicators(targetCard, e.clientX);
+    }
+
+    function findTargetCard(x, cards) {
+        return Array.from(cards).find(card => {
+            if (card === draggedCard) return false;
+            const rect = card.getBoundingClientRect();
+            return x >= rect.left && x <= rect.right;
+        });
+    }
+
+    function updateDropIndicators(targetCard, mouseX) {
+        cards.forEach(card => {
+            card.style.borderLeft = '';
+            card.style.borderRight = '';
+            card.classList.remove('drop-target');
+        });
 
         if (targetCard) {
             const rect = targetCard.getBoundingClientRect();
-            const isAfter = e.clientX > rect.left + rect.width / 2;
+            const isAfter = mouseX > rect.left + rect.width / 2;
             
+            targetCard.classList.add('drop-target');
             if (isAfter) {
                 targetCard.style.borderRight = '3px solid var(--color-border-highlight)';
             } else {
                 targetCard.style.borderLeft = '3px solid var(--color-border-highlight)';
             }
         }
-    };
+    }
 
-    const findTargetCard = (x, cards) => {
-        return Array.from(cards).find(card => {
-            if (card === draggedCard) return false;
-            const rect = card.getBoundingClientRect();
-            return x >= rect.left && x <= rect.right;
-        });
-    };
-
-    const resetCardStyles = () => {
-        cards.forEach(card => {
-            card.style.borderLeft = '';
-            card.style.borderRight = '';
-        });
-    };
-
-    const onMouseUp = async (e) => {
+    async function handleMouseUp(e) {
         if (!draggedCard) return;
 
         const targetCard = findTargetCard(e.clientX, cards);
@@ -716,24 +784,58 @@ _setupInitiativeCardDragDrop(html) {
                 
                 updatedOrder.splice(newIndex, 0, movedCard);
                 this.drawnInitiative = updatedOrder;
-                await this.updateState();
+
+                // Mettre à jour l'état avec animation
+                await this.updateState(true);
             }
         }
 
-        // Cleanup
+        // Nettoyage
+        cleanup();
+    }
+
+    function cleanup() {
         if (dragImage) {
             dragImage.remove();
             dragImage = null;
         }
+        
         if (draggedCard) {
             draggedCard.style.opacity = '';
+            draggedCard.classList.remove('dragging');
             draggedCard = null;
         }
-        resetCardStyles();
-        document.removeEventListener('mousemove', onMouseMove);
-        document.removeEventListener('mouseup', onMouseUp);
-    };
+
+        // Réinitialiser tous les indicateurs
+        cards.forEach(card => {
+            card.style.borderLeft = '';
+            card.style.borderRight = '';
+            card.classList.remove('drop-target');
+        });
+
+        // Supprimer les écouteurs d'événements
+        document.removeEventListener('mousemove', handleMouseMove);
+        document.removeEventListener('mouseup', handleMouseUp);
+
+        // Réinitialiser les variables
+        initialX = null;
+        initialY = null;
+        xOffset = 0;
+        yOffset = 0;
+    }
+
+    // Attacher les écouteurs d'événements aux poignées de drag
+    cards.forEach(card => {
+        const handle = card.querySelector('.drag-handle');
+        if (handle) {
+            handle.addEventListener('mousedown', handleMouseDown.bind(this));
+        }
+    });
+
+    // Nettoyage lors de la fermeture
+    this.dragDropCleanup = cleanup;
 }
+
 _getDragAfterElement(container, y) {
     const draggableElements = [...container.querySelectorAll('.initiative-card:not(.dragging)')];
     
@@ -986,10 +1088,16 @@ _onToggleKO(event) {
     }
 
     _onDeleteOpportunity(event) {
+        event.preventDefault();  // Add this line
+        event.stopPropagation(); // Add this line
+        
         const id = event.currentTarget.closest('.opportunity-card').dataset.id;
         this.opportunities = this.opportunities.filter(o => o.id !== id);
-        this.render(true);
+        
+        // Update without full page refresh
+        this._renderOpportunities();
     }
+    
 
 
     _onEditOpportunityName(event) {

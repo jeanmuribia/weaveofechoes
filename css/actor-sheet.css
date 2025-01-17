@@ -1,0 +1,651 @@
+@import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@300;400;500;600;700&display=swap');
+
+.sheet-container {
+  font-family: 'Quicksand', sans-serif;
+}
+
+/* Titres principaux */
+.sheet-container h2, 
+.sheet-container h3 {
+  font-family: 'Quicksand', sans-serif;
+  font-weight: bold;
+}
+
+/* Texte général */
+.sheet-container .attribute-card,
+.sheet-container .temper-card,
+.sheet-container .maneuver-container {
+  font-family: 'Quicksand', sans-serif;
+}
+/* Base container for the sheet */
+.sheet-container {
+    max-width: 1200px; /* Largeur maximale */
+    min-width: 600px; /* Largeur minimale */
+    width: 100%;
+    margin-left: 0;
+    margin-right: auto;
+    padding: 20px;
+  }
+  .clickable {
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    padding: 2px 4px; /* Augmente la zone cliquable */
+    border-radius: 4px; /* Ajoute des coins arrondis pour le confort visuel */
+  }
+  
+  .clickable:hover {
+    background-color: rgba(0, 0, 0, 0.05); /* Légère surbrillance au survol */
+  }
+
+  /* Animation de tremblement */
+/* Tremblement et bord rouge pâle */
+/* Animation de tremblement uniquement latérale */
+@keyframes shake {
+  0% { transform: translateX(0); }
+  25% { transform: translateX(-4px); }
+  50% { transform: translateX(4px); }
+  75% { transform: translateX(-4px); }
+  100% { transform: translateX(0); }
+}
+
+/* Classe pour le tremblement et le bord rouge */
+.resource.stamina.out-of-bounds {
+  outline: 2px solid rgba(255, 0, 0, 0.3); /* Utilisation d'outline au lieu de border */
+  animation: shake 0.3s ease; /* Animation de tremblement */
+  border-radius: 8px; /* Les coins arrondis restent fonctionnels */
+}
+
+/* Conteneur principal des ressources (Stamina et Focus) */
+.resources {
+  display: flex;
+  gap: 30px;
+}
+
+/* Styles généraux pour toutes les ressources */
+.resource {
+  background: rgba(255, 255, 255, 0.3); /* Par défaut, pour Stamina */
+  border-radius: 8px;
+  padding: 12px 15px;
+  min-width: 120px;
+  min-height: 120px; /* Assurer une uniformité de taille */
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Labels des ressources */
+.resource-label {
+  color: #4a2810; /* Couleur par défaut */
+  font-size: 1em;
+  margin-bottom: 5px;
+}
+
+/* Valeur (Focus, Stamina) : Uniforme pour toutes les ressources */
+.resource-value {
+  font-size: 2em;
+  font-weight: bold;
+  line-height: 1.2;
+  display: block;
+  margin: 8px 0;
+}
+
+/* Contrôles (boutons + et -) */
+.resource-controls {
+  display: flex;
+  gap: 8px;
+  margin-top: 5px;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Boutons des contrôles */
+.resource-btn {
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: 1px solid #8b4513; /* Couleur par défaut pour Stamina */
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2em;
+}
+
+.resource-btn:hover {
+  background: rgba(139, 69, 19, 0.2); /* Hover par défaut */
+}
+
+/* Spécificité pour la ressource Focus */
+.resource.focus {
+  background: rgba(180, 200, 255, 0.2); /* Couleur spécifique pour Focus */
+}
+
+.resource.focus .resource-label {
+  color: #2a4d69; /* Couleur spécifique pour le label Focus */
+}
+
+.resource.focus .resource-btn {
+  border: 1px solid #2a4d69; /* Bord spécifique pour Focus */
+  background: rgba(42, 77, 105, 0.1); /* Fond spécifique pour Focus */
+}
+
+.resource.focus .resource-btn:hover {
+  background: rgba(42, 77, 105, 0.2); /* Hover spécifique pour Focus */
+}
+
+/* Alignement du bouton "Show" */
+.resource-visibility {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px; /* Espacement entre la case et le texte */
+}
+
+.resource-visibility input[type="checkbox"] {
+  cursor: pointer;
+}
+
+/* Spécificité pour la ressource Synergie *//* Ressource Synergie */
+.resource.synergy {
+  background: rgba(220, 255, 200, 0.2); /* Couleur spécifique pour Synergy */
+  border-radius: 8px;
+  padding: 12px 15px;
+  min-width: 120px;
+  min-height: 80px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  max-width: 120px;
+}
+
+.resource.synergy .resource-label {
+  color: #2d572c; /* Couleur spécifique pour le label Synergy */
+  font-size: 1em;
+  margin-bottom: 8px;
+}
+
+.resource.synergy .resource-value {
+  font-size: 2em;
+  font-weight: bold;
+  color: #2d572c;
+}
+
+.resource-value.not-in-group {
+  font-style: italic;
+  font-size: 0.9em; /* Taille légèrement réduite */
+  color: #6c757d; /* Couleur grise subtile */
+  text-align: center; /* Centrer le texte */
+  word-wrap: break-word; /* Forcer le retour à la ligne */
+  max-width: 100%; /* Contraindre la largeur */
+  white-space: normal; /* Permettre les retours à la ligne */
+}
+
+  
+  /* Identity section */
+  .identity-section {
+    position: relative;
+    padding-bottom: 20px;
+    margin-bottom: 30px;
+    padding-right: 220px; /* Ajustement pour l'image */
+  }
+  
+  /* Basic info section */
+  .basic-info {
+    display: flex;
+    gap: 40px;
+    margin-bottom: 30px;
+    width: 100%;
+  }
+  
+  .info-field {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: #4a2810;
+    font-size: 1.3em;
+    white-space: nowrap;
+  }
+  
+  .info-field span {
+    font-weight: 600;
+  }
+  
+  .element-icon {
+    margin-left: 8px;
+    vertical-align: middle;
+    font-size: 1em; /* Ajuste la taille pour correspondre au texte */
+    color: inherit; /* Utilise la couleur actuelle de la police */
+  }
+  
+  .element-icon.fire::before {
+    content: "🔥"; /* Symbole pour le feu */
+  }
+  
+  .element-icon.water::before {
+    content: "💧"; /* Symbole pour l'eau */
+  }
+  
+  .element-icon.earth::before {
+    content: "🌍"; /* Symbole pour la terre */
+  }
+  
+  .element-icon.air::before {
+    content: "💨"; /* Symbole pour l'air */
+  }
+
+  #stamina-max-edit {
+    font-size: 1em;
+    width: 50px;
+    text-align: center;
+  }
+
+  .stamina-controls {
+    display: flex; /* Aligne les éléments horizontalement */
+    justify-content: center; /* Centre les boutons dans le conteneur */
+    gap: 5px; /* Espacement horizontal entre les boutons */
+  }
+ 
+
+  /* Profile image */
+ /* Ajuster la position et la taille de l'image */
+.profile-image {
+    position: absolute;
+    bottom: 0;
+    right: auto; /* Supprime l'alignement au bord droit */
+    left: 400px; /* Assure une distance fixe vis-à-vis des éléments à gauche */
+    width: 200px; /* Réduction de la taille */
+    height: 200px; /* Réduction de la hauteur */
+    border: 2px solid #8b4513;
+    border-radius: 8px;
+    overflow: hidden;
+    background: white;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+
+.profile-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  
+
+
+/* Section Tempers */
+.tempers-container {
+  display: grid; /* Utilisation d'une grille */
+  grid-template-columns: repeat(2, 1fr); /* Deux colonnes pour le carré */
+  gap: 20px; /* Espacement entre les cartes */
+  margin-top: 20px;
+}
+
+/* Cartes des tempers */
+.temper-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start; /* Change pour permettre un placement en haut */
+  align-items: center;
+  width: 100px;
+  height: 100px;
+  padding: 10px;
+  background-color: #f5f5f5;
+  border-radius: 12px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+/* Couleurs des tempers */
+.temper-card[data-value="critical"] {
+  background-color: #f28b82; /* Rouge pastel */
+  color: #000; /* Texte noir */
+}
+
+.temper-card[data-value="bonus"] {
+  background-color: #81c995; /* Vert pastel */
+  color: #000; /* Texte noir */
+}
+
+.temper-card[data-value="neutral"] {
+  background-color: #fef49c; /* Jaune pastel */
+  color: #000; /* Texte noir */
+}
+
+.temper-card[data-value="malus"] {
+  background-color: #aecbfa; /* Bleu pastel */
+  color: #000; /* Texte noir */
+}
+
+/* Griser la carte si injury est activé */
+.temper-card[data-injury="true"] {
+  background-color: #d3d3d3 !important; /* Gris clair pour désactivation */
+  color: #666 !important;
+}
+
+/* En-tête des cartes (titre et icône crayon) */
+.temper-header {
+  position: relative;
+  width: 100%;
+  display: flex;
+  justify-content: space-between; /* Sépare le titre et le crayon */
+  align-items: center; /* Centre verticalement les éléments */
+  height: 30px; /* Fixe une hauteur explicite pour éviter les décalages */
+  margin-bottom: auto; /* Espacement uniforme avec le contenu en dessous */
+}
+
+.temper-title {
+  font-size: 1.2em;
+  font-weight: bold;
+  margin: 0;
+  text-align: left; /* Alignement gauche pour éviter tout flottement */
+  flex-grow: 1; /* Permet au titre d’occuper l’espace restant */
+}
+
+.edit-button {
+  position: absolute;
+  right: 10px; /* Colle le bouton au bord droit */
+  top: -10px; /* Ajuste verticalement */
+  width: 0; /* Empêche les effets de hover sur le bouton */
+  height: 0; /* Empêche les effets de hover sur le bouton */
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+.edit-button i {
+  font-size: 0.9em; /* Taille du crayon */
+  color: #333;
+  transition: transform 0.2s ease, color 0.2s ease; /* Effet de hover uniquement sur l'icône */
+}
+
+.edit-button:hover i {
+  color: #555; /* Change légèrement la couleur */
+}
+
+.edit-button:hover {
+  background: none; /* Assure qu’il n’y a pas de fond supplémentaire */
+}
+
+
+/* Valeur des tempers */
+.temper-value {
+  font-size: 1.5em; /* Taille du texte */
+  font-weight: bold;
+  margin: 10px 0; /* Espacement haut et bas */
+}
+
+/* Étiquette et case à cocher pour Trauma */
+.trauma-label {
+  font-size: 0.9em;
+  margin-top: auto; /* Place l'étiquette en bas */
+  margin-bottom: 10px; /* Force un espace sous Trauma */
+  align-self: flex-start; /* Empêche les contraintes de flex sur la position */
+}
+
+.trauma-label input[type="checkbox"] {
+  margin-right: 5px;
+}
+
+.tempers-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr); /* Deux colonnes */
+  grid-gap: 10px; /* Espacement entre les cartes */
+  padding: 10px; /* Espace interne pour la grille */
+}
+
+.temper-card input[type="checkbox"] {
+  margin: 0; /* Supprime toutes les marges par défaut */
+  padding: 0; /* Supprime tout padding résiduel */
+  vertical-align: middle; /* Centre verticalement la checkbox */
+}
+
+.attribute-card-wrapper {
+  display: flex;
+  align-items: flex-start; /* Aligne les éléments en haut */
+  gap: 10px; /* Espace entre la carte et les injuries */
+}
+
+
+/* Conteneur des attributs */
+.attributes-container {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr); /* Deux colonnes */
+  grid-gap: 20px;
+  margin-top: 20px;
+  min-width: 300px; /* Largeur minimale */
+}
+/* Cartes des attributs */
+.attribute-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  width: 125px; /* Taille fixe */
+  height: 125px; /* Taille fixe */
+  padding: 10px;
+  background-color: #f5f5f5;
+  border-radius: 12px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  flex-shrink: 0; /* Empêche la réduction */
+}
+/* Couleurs des cartes */
+.attribute-card[data-value="critical"] {
+  background-color: #f28b82;
+  color: #000;
+}
+
+.attribute-card[data-value="bonus"] {
+  background-color: #81c995;
+  color: #000;
+}
+
+.attribute-card[data-value="neutral"] {
+  background-color: #fef49c;
+  color: #000;
+}
+
+.attribute-card[data-value="malus"] {
+  background-color: #aecbfa;
+  color: #000;
+}
+
+/* Griser la carte si injury est activé */
+.attribute-card[data-injury="true"] {
+  background-color: #d3d3d3 !important;
+  color: #666 !important;
+}
+
+/* En-tête des cartes */
+.attribute-header {
+  position: relative;
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 30px;
+}
+
+.attribute-title {
+  font-size: 1.2em;
+  font-weight: bold;
+}
+
+.edit-button {
+  position: absolute;
+  right: 10px;
+  top: -10px;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.edit-button i {
+  font-size: 0.9em;
+  color: #333;
+  transition: transform 0.2s ease, color 0.2s ease;
+}
+
+.edit-button:hover i {
+  color: #555;
+}
+
+/* Valeur des attributs */
+.attribute-value {
+  font-size: 1.5em;
+  font-weight: bold;
+  margin: 10px 0;
+}
+
+/* Cases à cocher pour injuries */
+.attribute-injuries {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 100px; /* Largeur minimale pour les blessures */
+}
+.attribute-injuries label {
+  font-size: 0.9em;
+}
+
+
+/* Label "Wounded" */
+.wounded-label {
+  font-size: 0.9em; /* Taille du texte */
+  margin: 0; /* Supprime toutes les marges */
+  display: flex;
+  align-items: center; /* Aligne verticalement */
+  justify-content: center; /* Centré horizontalement */
+}
+
+/* Conteneur global pour Tempers et Attributes */
+.tempers-attributes-container {
+  display: flex;
+  justify-content: space-between; /* Espace entre Tempers et Attributes */
+  align-items: flex-start; /* Alignement en haut */
+  width: 800px; /* Largeur totale */
+  max-width: 900px;
+  margin: 0 0;
+  gap: 25px;
+}
+/* Section Tempers */
+.tempers-section {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 300px; /* Largeur fixe */
+  background-color: #f5f5dc;
+  border-radius: 15px;
+  padding: 20px;
+  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* Section Attributes */
+.attributes-section {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 520px; /* Largeur fixe */
+  background-color: #f5f5dc; /* Fond beige */
+  border-radius: 15px;
+  padding: 20px;
+  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+
+/* Titres des sections */
+h2 {
+  text-align: center;
+  font-size: 1.5rem;
+  font-weight: bold;
+  text-transform: uppercase;
+  margin-bottom: 20px;
+  border-bottom: none; /* Supprimer les lignes */
+}
+
+/* Style pour les labels "Trauma" et "Wounded" */
+.trauma-label,
+.wounded-label {
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 5px; /* Espacement entre la checkbox et le texte */
+  margin: 0;
+}
+
+/* Injuries alignés verticalement */
+.attribute-injuries {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-left: 10px; /* Espacement avec la carte principale */
+}
+
+label {
+  font-size: 0.9rem; /* Taille des textes de labels */
+}
+
+/* Section des Tempers */
+.tempers-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  width: 300px; /* Largeur fixe */
+  background-color: #f5f5dc; /* Fond beige pastel */
+  border-radius: 15px;
+  padding: 20px;
+  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+
+.tempers-wrapper {
+  display: flex;
+  flex-direction: column; /* Aligne Tempers et Maneuver verticalement */
+  justify-content: space-between; /* Espacement flexible */
+  width: 300px; /* Largeur fixe pour correspondre aux cartes Tempers */
+  min-height: 400px; /* Correspond à la hauteur minimale de Attributes */
+  background-color: transparent; /* Fond transparent pour ne pas inclure Maneuver */
+}
+
+/* Conteneur cliquable avec une couleur beige */
+.maneuver-container {
+  width: 150px;
+  height: 150px;
+  background: linear-gradient(145deg, #f5e6d9, #e8d8c9); /* Dégradé beige clair */
+  border-radius: 5px;
+  box-shadow: 0px 6px 15px rgba(0, 0, 0, 0.2); /* Ombre renforcée */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: #5e4a3b; /* Couleur du texte marron doux */
+  cursor: pointer;
+  transition: transform 0.1s ease, box-shadow 0.1s ease, background 0.3s ease; /* Transitions fluides */
+  margin: 25px auto; /* Centrage horizontal */
+}
+
+/* Effet de survol */
+.maneuver-container:hover {
+  transform: translateY(-2px);
+  box-shadow: 0px 8px 20px rgba(0, 0, 0, 0.3); /* Accentuation de l'ombre */
+  background: linear-gradient(145deg, #e8d8c9, #f0dbcc); /* Variation subtile du dégradé */
+}
+
+/* Effet de clic */
+.maneuver-container:active {
+  transform: translateY(2px);
+  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+  background: linear-gradient(145deg, #dac7b8, #e2cbbd); /* Dégradé plus foncé pour le clic */
+}
+
+/* Titre à l'intérieur */
+.maneuver-container h2 {
+  margin: 0;
+  color: #5e4a3b; /* Couleur du texte assortie */
+}

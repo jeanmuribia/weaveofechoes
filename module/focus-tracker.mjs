@@ -207,12 +207,13 @@ export class FocusTracker extends Application {
 }
 
 // Hook global pour synchroniser le FocusTracker avec le SynergyTracker
-Hooks.on('updateSynergyGroup', (synergyTracker) => {
-    if (game.weaveOfEchoes.focusTracker) {
-        // Pass the updated group members to the focus tracker
-        game.weaveOfEchoes.focusTracker.updateGroupFromSynergy(synergyTracker.data.characters);
+Hooks.on('updateSynergyTracker', (updatedActor) => {
+    for (let app of Object.values(ui.windows)) {
+      if (app instanceof SynergyTracker) {
+        app.updateSynergyBasedOnRelationships(updatedActor);
+      }
     }
-});
+  });
 
 // Hooks.on pour les mises à jour des acteurs
 Hooks.on('updateActor', async (actor, updatedData) => {

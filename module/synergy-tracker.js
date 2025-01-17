@@ -93,24 +93,7 @@ export class SynergyTracker extends Application {
     // Pas besoin de mettre à jour l'affichage du SynergyTracker
   }
 
-  _onIncreaseMaxSynergy(event) {
-    event.preventDefault();
-    this.data.maxSynergy++;
-    this._updateTracker();
-    this.updateCharacterSheets(); 
 
-
-  }
-
-  _onDecreaseMaxSynergy(event) {
-    event.preventDefault();
-    if (this.data.maxSynergy > 0) {
-      this.data.maxSynergy--;
-      this.data.currentSynergy = Math.min(this.data.currentSynergy, this.data.maxSynergy);
-      this._updateTracker();
-      this.updateCharacterSheets(); 
-    }
-  }
 
   initializeSynergy() {
     this.data.maxSynergy = this.calculateMaxSynergy();
@@ -120,112 +103,127 @@ export class SynergyTracker extends Application {
   async _updateTracker() {
     await this.render(false);
   }
-
   _onIncreaseCurrentSynergy(event) {
     event.preventDefault();
     if (this.data.currentSynergy < this.data.maxSynergy) {
-      this.data.currentSynergy++;
-      this._updateTracker();
-      this.updateCharacterSheets(); 
+        this.data.currentSynergy++;
+        this.updateCharacterSheets();
+        this.render(false);
+    } else {
+        ui.notifications.warn("Current Synergy is already at maximum.");
     }
-  }
+}
 
-  _onDecreaseCurrentSynergy(event) {
+_onDecreaseCurrentSynergy(event) {
     event.preventDefault();
     if (this.data.currentSynergy > 0) {
-      this.data.currentSynergy--;
-      this._updateTracker();
-      this.updateCharacterSheets(); 
+        this.data.currentSynergy--;
+        this.updateCharacterSheets();
+        this.render(false);
+    } else {
+        ui.notifications.warn("Current Synergy is already at minimum.");
     }
-  }
+}
 
-  _onEmptyPool(event) {
+_onIncreaseMaxSynergy(event) {
     event.preventDefault();
-    this.data.currentSynergy = 0;
-    this._updateTracker();
-    this.updateCharacterSheets(); 
-  }
+    this.data.maxSynergy++;
+    this.updateCharacterSheets();
+    this.render(false);
+}
 
-  _onFillPool(event) {
+_onDecreaseMaxSynergy(event) {
     event.preventDefault();
-    this.data.currentSynergy = this.data.maxSynergy;
-    this._updateTracker();
-    this.updateCharacterSheets(); 
-  }
+    if (this.data.maxSynergy > 0) {
+        this.data.maxSynergy--;
+        this.data.currentSynergy = Math.min(this.data.currentSynergy, this.data.maxSynergy);
+        this.updateCharacterSheets();
+        this.render(false);
+    } else {
+        ui.notifications.warn("Max Synergy is already at minimum.");
+    }
+}
 
-  _onResetMaxValue(event) {
-    event.preventDefault();
-    this.data.maxSynergy = this.calculateMaxSynergy();
-    this.data.currentSynergy = Math.min(this.data.currentSynergy, this.data.maxSynergy);
-    this._updateTracker();
-    this.updateCharacterSheets(); 
-  }
+_onEmptyPool(event) {
+  event.preventDefault();
+  this.data.currentSynergy = 0;
+  this.updateCharacterSheets();
+  this.render(false); // Redessine le tracker
+}
 
+_onFillPool(event) {
+  event.preventDefault();
+  this.data.currentSynergy = this.data.maxSynergy;
+  this.updateCharacterSheets();
+  this.render(false); // Redessine le tracker
+}
+_onResetMaxValue(event) {
+  event.preventDefault();
+  this.data.maxSynergy = this.calculateMaxSynergy();
+  this.data.currentSynergy = Math.min(this.data.currentSynergy, this.data.maxSynergy);
+  this.updateCharacterSheets();
+  this.render(false); // Redessine le tracker
+}
   _onManageMembers(event) {
     event.preventDefault();
     this.showMemberManagementModal();
   }
-
   _onMemberSelection(event) {
     const characterName = event.currentTarget.dataset.character;
-   
+
     if (!Array.isArray(this.data.selectedCharacters)) {
-      this.data.selectedCharacters = [];
+        this.data.selectedCharacters = [];
     }
-  
+
     const index = this.data.selectedCharacters.indexOf(characterName);
-   
+
     if (index > -1) {
-      // Deselect the character
-      this.data.selectedCharacters.splice(index, 1);
+        // Deselect the character
+        this.data.selectedCharacters.splice(index, 1);
     } else {
-      // Add the character to the selected list
-      this.data.selectedCharacters.push(characterName);
+        // Add the character to the selected list
+        this.data.selectedCharacters.push(characterName);
     }
-  
-    // Log the selected characters for debugging
+
+    // Log for debugging
     console.log('Selected Characters in Synergy Tracker:', this.data.selectedCharacters);
-  
-    // Trigger hook for focus tracker to update
-    Hooks.call('updateSynergyGroup', this);
-  
-    // Re-render tracker to reflect changes
+
+    // Re-render the tracker to reflect the changes
     this.render(false);
-  }
-  
-_onRemoveMember(event) {
-  event.preventDefault();
-  const characterName = event.currentTarget.dataset.character;
-  
-  // Supprime le personnage de la liste des membres du groupe
-  const index = this.data.characters.indexOf(characterName);
-  if (index > -1) {
-      this.data.characters.splice(index, 1);
-  }
-
-  // Supprime également le personnage de la liste des personnages sélectionnés, s'il est présent
-  const selectedIndex = this.data.selectedCharacters.indexOf(characterName);
-  if (selectedIndex > -1) {
-      this.data.selectedCharacters.splice(selectedIndex, 1);
-  }
-
-  // Retire le membre de la liste globale des membres assignés
-  SynergyTracker.assignedMembers.delete(characterName);
-
-  // Recalculer la valeur max de Synergy après la suppression
-  this.data.maxSynergy = this.calculateMaxSynergy();
-  this.data.currentSynergy = Math.min(this.data.currentSynergy, this.data.maxSynergy);
-
-  this._updateTracker();
-  Hooks.call('updateSynergyGroup', this);
 }
+
+  
+  _onRemoveMember(event) {
+    event.preventDefault();
+    const characterName = event.currentTarget.dataset.character;
+
+    const index = this.data.characters.indexOf(characterName);
+    if (index > -1) {
+        this.data.characters.splice(index, 1);
+    }
+
+    const selectedIndex = this.data.selectedCharacters.indexOf(characterName);
+    if (selectedIndex > -1) {
+        this.data.selectedCharacters.splice(selectedIndex, 1);
+    }
+
+    SynergyTracker.assignedMembers.delete(characterName);
+
+    this.data.maxSynergy = this.calculateMaxSynergy();
+    this.data.currentSynergy = Math.min(this.data.currentSynergy, this.data.maxSynergy);
+
+    this.updateCharacterSheets();
+    this.render(false); // Redessine le tracker
+   
+}
+
 
   _onApplySynergyCost(event) {
     event.preventDefault();
     const cost = this.calculateManeuverCost();
     if (this.data.currentSynergy >= cost) {
       this.data.currentSynergy -= cost;
-      this._updateTracker();
+      
       ui.notifications.info(`Applied synergy cost: ${cost} points`);
     } else {
       ui.notifications.warn("Not enough synergy points to apply the cost.");
@@ -234,19 +232,21 @@ _onRemoveMember(event) {
 
   _onAddMember(event) {
     event.preventDefault();
-
-    // Filtrer les personnages disponibles qui ne sont pas déjà dans le groupe et qui ne sont pas assignés à d'autres groupes
-    const availableCharacters = game.actors.filter(actor => 
-        actor.type === "character" && 
-        !this.data.characters.includes(actor.name) &&
-        !SynergyTracker.assignedMembers.has(actor.name) // Vérifier si le personnage est déjà assigné à un groupe
+  
+    // Filtrer les personnages disponibles qui ne sont pas déjà dans le groupe
+    const availableCharacters = game.actors.filter(actor =>
+      actor.type === "character" && !this.data.characters.includes(actor.name)
     );
-
-    // Créer le contenu HTML pour la modale
+  
+    if (!availableCharacters.length) {
+      ui.notifications.warn("No available characters to add.");
+      return;
+    }
+  
     const content = `
       <form>
         <div class="form-group">
-          <label>Select a Member to Add:</label>
+          <label>Select Members to Add:</label>
           ${availableCharacters.map(character => `
             <div>
               <label>
@@ -258,71 +258,64 @@ _onRemoveMember(event) {
         </div>
       </form>
     `;
-
-    // Afficher la modale avec les membres disponibles
+  
     new Dialog({
-        title: "Add Members",
-        content: content,
-        buttons: {
-            add: {
-                icon: '<i class="fas fa-user-plus"></i>',
-                label: "Add Selected",
-                callback: (html) => this._addSelectedMembers(html)
-            },
-            cancel: {
-                icon: '<i class="fas fa-times"></i>',
-                label: "Cancel"
+      title: "Add Members",
+      content,
+      buttons: {
+        add: {
+          label: "Add Selected",
+          callback: (html) => {
+            const selectedMembers = Array.from(html.find('input[name="add-member"]:checked')).map(input => input.value);
+  
+            if (!selectedMembers.length) {
+              ui.notifications.warn("No members selected to add.");
+              return;
             }
+  
+            selectedMembers.forEach(memberName => {
+              if (!this.data.characters.includes(memberName)) {
+                this.data.characters.push(memberName);
+              }
+            });
+  
+            this.data.maxSynergy = this.calculateMaxSynergy();
+            this.data.currentSynergy = Math.min(this.data.currentSynergy, this.data.maxSynergy);
+            this.updateCharacterSheets();
+            this.render(false);
+          }
+        },
+        cancel: {
+          label: "Cancel"
         }
-    }).render(true);
-}
-
-
-_addSelectedMembers(html) {
-  const selectedMembers = Array.from(html.find('input[name="add-member"]:checked')).map(input => input.value);
-
-  // Ajouter temporairement les membres au groupe
-  this.data.characters.push(...selectedMembers);
-
-  // Vérification stricte des relations après ajout temporaire
-  let missingTies = [];
-  for (let i = 0; i < this.data.characters.length; i++) {
-    for (let j = i + 1; j < this.data.characters.length; j++) {
-      const memberA = this.data.characters[i];
-      const memberB = this.data.characters[j];
-
-      const actorA = game.actors.getName(memberA);
-      const actorB = game.actors.getName(memberB);
-
-      // Initialiser les relations si elles sont manquantes
-      actorA.system.relationships = actorA.system.relationships || [];
-      actorB.system.relationships = actorB.system.relationships || [];
-
-      // Vérification de la relation mutuelle entre les personnages
-      const relationA = actorA.system.relationships.find(r => r.characterName === memberB);
-      const relationB = actorB.system.relationships.find(r => r.characterName === memberA);
-
-      if (!relationA || !relationB) {
-        missingTies.push(`${memberA} and ${memberB}`);
       }
+    }).render(true);
+  }
+  
+  _addSelectedMembers(html) {
+    const selectedMembers = Array.from(html.find('input[name="add-member"]:checked')).map(input => input.value);
+
+    if (!selectedMembers.length) {
+        ui.notifications.warn("No members selected to add.");
+        return;
     }
-  }
 
-  if (missingTies.length > 0) {
-    // Retirer les membres ajoutés temporairement et afficher un avertissement détaillé
-    this.data.characters = this.data.characters.filter(member => !selectedMembers.includes(member));
-    ui.notifications.warn(`No ties between: ${missingTies.join(', ')}`);
-    this._updateTracker();
-  } else {
-    // Ajouter les membres à la liste globale des membres assignés
-    selectedMembers.forEach(member => SynergyTracker.assignedMembers.add(member));
+    selectedMembers.forEach(memberName => {
+        if (!this.data.characters.includes(memberName)) {
+            this.data.characters.push(memberName);
+        }
+        SynergyTracker.assignedMembers.add(memberName);
+    });
+
     this.data.maxSynergy = this.calculateMaxSynergy();
-    this._updateTracker();
-  }
+    this.data.currentSynergy = Math.min(this.data.currentSynergy, this.data.maxSynergy);
 
-  Hooks.call('updateSynergyGroup', this);
+    this.updateCharacterSheets();
+    this.render(false); // Redessine le tracker
+    Hooks.callAll('updateSynergyTracker', this);
 }
-a
+
+
 
   updateGroupMembers(html) {
     const selectedMembers = Array.from(html.find('input[name="group-member"]:checked'))
@@ -331,7 +324,7 @@ a
     this.data.characters = selectedMembers;
     this.data.selectedCharacters = [];
     this.initializeSynergy();
-    this._updateTracker();
+    
   }
 
   calculateMaxSynergy() {
@@ -432,7 +425,7 @@ updateSynergyBasedOnRelationships(updatedActor) {
       // Récalculez la synergie maximale en fonction des relations mises à jour
       this.data.maxSynergy = this.calculateMaxSynergy();
       this.data.currentSynergy = Math.min(this.data.currentSynergy, this.data.maxSynergy);
-      this._updateTracker();
+      
       this.updateCharacterSheets(); // Met à jour les fiches de personnage
   }
 }

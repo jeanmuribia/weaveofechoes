@@ -1,4 +1,5 @@
 @import url('initiative-tracker.css');
+@import url('actor-sheet.css');
 
 #interface {
   width: 100vw;

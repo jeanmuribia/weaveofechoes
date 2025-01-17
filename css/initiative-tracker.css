@@ -644,6 +644,35 @@
     z-index: 1000;
 }
 
+.initiative-card.drop-target {
+    transform: scale(1.02);
+}
+
+.dragging-image {
+    pointer-events: none;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    transition: transform 0.1s ease;
+    will-change: transform;
+}
+
+.drag-handle {
+    cursor: grab;
+}
+
+.drag-handle:active {
+    cursor: grabbing;
+}
+
+.initiative-cards-container {
+    display: flex;
+    gap: 30px;
+    padding: 20px;
+    overflow-x: auto;
+    min-height: 300px;
+    align-items: flex-start;
+    position: relative;
+}
+
 /* Style pour les cartes qui se déplacent */
 .initiative-card:not(.dragging) {
     transition: transform 0.3s ease;

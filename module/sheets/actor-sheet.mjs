@@ -37,13 +37,7 @@ Hooks.on("createActor", async (actor, options, userId) => {
   }
 });
 
-Hooks.on('updateSynergyGroup', (tracker) => {
-  game.actors.forEach(actor => {
-    if (actor.sheet && actor.sheet instanceof WoeActorSheet) {
-      actor.sheet.render(false);
-    }
-  });
-});
+
 
 export class WoeActorSheet extends ActorSheet {
   constructor(...args) {
@@ -64,8 +58,8 @@ export class WoeActorSheet extends ActorSheet {
   static get defaultOptions() {
     return foundry.utils.mergeObject(super.defaultOptions, {
       classes: ['weave-of-echoes', 'sheet', 'actor'],
-      width: 600,
-      height: 600,
+      width:900,
+      height: 1100,
       tabs: [
         { navSelector: '.sheet-tabs', contentSelector: '.tab-content', initial: 'profile' },
       ],
@@ -90,6 +84,8 @@ export class WoeActorSheet extends ActorSheet {
     context.actors = game.actors.filter(actor => actor.id !== this.actor.id && actor.type === "character");
     context.system = actorData.system;
     context.actorName = this.actor.name;
+
+    context.isNotInGroup = !context.currentSynergy && !context.maxSynergy;
 
     // Relationship Levels
     context.relationshipLevels = [
@@ -143,8 +139,14 @@ export class WoeActorSheet extends ActorSheet {
     // Handle Stamina interactions (increase, decrease, and max editing)
     this.handleStaminaEditing(html);
 
+    this.handleStaminaMaxEditing(html);
+
     // Handle Element editing
     this.handleElementEditing(html);
+
+    this.handleFocusToggle(html); // Gestion du toggle "Show Focus"
+
+    this.handleFocusEditing(html); // Gérer les boutons + et -
 
     // Enable editing for tempers and attributes
     this.enableAttributeEditing(html);
@@ -155,10 +157,10 @@ export class WoeActorSheet extends ActorSheet {
     html.find('.focus-add').click(this._onAddFocusPoints.bind(this));
     html.find('.focus-subtract').click(this._onSubtractFocusPoints.bind(this));
 
-    // Handle Wound listeners for attributes
-    this.manageAttributeWounds(html);
+    // Handle Injury listeners for attributes
+    this.manageAttributeInjuries(html);
 
-    // Handle trauma (wounds) listeners for tempers
+    // Handle trauma (injuries) listeners for tempers
     this.manageTemperTrauma(html);
 
     // Dice roll event listeners for tempers and attributes
@@ -181,36 +183,36 @@ export class WoeActorSheet extends ActorSheet {
     this.displayRelationships(html);
     this.addRelationshipListeners(html);
 
-          // Manage wounds for all attributes
-      this.manageWoundsListeners(html, 'body');
-      this.manageWoundsListeners(html, 'mind');
-      this.manageWoundsListeners(html, 'soul');
-      this.manageWoundsListeners(html, 'martial');
-      this.manageWoundsListeners(html, 'elementary');
-      this.manageWoundsListeners(html, 'rhetoric');
+          // Manage injuries for all attributes
+      this.manageInjuriesListeners(html, 'body');
+      this.manageInjuriesListeners(html, 'mind');
+      this.manageInjuriesListeners(html, 'soul');
+      this.manageInjuriesListeners(html, 'martial');
+      this.manageInjuriesListeners(html, 'elementary');
+      this.manageInjuriesListeners(html, 'rhetoric');
 
         // Trauma listeners for tempers
   html.find('#fire-trauma').on('change', async (event) => {
     const isChecked = html.find('#fire-trauma').is(':checked');
-    await this.actor.update({ "system.tempers.fire.wound": isChecked });
+    await this.actor.update({ "system.tempers.fire.injury": isChecked });
     this.render();  // Re-render to update the display
   });
 
   html.find('#water-trauma').on('change', async (event) => {
     const isChecked = html.find('#water-trauma').is(':checked');
-    await this.actor.update({ "system.tempers.water.wound": isChecked });
+    await this.actor.update({ "system.tempers.water.injury": isChecked });
     this.render();
   });
 
   html.find('#earth-trauma').on('change', async (event) => {
     const isChecked = html.find('#earth-trauma').is(':checked');
-    await this.actor.update({ "system.tempers.earth.wound": isChecked });
+    await this.actor.update({ "system.tempers.earth.injury": isChecked });
     this.render();
   });
 
   html.find('#air-trauma').on('change', async (event) => {
     const isChecked = html.find('#air-trauma').is(':checked');
-    await this.actor.update({ "system.tempers.air.wound": isChecked });
+    await this.actor.update({ "system.tempers.air.injury": isChecked });
     this.render();
   });
 
@@ -629,7 +631,7 @@ getCheckedBoxes(type) {
     const tempers = ['fire', 'water', 'earth', 'air'];
   
     tempers.forEach(temper => {
-      if (this.actor.system.tempers[temper].wound) { // If trauma exists for this temper
+      if (this.actor.system.tempers[temper].injury) { // If trauma exists for this temper
         const temperButton = html.find(`.temper-choice[data-temper="${temper}"]`);
         temperButton.prop('disabled', true).addClass('disabled').css({
           'background-color': 'lightgrey',
@@ -850,80 +852,102 @@ getColoredLabel(name, type) {
   return `<span class="color-${type}">${capitalizedName}</span>`;
 }
 
- // This function adds event listeners for managing wound checkboxes
-manageWoundsListeners(html, attribute) {
+
+manageTemperEdition(html) {
+  ['fire', 'water', 'earth', 'air'].forEach(temper => {
+    // Ouvrir la liste déroulante
+    html.find(`.temper-card[data-value="${temper}"] .edit-button`).on('click', (event) => {
+      const temperSelect = html.find(`#${temper}-select`);
+      temperSelect.toggleClass('hidden'); // Affiche/masque la liste déroulante
+    });
+
+    // Mettre à jour la valeur de Temper
+    html.find(`#${temper}-select`).on('change', async (event) => {
+      const newValue = event.target.value;
+      await this.actor.update({ [`system.tempers.${temper}.currentValue`]: newValue });
+
+      // Met à jour la couleur et la valeur affichée
+      const temperCard = html.find(`.temper-card[data-value="${temper}"]`);
+      temperCard.attr('data-value', newValue);
+      this.render(); // Re-rendu pour appliquer les styles
+    });
+  });
+}
+
+ // This function adds event listeners for managing injury checkboxes
+manageInjuriesListeners(html, attribute) {
   const attr = this.actor.system.attributes[attribute];
-  const wound1 = html.find(`#${attribute}-wound1`);
-  const wound2 = html.find(`#${attribute}-wound2`);
-  const wound3 = html.find(`#${attribute}-wound3`);
+  const injury1 = html.find(`#${attribute}-injury1`);
+  const injury2 = html.find(`#${attribute}-injury2`);
+  const injury3 = html.find(`#${attribute}-injury3`);
 
   // Initial checkbox management
-  this.manageWoundCheckboxes(attribute, wound1, wound2, wound3);
+  this.manageWoundCheckboxes(attribute, injury1, injury2, injury3);
 
-  // Add change listeners for each wound checkbox
-  wound1.on('change', async (event) => {
+  // Add change listeners for each injury checkbox
+  injury1.on('change', async (event) => {
     const checked = event.target.checked;
-    await this.actor.update({ [`system.attributes.${attribute}.wounds.wound1`]: checked });
+    await this.actor.update({ [`system.attributes.${attribute}.injuries.injury1`]: checked });
     this.updateAttributeCurrentValue(attribute);
   });
 
-  wound2.on('change', async (event) => {
+  injury2.on('change', async (event) => {
     const checked = event.target.checked;
-    await this.actor.update({ [`system.attributes.${attribute}.wounds.wound2`]: checked });
+    await this.actor.update({ [`system.attributes.${attribute}.injuries.injury2`]: checked });
     this.updateAttributeCurrentValue(attribute);
   });
 
-  wound3.on('change', async (event) => {
+  injury3.on('change', async (event) => {
     const checked = event.target.checked;
-    await this.actor.update({ [`system.attributes.${attribute}.wounds.wound3`]: checked });
+    await this.actor.update({ [`system.attributes.${attribute}.injuries.injury3`]: checked });
     this.updateAttributeCurrentValue(attribute);
   });
 }
 
-manageWoundCheckboxes(attribute, wound1, wound2, wound3) {
+manageWoundCheckboxes(attribute, injury1, injury2, injury3) {
   const attr = this.actor.system.attributes[attribute];
-  const wounds = attr.wounds;
+  const injuries = attr.injuries;
 
   if (attr.baseValue === 'malus') {
-    wound1.prop('disabled', true);
-    wound2.prop('disabled', true);
-    wound3.prop('disabled', true);
+    injury1.prop('disabled', true);
+    injury2.prop('disabled', true);
+    injury3.prop('disabled', true);
   } else if (attr.currentValue === 'malus') {
-    if (wounds.wound3) {
-      wound1.prop('disabled', true);
-      wound2.prop('disabled', true);
-      wound3.prop('disabled', false);
-    } else if (wounds.wound2) {
-      wound1.prop('disabled', true);
-      wound2.prop('disabled', false);
-      wound3.prop('disabled', true);
-    } else if (wounds.wound1) {
-      wound1.prop('disabled', false);
-      wound2.prop('disabled', true);
-      wound3.prop('disabled', true);
+    if (injuries.injury3) {
+      injury1.prop('disabled', true);
+      injury2.prop('disabled', true);
+      injury3.prop('disabled', false);
+    } else if (injuries.injury2) {
+      injury1.prop('disabled', true);
+      injury2.prop('disabled', false);
+      injury3.prop('disabled', true);
+    } else if (injuries.injury1) {
+      injury1.prop('disabled', false);
+      injury2.prop('disabled', true);
+      injury3.prop('disabled', true);
     }
   } else {
-    if (!wounds.wound1 && !wounds.wound2 && !wounds.wound3) {
-      wound1.prop('disabled', false);
-      wound2.prop('disabled', true);
-      wound3.prop('disabled', true);
-    } else if (wounds.wound1 && !wounds.wound2 && !wounds.wound3) {
-      wound1.prop('disabled', false);
-      wound2.prop('disabled', false);
-      wound3.prop('disabled', true);
-    } else if (wounds.wound2 && !wounds.wound3) {
-      wound1.prop('disabled', true);
-      wound2.prop('disabled', false);
-      wound3.prop('disabled', false);
-    } else if (wounds.wound3) {
-      wound1.prop('disabled', true);
-      wound2.prop('disabled', true);
-      wound3.prop('disabled', false);
+    if (!injuries.injury1 && !injuries.injury2 && !injuries.injury3) {
+      injury1.prop('disabled', false);
+      injury2.prop('disabled', true);
+      injury3.prop('disabled', true);
+    } else if (injuries.injury1 && !injuries.injury2 && !injuries.injury3) {
+      injury1.prop('disabled', false);
+      injury2.prop('disabled', false);
+      injury3.prop('disabled', true);
+    } else if (injuries.injury2 && !injuries.injury3) {
+      injury1.prop('disabled', true);
+      injury2.prop('disabled', false);
+      injury3.prop('disabled', false);
+    } else if (injuries.injury3) {
+      injury1.prop('disabled', true);
+      injury2.prop('disabled', true);
+      injury3.prop('disabled', false);
     }
   }
 }
 
-// This function degrades the value of the attribute as the wounds increase
+// This function degrades the value of the attribute as the injuries increase
 degradeAttributeValue(value) {
   switch (value) {
     case 'critical':
@@ -939,80 +963,226 @@ degradeAttributeValue(value) {
   }
 }
 
-  handleNameEditing(html) {
-    html.find('#name-label').on('click', () => {
-      html.find('#actor-name').hide();
-      html.find('#name-edit').prop('disabled', false).show().focus();
-    });
+handleNameEditing(html) {
+  const nameDisplay = html.find('#actor-name');
+  const nameInput = html.find('#name-edit');
 
-    html.find('#name-edit').on('blur', async () => {
-      const newName = html.find('#name-edit').val().trim();
-      if (newName) {
-        await this.actor.update({ "name": newName });
-        html.find('#actor-name').text(newName).show();
-      } else {
-        html.find('#actor-name').show();
-      }
-      html.find('#name-edit').hide();
-    });
+  if (!nameDisplay.length || !nameInput.length) {
+    console.error("Name editing elements missing in the template.");
+    return;
   }
 
-  handleStaminaEditing(html) {
-    // Decrease stamina
-    html.find('#stamina-decrease').on('click', async () => {
-      let currentStamina = parseInt(html.find('#current-stamina-view').text());
-      if (currentStamina > 0) {
-        currentStamina--;
-        await this.actor.update({ "system.stamina.current": currentStamina });
-        html.find('#current-stamina-view').text(currentStamina);
-      }
-    });
+  nameDisplay.on('click', () => {
+    nameInput.val(nameDisplay.text().trim()); // Pré-remplir avec la valeur actuelle
+    nameDisplay.hide();
+    nameInput.prop('disabled', false).show().focus();
+  });
 
-    // Increase stamina
-    html.find('#stamina-increase').on('click', async () => {
-      let currentStamina = parseInt(html.find('#current-stamina-view').text());
-      const maxStamina = this.actor.system.stamina.max || 4;
-      if (currentStamina < maxStamina) {
-        currentStamina++;
-        await this.actor.update({ "system.stamina.current": currentStamina });
-        html.find('#current-stamina-view').text(currentStamina);
-      }
-    });
+  nameInput.on('blur', async () => {
+    const newName = nameInput.val().trim();
+    if (newName) {
+      await this.actor.update({ "name": newName });
+      nameDisplay.text(newName).show();
+    } else {
+      nameDisplay.show();
+    }
+    nameInput.hide();
+  });
+}
 
-    // Edit max stamina
-    html.find('#stamina-label').on('click', () => {
-      html.find('#stamina-max-view').hide();
-      html.find('#stamina-max-edit').show().focus();
-    });
 
-    html.find('#stamina-max-edit').on('blur', async () => {
-      let newMaxStamina = parseInt(html.find('#stamina-max-edit').val());
-      if (isNaN(newMaxStamina)) newMaxStamina = 4;
+handleStaminaMaxEditing(html) {
+  const staminaMaxContainer = html.find('#stamina-max-container');
+  const staminaMaxDisplay = html.find('#stamina-max');
+  const staminaMaxInput = html.find('#stamina-max-edit');
 
-      await this.actor.update({
-        "system.stamina.max": newMaxStamina,
-        "system.stamina.current": Math.min(this.actor.system.stamina.current, newMaxStamina)
-      });
-
-      html.find('#stamina-max-view').text(newMaxStamina).show();
-      html.find('#stamina-max-edit').hide();
-      html.find('#current-stamina-view').text(this.actor.system.stamina.current).show();
-    });
+  if (!staminaMaxContainer.length || !staminaMaxDisplay.length || !staminaMaxInput.length) {
+    console.error("Stamina Max elements are missing in the template.");
+    return;
   }
+
+  // Activer l'édition au clic sur le conteneur
+  staminaMaxContainer.on('click', () => {
+    staminaMaxInput.val(staminaMaxDisplay.text().trim()); // Pré-remplir avec la valeur actuelle
+    staminaMaxContainer.hide();
+    staminaMaxInput.removeClass('hidden').focus();
+  });
+
+  // Sauvegarder la valeur lorsqu'on quitte le champ
+  staminaMaxInput.on('blur', async () => {
+    const newMaxStamina = parseInt(staminaMaxInput.val().trim(), 10);
+
+    if (!isNaN(newMaxStamina) && newMaxStamina > 0) {
+      await this.actor.update({ "system.stamina.max": newMaxStamina });
+
+      // Vérifier que la current Stamina ne dépasse pas la nouvelle max
+      const currentStamina = Math.min(this.actor.system.stamina.current, newMaxStamina);
+      await this.actor.update({ "system.stamina.current": currentStamina });
+
+      // Mettre à jour l'affichage
+      staminaMaxDisplay.text(newMaxStamina);
+      html.find('#current-stamina').text(currentStamina); // Mettre à jour la current
+    }
+
+    staminaMaxContainer.show();
+    staminaMaxInput.addClass('hidden');
+  });
+
+  // Sauvegarde via la touche Entrée
+  staminaMaxInput.on('keydown', async (event) => {
+    if (event.key === 'Enter') {
+      staminaMaxInput.blur(); // Déclencher l'événement blur pour sauvegarder
+    }
+  });
+}
+
+
+handleStaminaEditing(html) {
+  const staminaMinus = html.find('#stamina-minus');
+  const staminaPlus = html.find('#stamina-plus');
+  const staminaContainer = html.find('.resource.stamina'); // Conteneur global
+  const currentStaminaElement = html.find('#current-stamina');
+  const maxStamina = this.actor.system.stamina.max;
+
+  if (!staminaMinus.length || !staminaPlus.length || !staminaContainer.length || !currentStaminaElement.length) {
+    console.error("Stamina elements or container are missing in the template.");
+    return;
+  }
+
+  // Fonction pour afficher une erreur visuelle sur le conteneur
+  const showOutOfBounds = () => {
+    staminaContainer.addClass('out-of-bounds');
+    setTimeout(() => {
+      staminaContainer.removeClass('out-of-bounds');
+    }, 300); // Supprimer la classe après 300ms
+  };
+
+  // Diminuer la Stamina
+  staminaMinus.on('click', async () => {
+    const currentStamina = this.actor.system.stamina.current;
+    if (currentStamina <= 0) {
+      showOutOfBounds(); // Tremblement si déjà à 0
+      return;
+    }
+
+    const newStamina = Math.max(0, currentStamina - 1);
+    await this.actor.update({ "system.stamina.current": newStamina });
+    currentStaminaElement.text(newStamina);
+  });
+
+  // Augmenter la Stamina
+  staminaPlus.on('click', async () => {
+    const currentStamina = this.actor.system.stamina.current;
+    if (currentStamina >= maxStamina) {
+      showOutOfBounds(); // Tremblement si déjà au maximum
+      return;
+    }
+
+    const newStamina = Math.min(maxStamina, currentStamina + 1);
+    await this.actor.update({ "system.stamina.current": newStamina });
+    currentStaminaElement.text(newStamina);
+  });
+}
+
+handleFocusToggle(html) {
+  const focusToggle = html.find('#focus-toggle');
+
+  if (!focusToggle.length) {
+    console.error("Focus toggle element is missing in the template.");
+    return;
+  }
+
+  // Écouter les changements sur la case à cocher
+  focusToggle.on('change', async (event) => {
+    const isVisible = event.target.checked;
+
+    // Mettre à jour l'état de visibilité dans les données de l'acteur
+    await this.actor.update({ "system.focusPoints.isVisible": isVisible });
+
+    // Si "Show" est activé, envoyer un message aux autres joueurs (hors propriétaire et GM)
+    if (isVisible) {
+      const focusValue = this.actor.system.focusPoints.current || 0;
+      const actorName = this.actor.name;
+
+      // Filtrer les joueurs : exclure le propriétaire et le GM
+      const playersToNotify = game.users.filter(
+        user => !user.isGM && user.id !== this.actor.owner.id
+      );
+
+      if (playersToNotify.length > 0) {
+        ChatMessage.create({
+          user: game.user.id,
+          speaker: ChatMessage.getSpeaker({ actor: this.actor }),
+          content: `<strong>${actorName}</strong> shares their Focus: <strong>${focusValue}</strong>`,
+          whisper: playersToNotify.map(user => user.id), // Envoyer seulement aux joueurs ciblés
+        });
+      }
+    }
+  });
+}
+
+handleFocusEditing(html) {
+  const focusMinus = html.find('#focus-minus');
+  const focusPlus = html.find('#focus-plus');
+  const focusValueElement = html.find('#focus-value');
+
+  if (!focusMinus.length || !focusPlus.length || !focusValueElement.length) {
+    console.error("Focus buttons or display element are missing in the template.");
+    return;
+  }
+
+  // Diminuer le Focus
+  focusMinus.on('click', async () => {
+    const currentFocus = this.actor.system.focusPoints.current;
+    const newFocus = Math.max(0, currentFocus - 1); // Empêcher une valeur négative
+    await this.actor.update({ "system.focusPoints.current": newFocus });
+    focusValueElement.text(newFocus);
+  });
+
+  // Augmenter le Focus
+  focusPlus.on('click', async () => {
+    const currentFocus = this.actor.system.focusPoints.current;
+    const newFocus = currentFocus + 1; // Pas de limite supérieure pour le moment
+    await this.actor.update({ "system.focusPoints.current": newFocus });
+    focusValueElement.text(newFocus);
+  });
+}
+
+
 
   handleElementEditing(html) {
-    html.find('#element-label').on('click', () => {
-      html.find('#element-view').hide();
-      html.find('#element-edit').show().focus();
+    const elementView = html.find('#element-view');
+    const elementSelect = html.find('#element-edit');
+  
+    if (!elementView.length || !elementSelect.length) {
+      console.error("Element editing elements missing in the template.");
+      return;
+    }
+  
+    // Afficher la liste déroulante au clic
+    elementView.on('click', () => {
+      elementSelect.val(this.actor.system.element.value); // Pré-remplir la liste déroulante
+      elementView.hide();
+      elementSelect.show().focus();
     });
-
-    html.find('#element-edit').on('blur', async () => {
-      const newElement = html.find('#element-edit').val();
-      await this.actor.update({ "system.element.value": newElement });
-      html.find('#element-view').text(newElement).show();
-      html.find('#element-edit').hide();
+  
+    // Mettre à jour l'élément après sélection
+    elementSelect.on('blur change', async () => {
+      const newElement = elementSelect.val();
+      if (newElement) {
+        await this.actor.update({ "system.element.value": newElement });
+  
+        // Mettre à jour l'affichage avec une majuscule et un symbole
+        elementView.html(`
+          ${newElement.charAt(0).toUpperCase() + newElement.slice(1)}
+          <i class="element-icon ${newElement}"></i>
+        `).show();
+      }
+      elementSelect.hide();
     });
   }
+  
+  
 
   enableAttributeEditing(html) {
     const fields = ['fire', 'water', 'earth', 'air', 'mind', 'body', 'soul', 'martial', 'elementary', 'rhetoric'];
@@ -1043,23 +1213,23 @@ degradeAttributeValue(value) {
     });
   }
 
-  manageAttributeWounds(html) {
+  manageAttributeInjuries(html) {
     const attributes = ['body', 'mind', 'soul', 'martial', 'elementary', 'rhetoric'];
     attributes.forEach(attr => {
-      const wound1 = html.find(`#${attr}-wound1`);
-      const wound2 = html.find(`#${attr}-wound2`);
-      const wound3 = html.find(`#${attr}-wound3`);
-      this.manageWoundCheckboxes(attr, wound1, wound2, wound3);
+      const injury1 = html.find(`#${attr}-injury1`);
+      const injury2 = html.find(`#${attr}-injury2`);
+      const injury3 = html.find(`#${attr}-injury3`);
+      this.manageWoundCheckboxes(attr, injury1, injury2, injury3);
 
-      wound1.on('change', async () => this.updateWoundState(attr, 'wound1', wound1));
-      wound2.on('change', async () => this.updateWoundState(attr, 'wound2', wound2));
-      wound3.on('change', async () => this.updateWoundState(attr, 'wound3', wound3));
+      injury1.on('change', async () => this.updateWoundState(attr, 'injury1', injury1));
+      injury2.on('change', async () => this.updateWoundState(attr, 'injury2', injury2));
+      injury3.on('change', async () => this.updateWoundState(attr, 'injury3', injury3));
     });
   }
 
-  async updateWoundState(attribute, wound, checkbox) {
+  async updateWoundState(attribute, injury, checkbox) {
     const checked = checkbox.is(':checked');
-    await this.actor.update({ [`system.attributes.${attribute}.wounds.${wound}`]: checked });
+    await this.actor.update({ [`system.attributes.${attribute}.injuries.${injury}`]: checked });
     this.updateAttributeCurrentValue(attribute);
   }
 
@@ -1067,9 +1237,9 @@ degradeAttributeValue(value) {
     const attr = this.actor.system.attributes[attribute];
     let currentValue = attr.baseValue;
 
-    if (attr.wounds.wound1) currentValue = this.degradeAttributeValue(currentValue);
-    if (attr.wounds.wound2) currentValue = this.degradeAttributeValue(currentValue);
-    if (attr.wounds.wound3) currentValue = this.degradeAttributeValue(currentValue);
+    if (attr.injuries.injury1) currentValue = this.degradeAttributeValue(currentValue);
+    if (attr.injuries.injury2) currentValue = this.degradeAttributeValue(currentValue);
+    if (attr.injuries.injury3) currentValue = this.degradeAttributeValue(currentValue);
 
     await this.actor.update({ [`system.attributes.${attribute}.currentValue`]: currentValue });
   }
@@ -1091,7 +1261,7 @@ degradeAttributeValue(value) {
     ['fire', 'water', 'earth', 'air'].forEach(temper => {
       html.find(`#${temper}-trauma`).on('change', async () => {
         const isChecked = html.find(`#${temper}-trauma`).is(':checked');
-        await this.actor.update({ [`system.tempers.${temper}.wound`]: isChecked });
+        await this.actor.update({ [`system.tempers.${temper}.injury`]: isChecked });
         this.render();  // Re-render to apply trauma change
       });
     });
@@ -1478,4 +1648,5 @@ function formatResult(result) {
       return result;  // No change for Stalemate
   }
 }
+
 

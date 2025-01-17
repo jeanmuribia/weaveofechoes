@@ -15,284 +15,150 @@
     <!-- Tab contents -->
     <div class="tab-content">
       
-<!-- Profile Tab -->
 <div class="tab active" data-tab="profile">
-  <!-- Profile tab content -->
-
-   <!-- Identity section -->
-  <div>
-    <h2><label for="identity">Identity</label></h2>
-
-    <!-- Actor Name -->
-    <label for="actor-name" style="cursor: pointer;" id="name-label">Name:</label>
-    <span id="actor-name" style="cursor: pointer; margin-left: 10px;">{{actorName}}</span>
-    <input type="text" id="name-edit" name="name" value="{{actorName}}" style="display: none;" />
-  </div>
-
-  <!-- Element -->
-  <div>
-    <label for="element" style="cursor: pointer;" id="element-label">Element:</label>
-    <span id="element-view">{{toUpperCaseValue system.element.value}}</span>
-    <select id="element-edit" name="element" style="display: none;">
-      <option value="fire" {{#if (eq system.element.value "fire")}}selected{{/if}}>Fire</option>
-      <option value="water" {{#if (eq system.element.value "water")}}selected{{/if}}>Water</option>
-      <option value="earth" {{#if (eq system.element.value "earth")}}selected{{/if}}>Earth</option>
-      <option value="air" {{#if (eq system.element.value "air")}}selected{{/if}}>Air</option>
-      <option value="none" {{#if (eq system.element.value "none")}}selected{{/if}}>None</option>
-    </select>
-  </div>
-
-  <!-- Stamina Max -->
-  <div style="display: flex; align-items: center;">
-    <label for="stamina-max" style="cursor: pointer;" id="stamina-label">Stamina Max:</label>
-    <span id="stamina-max-view" style="margin-left: 10px;">{{system.stamina.max}}</span>
-    <select id="stamina-max-edit" name="stamina-max" style="display: none;">
-      <option value="1" {{#if (eq system.stamina.max "1")}}selected{{/if}}>1</option>
-      <option value="2" {{#if (eq system.stamina.max "2")}}selected{{/if}}>2</option>
-      <option value="3" {{#if (eq system.stamina.max "3")}}selected{{/if}}>3</option>
-      <option value="4" {{#if (eq system.stamina.max "4")}}selected{{/if}}>4</option>
-      <option value="5" {{#if (eq system.stamina.max "5")}}selected{{/if}}>5</option>
-      <option value="6" {{#if (eq system.stamina.max "6")}}selected{{/if}}>6</option>
-    </select>
-  </div>
-
-  <!-- Current Stamina -->
-  <div style="display: flex; align-items: center; margin-top: 10px;">
-    <label for="current-stamina">Current Stamina:</label>
-    <span id="current-stamina-view" style="margin-left: 10px;">{{system.stamina.current}}</span>
-    <button id="stamina-decrease" type="button" style="margin-left: 10px;">-</button>
-    <button id="stamina-increase" type="button" style="margin-left: 5px;">+</button>
-  </div>
-
-  <div class="focus-points-container">
-  <div class="focus-points-circle">
-    <span class="focus-points-label">Focus Points</span>
-    <span class="focus-points-value">{{system.focusPoints.current}}</span>
-  </div>
-  <label class="focus-points-visibility">
-    <input type="checkbox" name="system.focusPoints.isVisible" {{checked system.focusPoints.isVisible}}>
-    Show Focus Points
-  </label>
+ <section class="identity-section">
+  <h2 class="section-header">Identity</h2>
+  
+  <div class="basic-info">
+   <div class="info-field">
+  <label class="info-label">Name:</label>
+  <span id="actor-name" class="clickable">{{actorName}}</span>
+  <input id="name-edit" type="text" class="hidden" />
+</div>
+     <div class="info-field">
+  <label class="info-label">Element:</label>
+  <span id="element-view" class="clickable">
+    {{capitalize system.element.value}}
+    <i class="element-icon {{system.element.value}}"></i>
+  </span>
+  <select id="element-edit" class="hidden">
+    <option value="fire">Fire</option>
+    <option value="water">Water</option>
+    <option value="earth">Earth</option>
+    <option value="air">Air</option>
+  </select>
 </div>
 
+  </div>
+
+  <div class="resources">
+ <div class="resource stamina">
+  <label class="resource-label">Stamina</label>
+  <div class="stamina-display">
+    <span id="current-stamina" class="resource-value">{{system.stamina.current}}</span>
+   <div class="stamina-controls">
+  <button id="stamina-minus" class="resource-btn">-</button>
+  <button id="stamina-plus" class="resource-btn">+</button>
+</div>
+  </div>
+  <div class="stamina-max-container">
+    <span id="stamina-max-container" class="clickable">
+      Max: <span id="stamina-max">{{system.stamina.max}}</span>
+    </span>
+    <input id="stamina-max-edit" type="number" class="hidden" min="1" />
+  </div>
+</div>
+
+  <div class="resource focus">
+  <label class="resource-label">Focus</label>
+  <span id="focus-value" class="resource-value">{{system.focusPoints.current}}</span>
+  <div class="resource-controls">
+    <button id="focus-minus" class="resource-btn">-</button>
+    <button id="focus-plus" class="resource-btn">+</button>
+  </div>
+  <div class="resource-visibility">
+    <input id="focus-toggle" type="checkbox" {{#if system.focusPoints.isVisible}}checked{{/if}} />
+    <label for="focus-toggle">Show</label>
+  </div>
+</div>
+
+<div class="resource synergy">
+  <div class="resource-label">Synergy</div>
+  <div class="resource-value {{#if isNotInGroup}}not-in-group{{/if}}">
+    {{#if isNotInGroup}}
+      Not in a group yet
+    {{else}}
+      {{currentSynergy}}
+    {{/if}}
+  </div>
+  {{#unless isNotInGroup}}
+    <div class="resource-controls">
+      <div>Base: {{maxSynergy}}</div>
+    </div>
+  {{/unless}}
+</div>
+
+  </div>
+
+  <div class="profile-image">
+    <img src="{{actor.img}}" data-edit="img" title="{{actor.name}}"/>
+  </div>
+</section>
+</div>
+<div class="section-container">
+
+<div class="tempers-attributes-container">
   <!-- Tempers Section -->
-<h2>Tempers</h2>
+    <div class="tempers-maneuver-wrapper">
+<section class="tempers-section">
+  <h2>Tempers</h2>
+  <div class="tempers-container">
+    {{#each system.tempers}}
+    <div class="temper-card" data-value="{{this.currentValue}}" data-injury="{{this.injury}}">
+      <div class="temper-header">
+        <h3 class="temper-title">{{@key}}</h3>
+        <button class="edit-button" data-temper="{{@key}}" title="Edit">
+          <i class="fas fa-pencil-alt"></i>
+        </button>
+      </div>
+      <span class="temper-value">{{this.currentValue}}</span>
+      <label class="trauma-label">
+        <input type="checkbox" id="{{@key}}-trauma" {{checked this.injury}} /> Trauma
+      </label>
+    </div>
+    {{/each}}
+  </div>
+</section>
 
-<!-- Fire Temper -->
-<div style="display: flex; align-items: center;">
-  <label id="fire-label" style="cursor: pointer;">Fire Temper:</label>
-  
-  <!-- Display currentValue for the temper -->
-  <span id="fire-view" class="temper {{system.tempers.fire.currentValue}} clickable" style="margin-left: 10px;">
-  {{toUpperCaseValue system.tempers.fire.currentValue}}
-</span>
-
-  <!-- Trauma Checkbox -->
-  <input type="checkbox" id="fire-trauma" class="trauma" {{#if system.tempers.fire.wound}}checked{{/if}} style="margin-left: 10px;"> Trauma
-  
-  <select id="fire-edit" name="fire" style="display: none; margin-left: 10px;">
-    <option value="malus" {{#if (eq system.tempers.fire.currentValue "malus")}}selected{{/if}}>Malus</option>
-    <option value="neutral" {{#if (eq system.tempers.fire.currentValue "neutral")}}selected{{/if}}>Neutral</option>
-    <option value="bonus" {{#if (eq system.tempers.fire.currentValue "bonus")}}selected{{/if}}>Bonus</option>
-    <option value="critical" {{#if (eq system.tempers.fire.currentValue "critical")}}selected{{/if}}>Critical</option>
-  </select>
+<div class="maneuver-section">
+      <div class="maneuver-container">
+       <h2>Maneuver</h2> 
+      </div>
+    </div>
 </div>
 
-<!-- Water Temper -->
-<div style="display: flex; align-items: center;">
-  <label id="water-label" style="cursor: pointer;">Water Temper:</label>
-  
-  <span id="water-view" class="temper {{system.tempers.water.currentValue}} clickable" style="margin-left: 10px;">
-    {{toUpperCaseValue system.tempers.water.currentValue}}
-  </span>
-
-  <!-- Trauma Checkbox -->
-  <input type="checkbox" id="water-trauma" class="trauma" {{#if system.tempers.water.wound}}checked{{/if}} style="margin-left: 10px;"> Trauma
-  
-  <select id="water-edit" name="water" style="display: none; margin-left: 10px;">
-    <option value="malus" {{#if (eq system.tempers.water.currentValue "malus")}}selected{{/if}}>Malus</option>
-    <option value="neutral" {{#if (eq system.tempers.water.currentValue "neutral")}}selected{{/if}}>Neutral</option>
-    <option value="bonus" {{#if (eq system.tempers.water.currentValue "bonus")}}selected{{/if}}>Bonus</option>
-    <option value="critical" {{#if (eq system.tempers.water.currentValue "critical")}}selected{{/if}}>Critical</option>
-  </select>
-</div>
-
-<!-- Earth Temper -->
-<div style="display: flex; align-items: center;">
-  <label id="earth-label" style="cursor: pointer;">Earth Temper:</label>
-  
-  <span id="earth-view" class="temper {{system.tempers.earth.currentValue}} clickable" style="margin-left: 10px;">
-    {{toUpperCaseValue system.tempers.earth.currentValue}}
-  </span>
-
-  <!-- Trauma Checkbox -->
-  <input type="checkbox" id="earth-trauma" class="trauma" {{#if system.tempers.earth.wound}}checked{{/if}} style="margin-left: 10px;"> Trauma
-  
-  <select id="earth-edit" name="earth" style="display: none; margin-left: 10px;">
-    <option value="malus" {{#if (eq system.tempers.earth.currentValue "malus")}}selected{{/if}}>Malus</option>
-    <option value="neutral" {{#if (eq system.tempers.earth.currentValue "neutral")}}selected{{/if}}>Neutral</option>
-    <option value="bonus" {{#if (eq system.tempers.earth.currentValue "bonus")}}selected{{/if}}>Bonus</option>
-    <option value="critical" {{#if (eq system.tempers.earth.currentValue "critical")}}selected{{/if}}>Critical</option>
-  </select>
-</div>
-
-<!-- Air Temper -->
-<div style="display: flex; align-items: center;">
-  <label id="air-label" style="cursor: pointer;">Air Temper:</label>
-  
-  <span id="air-view" class="temper {{system.tempers.air.currentValue}} clickable" style="margin-left: 10px;">
-    {{toUpperCaseValue system.tempers.air.currentValue}}
-  </span>
-
-  <!-- Trauma Checkbox -->
-  <input type="checkbox" id="air-trauma" class="trauma" {{#if system.tempers.air.wound}}checked{{/if}} style="margin-left: 10px;"> Trauma
-  
-  <select id="air-edit" name="air" style="display: none; margin-left: 10px;">
-    <option value="malus" {{#if (eq system.tempers.air.currentValue "malus")}}selected{{/if}}>Malus</option>
-    <option value="neutral" {{#if (eq system.tempers.air.currentValue "neutral")}}selected{{/if}}>Neutral</option>
-    <option value="bonus" {{#if (eq system.tempers.air.currentValue "bonus")}}selected{{/if}}>Bonus</option>
-    <option value="critical" {{#if (eq system.tempers.air.currentValue "critical")}}selected{{/if}}>Critical</option>
-  </select>
-</div>
-
-
-  <!-- Attributes Section -->
+<section class="attributes-section">
   <h2>Attributes</h2>
+  <div class="attributes-container">
+{{#each (sort (objectToArray system.attributes) 'order') as |attribute|}}
+<div class="attribute-card-wrapper">
+  <div class="attribute-card" data-value="{{attribute.currentValue}}" data-injury="{{attribute.injuries.injury1}}">
+    <div class="attribute-header">
+      <h3 class="attribute-title">{{capitalize attribute.key}}</h3>
+      <button class="edit-button" title="Edit">
+        <i class="fa-solid fa-pencil"></i>
+      </button>
+    </div>
+    <div class="attribute-value">{{attribute.currentValue}}</div>
+    <label class="wounded-label">
+      <input type="checkbox" {{checked attribute.wounded}} /> Wounded
+    </label>
+  </div>
+  <div class="attribute-injuries">
+    <label><input type="checkbox" {{checked attribute.injuries.injury1}} /> Injury 1</label>
+    <label><input type="checkbox" {{checked attribute.injuries.injury2}} /> Injury 2</label>
+    <label><input type="checkbox" {{checked attribute.injuries.injury3}} /> Injury 3</label>
+  </div>
+</div>
+{{/each}}
+  </div>
+</section>
+</div>
+  
 
-  <!-- Body Attribute -->
-  <div style="display: flex; align-items: center;">
-    <label id="body-label" style="cursor: pointer;">Body:</label>
-    <span id="body-view" class="attribute {{system.attributes.body.currentValue}}" style="margin-left: 10px;">
-      {{toUpperCaseValue system.attributes.body.currentValue}}
-    </span>
-    <select id="body-edit" name="body" style="display: none;">
-      <option value="malus" {{#if (eq system.attributes.body.baseValue "malus")}}selected{{/if}}>Malus</option>
-      <option value="neutral" {{#if (eq system.attributes.body.baseValue "neutral")}}selected{{/if}}>Neutral</option>
-      <option value="bonus" {{#if (eq system.attributes.body.baseValue "bonus")}}selected{{/if}}>Bonus</option>
-      <option value="critical" {{#if (eq system.attributes.body.baseValue "critical")}}selected{{/if}}>Critical</option>
-    </select>
+
   </div>
 
-  <!-- Wound System for Body -->
-  <div class="wounds">
-    <input type="checkbox" id="body-wound1" {{#if system.attributes.body.wounds.wound1}}checked{{/if}} />
-    <input type="checkbox" id="body-wound2" {{#if system.attributes.body.wounds.wound2}}checked{{/if}} {{#unless system.attributes.body.wounds.wound1}}disabled{{/unless}} />
-    <input type="checkbox" id="body-wound3" {{#if system.attributes.body.wounds.wound3}}checked{{/if}} {{#unless system.attributes.body.wounds.wound2}}disabled{{/unless}} />
-  </div>
-
-  <!-- Soul Attribute -->
-  <div style="display: flex; align-items: center;">
-    <label id="soul-label" style="cursor: pointer;">Soul:</label>
-    <span id="soul-view" class="attribute {{system.attributes.soul.currentValue}}" style="margin-left: 10px;">
-      {{toUpperCaseValue system.attributes.soul.currentValue}}
-    </span>
-    <select id="soul-edit" name="soul" style="display: none;">
-      <option value="malus" {{#if (eq system.attributes.soul.baseValue "malus")}}selected{{/if}}>Malus</option>
-      <option value="neutral" {{#if (eq system.attributes.soul.baseValue "neutral")}}selected{{/if}}>Neutral</option>
-      <option value="bonus" {{#if (eq system.attributes.soul.baseValue "bonus")}}selected{{/if}}>Bonus</option>
-      <option value="critical" {{#if (eq system.attributes.soul.baseValue "critical")}}selected{{/if}}>Critical</option>
-    </select>
-  </div>
-
-  <!-- Wound System for Soul -->
-  <div class="wounds">
-    <input type="checkbox" id="soul-wound1" {{#if system.attributes.soul.wounds.wound1}}checked{{/if}} />
-    <input type="checkbox" id="soul-wound2" {{#if system.attributes.soul.wounds.wound2}}checked{{/if}} {{#unless system.attributes.soul.wounds.wound1}}disabled{{/unless}} />
-    <input type="checkbox" id="soul-wound3" {{#if system.attributes.soul.wounds.wound3}}checked{{/if}} {{#unless system.attributes.soul.wounds.wound2}}disabled{{/unless}} />
-  </div>
-
-  <!-- Mind Attribute -->
-  <div style="display: flex; align-items: center;">
-    <label id="mind-label" style="cursor: pointer;">Mind:</label>
-    <span id="mind-view" class="attribute {{system.attributes.mind.currentValue}}" style="margin-left: 10px;">
-      {{toUpperCaseValue system.attributes.mind.currentValue}}
-    </span>
-    <select id="mind-edit" name="mind" style="display: none;">
-      <option value="malus" {{#if (eq system.attributes.mind.baseValue "malus")}}selected{{/if}}>Malus</option>
-      <option value="neutral" {{#if (eq system.attributes.mind.baseValue "neutral")}}selected{{/if}}>Neutral</option>
-      <option value="bonus" {{#if (eq system.attributes.mind.baseValue "bonus")}}selected{{/if}}>Bonus</option>
-      <option value="critical" {{#if (eq system.attributes.mind.baseValue "critical")}}selected{{/if}}>Critical</option>
-    </select>
-  </div>
-
-  <!-- Wound System for Mind -->
-  <div class="wounds">
-    <input type="checkbox" id="mind-wound1" {{#if system.attributes.mind.wounds.wound1}}checked{{/if}} />
-    <input type="checkbox" id="mind-wound2" {{#if system.attributes.mind.wounds.wound2}}checked{{/if}} {{#unless system.attributes.mind.wounds.wound1}}disabled{{/unless}} />
-    <input type="checkbox" id="mind-wound3" {{#if system.attributes.mind.wounds.wound3}}checked{{/if}} {{#unless system.attributes.mind.wounds.wound2}}disabled{{/unless}} />
-  </div>
-
-  <!-- Martial Attribute -->
-  <div style="display: flex; align-items: center;">
-    <label id="martial-label" style="cursor: pointer;">Martial:</label>
-    <span id="martial-view" class="attribute {{system.attributes.martial.currentValue}}" style="margin-left: 10px;">
-      {{toUpperCaseValue system.attributes.martial.currentValue}}
-    </span>
-    <select id="martial-edit" name="martial" style="display: none;">
-      <option value="malus" {{#if (eq system.attributes.martial.baseValue "malus")}}selected{{/if}}>Malus</option>
-      <option value="neutral" {{#if (eq system.attributes.martial.baseValue "neutral")}}selected{{/if}}>Neutral</option>
-      <option value="bonus" {{#if (eq system.attributes.martial.baseValue "bonus")}}selected{{/if}}>Bonus</option>
-      <option value="critical" {{#if (eq system.attributes.martial.baseValue "critical")}}selected{{/if}}>Critical</option>
-    </select>
-  </div>
-
-  <!-- Wound System for Martial -->
-  <div class="wounds">
-    <input type="checkbox" id="martial-wound1" {{#if system.attributes.martial.wounds.wound1}}checked{{/if}} />
-    <input type="checkbox" id="martial-wound2" {{#if system.attributes.martial.wounds.wound2}}checked{{/if}} {{#unless system.attributes.martial.wounds.wound1}}disabled{{/unless}} />
-    <input type="checkbox" id="martial-wound3" {{#if system.attributes.martial.wounds.wound3}}checked{{/if}} {{#unless system.attributes.martial.wounds.wound2}}disabled{{/unless}} />
-  </div>
-
-  <!-- Elementary Attribute -->
-  <div style="display: flex; align-items: center;">
-    <label id="elementary-label" style="cursor: pointer;">Elementary:</label>
-    <span id="elementary-view" class="attribute {{system.attributes.elementary.currentValue}}" style="margin-left: 10px;">
-      {{toUpperCaseValue system.attributes.elementary.currentValue}}
-    </span>
-    <select id="elementary-edit" name="elementary" style="display: none;">
-      <option value="malus" {{#if (eq system.attributes.elementary.baseValue "malus")}}selected{{/if}}>Malus</option>
-      <option value="neutral" {{#if (eq system.attributes.elementary.baseValue "neutral")}}selected{{/if}}>Neutral</option>
-      <option value="bonus" {{#if (eq system.attributes.elementary.baseValue "bonus")}}selected{{/if}}>Bonus</option>
-      <option value="critical" {{#if (eq system.attributes.elementary.baseValue "critical")}}selected{{/if}}>Critical</option>
-    </select>
-  </div>
-
-  <!-- Wound System for Elementary -->
-  <div class="wounds">
-    <input type="checkbox" id="elementary-wound1" {{#if system.attributes.elementary.wounds.wound1}}checked{{/if}} />
-    <input type="checkbox" id="elementary-wound2" {{#if system.attributes.elementary.wounds.wound2}}checked{{/if}} {{#unless system.attributes.elementary.wounds.wound1}}disabled{{/unless}} />
-    <input type="checkbox" id="elementary-wound3" {{#if system.attributes.elementary.wounds.wound3}}checked{{/if}} {{#unless system.attributes.elementary.wounds.wound2}}disabled{{/unless}} />
-  </div>
-
-  <!-- Rhetoric Attribute -->
-  <div style="display: flex; align-items: center;">
-    <label id="rhetoric-label" style="cursor: pointer;">Rhetoric:</label>
-    <span id="rhetoric-view" class="attribute {{system.attributes.rhetoric.currentValue}}" style="margin-left: 10px;">
-      {{toUpperCaseValue system.attributes.rhetoric.currentValue}}
-    </span>
-    <select id="rhetoric-edit" name="rhetoric" style="display: none;">
-      <option value="malus" {{#if (eq system.attributes.rhetoric.baseValue "malus")}}selected{{/if}}>Malus</option>
-      <option value="neutral" {{#if (eq system.attributes.rhetoric.baseValue "neutral")}}selected{{/if}}>Neutral</option>
-      <option value="bonus" {{#if (eq system.attributes.rhetoric.baseValue "bonus")}}selected{{/if}}>Bonus</option>
-      <option value="critical" {{#if (eq system.attributes.rhetoric.baseValue "critical")}}selected{{/if}}>Critical</option>
-    </select>
-  </div>
-
-  <!-- Wound System for Rhetoric -->
-  <div class="wounds">
-    <input type="checkbox" id="rhetoric-wound1" {{#if system.attributes.rhetoric.wounds.wound1}}checked{{/if}} />
-    <input type="checkbox" id="rhetoric-wound2" {{#if system.attributes.rhetoric.wounds.wound2}}checked{{/if}} {{#unless system.attributes.rhetoric.wounds.wound1}}disabled{{/unless}} />
-    <input type="checkbox" id="rhetoric-wound3" {{#if system.attributes.rhetoric.wounds.wound3}}checked{{/if}} {{#unless system.attributes.rhetoric.wounds.wound2}}disabled{{/unless}} />
-  </div>
-
-  <div class="diceLauncherButtons">
-  <button id="maneuver-button">Maneuver</button>
-  {{!-- <button id="malusDie">Malus</button>
-  <button id="neutralDie">Neutral</button>
-  <button id="bonusDie">Bonus</button>
-  <button id="criticalDie">Crtitical</button>
-   --}}
-  </div>
 
 </div> <!-- End of Profile Tab -->
 
@@ -339,7 +205,8 @@
       </div>
     </div>
   </div>
-
+  
+  <div class="tab-content"></div>
   <!-- Existing Relationships Section -->
   <h3>Existing Relationships</h3>
   <div id="relationship-list">
