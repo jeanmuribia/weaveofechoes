@@ -14,6 +14,15 @@ Handlebars.registerHelper('toUpperCaseValue', function(value) {
   return value;
 });
 
+Handlebars.registerHelper('firstLetter', function(value) {
+  if (!value) return '';
+  return value.charAt(0).toUpperCase();
+});
+
+Handlebars.registerHelper('ne', function(a, b) {
+  return a !== b;
+});
+
 // Handle actor deletion and remove associated relationships
 Hooks.on("preDeleteActor", async (actor, options, userId) => {
   const deletedActorName = actor.name;
@@ -38,7 +47,6 @@ Hooks.on("createActor", async (actor, options, userId) => {
 });
 
 
-
 export class WoeActorSheet extends ActorSheet {
   constructor(...args) {
     super(...args);
@@ -59,7 +67,7 @@ export class WoeActorSheet extends ActorSheet {
     return foundry.utils.mergeObject(super.defaultOptions, {
       classes: ['weave-of-echoes', 'sheet', 'actor'],
       width:900,
-      height: 1100,
+      height: 1300,
       tabs: [
         { navSelector: '.sheet-tabs', contentSelector: '.tab-content', initial: 'profile' },
       ],
@@ -132,103 +140,58 @@ export class WoeActorSheet extends ActorSheet {
   // Activate Listeners for sheet interactions
   activateListeners(html) {
     super.activateListeners(html);
-
+  
     // Handle name editing
     this.handleNameEditing(html);
-
-    // Handle Stamina interactions (increase, decrease, and max editing)
+  
+    // Profile image editing
+    this.handleProfileImageEditing(html);
+  
+    // Stamina editing
     this.handleStaminaEditing(html);
-
     this.handleStaminaMaxEditing(html);
-
-    // Handle Element editing
+  
+    // Element editing
     this.handleElementEditing(html);
+  
+    // Focus handling
+    this.handleFocusToggle(html);
+    this.handleFocusEditing(html);
+  
+    // Card editing
+    html.find('.edit-button').on('click', (event) => {
+      this.handleCardEdit(event, html);
+    });
 
-    this.handleFocusToggle(html); // Gestion du toggle "Show Focus"
-
-    this.handleFocusEditing(html); // Gérer les boutons + et -
-
-    // Enable editing for tempers and attributes
-    this.enableAttributeEditing(html);
-
-    //Visibility of the focus points
+    html.find('.base-value-indicator').on('click', (event) => {
+      this.handleCardEdit(event, html);
+    });
+  
+    // Focus points visibility
     html.find('input[name="system.focusPoints.isVisible"]').change(this._onFocusPointsVisibilityChange.bind(this));
-    // Add and Subtract Focus Points
     html.find('.focus-add').click(this._onAddFocusPoints.bind(this));
     html.find('.focus-subtract').click(this._onSubtractFocusPoints.bind(this));
+  
+    
+    // Wounds, Injuries, and Trauma management
+    this.handleMasteryLevelEditing(html);
+    this._setupAttributeListeners(html);
+    this._setupWoundListeners(html);
 
-    // Handle Injury listeners for attributes
-    this.manageAttributeInjuries(html);
-
-    // Handle trauma (injuries) listeners for tempers
     this.manageTemperTrauma(html);
-
-    // Dice roll event listeners for tempers and attributes
+  
+    // Dice rolling
     this.addDiceListeners(html);
-
-    html.find('.character-member-item').on('click', this._onGroupMemberClick.bind(this));;
-
-    //maneuver listener
-    html.find('#maneuver-button').on('click', (event) => {
-      event.preventDefault();
-      this.openManeuverWindow();  // Call the method to open the maneuver modal
-    
-      html.find('.member-item').click(this._onMemberSelection.bind(this));
-      
-  });
-
-    
-     
-    // Relationship management (view, add, edit, delete)
+  
+    // Group members
+    html.find('.character-member-item').on('click', this._onGroupMemberClick.bind(this));
+  
+    // Maneuver
+    html.find('.maneuver-container').on('click', () => { this.openManeuverWindow(); });
+  
+    // Relationships
     this.displayRelationships(html);
     this.addRelationshipListeners(html);
-
-          // Manage injuries for all attributes
-      this.manageInjuriesListeners(html, 'body');
-      this.manageInjuriesListeners(html, 'mind');
-      this.manageInjuriesListeners(html, 'soul');
-      this.manageInjuriesListeners(html, 'martial');
-      this.manageInjuriesListeners(html, 'elementary');
-      this.manageInjuriesListeners(html, 'rhetoric');
-
-        // Trauma listeners for tempers
-  html.find('#fire-trauma').on('change', async (event) => {
-    const isChecked = html.find('#fire-trauma').is(':checked');
-    await this.actor.update({ "system.tempers.fire.injury": isChecked });
-    this.render();  // Re-render to update the display
-  });
-
-  html.find('#water-trauma').on('change', async (event) => {
-    const isChecked = html.find('#water-trauma').is(':checked');
-    await this.actor.update({ "system.tempers.water.injury": isChecked });
-    this.render();
-  });
-
-  html.find('#earth-trauma').on('change', async (event) => {
-    const isChecked = html.find('#earth-trauma').is(':checked');
-    await this.actor.update({ "system.tempers.earth.injury": isChecked });
-    this.render();
-  });
-
-  html.find('#air-trauma').on('change', async (event) => {
-    const isChecked = html.find('#air-trauma').is(':checked');
-    await this.actor.update({ "system.tempers.air.injury": isChecked });
-    this.render();
-  });
-
-   // Add click listeners for temper rollDie based on currentValue
-  html.find('#fire-view').on('click', () => this.rollTemperOrAttribute('fire', 'tempers'));
-  html.find('#water-view').on('click', () => this.rollTemperOrAttribute('water', 'tempers'));
-  html.find('#earth-view').on('click', () => this.rollTemperOrAttribute('earth', 'tempers'));
-  html.find('#air-view').on('click', () => this.rollTemperOrAttribute('air', 'tempers'));
-
-  // Add click listeners for attribute rollDie based on currentValue
-  html.find('#body-view').on('click', () => this.rollTemperOrAttribute('body', 'attributes'));
-  html.find('#mind-view').on('click', () => this.rollTemperOrAttribute('mind', 'attributes'));
-  html.find('#soul-view').on('click', () => this.rollTemperOrAttribute('soul', 'attributes'));
-  html.find('#martial-view').on('click', () => this.rollTemperOrAttribute('martial', 'attributes'));
-  html.find('#elementary-view').on('click', () => this.rollTemperOrAttribute('elementary', 'attributes'));
-  html.find('#rhetoric-view').on('click', () => this.rollTemperOrAttribute('rhetoric', 'attributes'));
   }
 
   rollTemperOrAttribute(field, type) {
@@ -263,7 +226,202 @@ export class WoeActorSheet extends ActorSheet {
     });
   }
 
+  async _setupAttributeListeners(html) {
+    const attributes = ['body', 'mind', 'soul', 'martial', 'elementary', 'rhetoric'];
+    
+    attributes.forEach(attr => {
+      const injuryCheckbox = html.find(`#${attr}-injury`);
+      const baseValue = this.actor.system.attributes[attr].baseValue;
   
+      if (baseValue === 'malus') {
+        injuryCheckbox.prop('disabled', true)
+                      .parent().addClass('disabled')
+                      .attr('title', "Malus attribute can't get injured");
+        return;
+      }
+  
+      injuryCheckbox.on('click', async event => {
+        const isChecked = event.currentTarget.checked;
+        
+        await this.actor.update({
+          [`system.attributes.${attr}.injury`]: isChecked,
+          [`system.attributes.${attr}.currentValue`]: isChecked ? 'malus' : baseValue
+        });
+  
+        this.render();
+      });
+    });
+  }
+
+  _setupWoundListeners(html) {
+    ['1', '2', '3'].forEach(number => {
+      const woundBox = html.find(`.wound-box[data-wound="${number}"]`);
+      woundBox.on('click', () => this._handleWoundClick(number));
+    });
+  }
+  
+  async _handleWoundClick(number) {
+    const wounds = foundry.utils.deepClone(this.actor.system.wounds);
+    
+    // Vérifier si on peut interagir avec cette wound
+    if (!this._canInteractWithWound(number, wounds)) return;
+  
+    if (wounds[`wound${number}`]) {
+      // Unticking
+      await this._untickWound(number);
+    } else {
+      // Ticking
+      await this._tickWound(number);
+    }
+  }
+  
+  _canInteractWithWound(number, wounds) {
+    if (wounds[`wound${number}`]) {
+      // Pour untick
+      return (number === '3' || 
+             (number === '2' && !wounds.wound3) || 
+             (number === '1' && !wounds.wound2));
+    } else {
+      // Pour tick
+      return (number === '1' || 
+             (number === '2' && wounds.wound1) || 
+             (number === '3' && wounds.wound2));
+    }
+  }
+  
+  async _tickWound(number) {
+    const updates = {
+      [`system.wounds.wound${number}`]: true
+    };
+  
+    // Dégrader tous les attributs non-malus
+    Object.entries(this.actor.system.attributes).forEach(([key, attr]) => {
+      if (attr.baseValue !== 'malus' && attr.currentValue !== 'malus') {
+        updates[`system.attributes.${key}.currentValue`] = this._degradeValue(attr.currentValue);
+      }
+    });
+  
+    await this.actor.update(updates);
+  }
+  
+  async _untickWound(number) {
+    const updates = {
+      [`system.wounds.wound${number}`]: false
+    };
+  
+    // Améliorer les attributs si possible
+    Object.entries(this.actor.system.attributes).forEach(([key, attr]) => {
+      if (!attr.injury && attr.baseValue !== 'malus') {
+        updates[`system.attributes.${key}.currentValue`] = this._improveValue(attr.currentValue, attr.baseValue);
+      }
+    });
+  
+    await this.actor.update(updates);
+  }
+  
+  _degradeValue(value) {
+    const values = ['critical', 'bonus', 'neutral', 'malus'];
+    const currentIndex = values.indexOf(value);
+    return values[Math.min(currentIndex + 1, values.length - 1)];
+  }
+  
+  _improveValue(currentValue, baseValue) {
+    const values = ['critical', 'bonus', 'neutral', 'malus'];
+    const currentIndex = values.indexOf(currentValue);
+    const baseIndex = values.indexOf(baseValue);
+    
+    // On ne peut pas améliorer au-delà de la baseValue
+    const targetIndex = Math.max(currentIndex - 1, 0);
+    return values[Math.min(targetIndex, baseIndex)];
+  }
+  
+  _canToggleWound(number) {
+    const wounds = this.actor.system.wounds;
+    const attributes = this.actor.system.attributes;
+    
+    // Pour tick
+    if (!wounds[`wound${number}`]) {
+      if (number === '1') return true;
+      if (number === '2') return wounds.wound1;
+      if (number === '3') return wounds.wound2;
+      return false;
+    }
+    
+    // Pour untick (ordre inverse obligatoire)
+    if (number === '3') return true;
+    if (number === '2') return !wounds.wound3;
+    if (number === '1') return !wounds.wound2;
+    return false;
+  }
+  
+  async _tickWound(number) {
+    // D'abord, on tick la wound
+    await this.actor.update({[`system.wounds.wound${number}`]: true});
+    
+    // Ensuite, on dégrade tous les attributs non-malus d'un niveau
+    const updates = {};
+    Object.entries(this.actor.system.attributes).forEach(([key, attr]) => {
+      if (attr.currentValue !== 'malus') {
+        updates[`system.attributes.${key}.currentValue`] = this._degradeValue(attr.currentValue);
+      }
+    });
+    
+    if (Object.keys(updates).length > 0) {
+      await this.actor.update(updates);
+    }
+  }
+  
+  async _untickWound(number) {
+    // D'abord, on untick la wound
+    await this.actor.update({[`system.wounds.wound${number}`]: false});
+    
+    // Ensuite, on améliore tous les attributs dont la baseValue n'est pas malus
+    const updates = {};
+    Object.entries(this.actor.system.attributes).forEach(([key, attr]) => {
+      if (attr.baseValue !== 'malus') {
+        updates[`system.attributes.${key}.currentValue`] = this._improveValue(attr.currentValue, attr.baseValue);
+      }
+    });
+    
+    if (Object.keys(updates).length > 0) {
+      await this.actor.update(updates);
+    }
+  }
+  
+  _degradeValue(value) {
+    const values = ['critical', 'bonus', 'neutral', 'malus'];
+    const currentIndex = values.indexOf(value);
+    return values[Math.min(currentIndex + 1, values.length - 1)];
+  }
+  
+  _improveValue(currentValue, baseValue) {
+    const values = ['critical', 'bonus', 'neutral', 'malus'];
+    const targetIndex = values.indexOf(baseValue);
+    const currentIndex = values.indexOf(currentValue);
+    return values[Math.max(currentIndex - 1, targetIndex)];
+  }
+
+  manageTemperTrauma(html) {
+    ['fire', 'water', 'earth', 'air'].forEach(temper => {
+      html.find(`#${temper}-trauma`).on('change', async (event) => {
+        const isChecked = event.target.checked;
+        const temperCard = html.find(`.temper-card[data-field="${temper}"]`);
+  
+        // Update trauma state
+        await this.actor.update({
+          [`system.tempers.${temper}.injury`]: isChecked,
+          [`system.tempers.${temper}.currentValue`]: isChecked ? 'malus' : this.actor.system.tempers[temper].baseValue
+        });
+  
+        // Visual update
+        temperCard.toggleClass('disabled', isChecked);
+        
+        this.render();
+      });
+    });
+  }
+
+
   openManeuverWindow() {
     this.maneuverFocus = this.actor.system.focusPoints.current;
     this.focusPointsUsed = 0;  // Initialize the focus points counter to 0
@@ -395,6 +553,23 @@ export class WoeActorSheet extends ActorSheet {
   
     dialog.render(true);
   }
+
+  handleProfileImageEditing(html) {
+    html.find('.profile-image').on('click', async () => {
+        const filePicker = new FilePicker({ type: 'image' });
+        await filePicker.render(true);
+        const newImagePath = filePicker.result; // Utilisez "result" pour le chemin de fichier
+
+        if (newImagePath) {
+            const validExtensions = ['.png', '.jpg', '.jpeg', '.webp'];
+            if (validExtensions.some(ext => newImagePath.endsWith(ext))) {
+                await this.actor.update({ img: newImagePath });
+            } else {
+                ui.notifications.error("Invalid image format. Use PNG, JPG, JPEG, or WEBP.");
+            }
+        }
+    });
+}
 
   updateActiveState(html, selector, activeElement) {
     html.find(selector).removeClass('active');
@@ -854,98 +1029,32 @@ getColoredLabel(name, type) {
 
 
 manageTemperEdition(html) {
+  const updateTemper = async (path, newValue) => {
+      await this.actor.update({
+          [path]: newValue,
+          [`${path.replace('baseValue', 'currentValue')}`]: newValue
+      });
+      this.render(); // Re-rendre la fiche pour refléter les changements
+  };
+
+  const setupDropdownHandler = (html, temper) => {
+      const selector = `.value-select[data-path="system.tempers.${temper}.baseValue"]`;
+      html.find(selector).on('change', async (event) => {
+          const select = $(event.currentTarget);
+          const newValue = select.val(); // La nouvelle valeur sélectionnée
+          const path = select.data('path'); // Le chemin de la propriété (baseValue)
+          console.log(`Temper: ${temper}, Path: ${path}, New Value: ${newValue}`); // Debug
+          await updateTemper(path, newValue);
+      });
+  };
+
+  // Pour chaque temper, configurez les gestionnaires d'événements
   ['fire', 'water', 'earth', 'air'].forEach(temper => {
-    // Ouvrir la liste déroulante
-    html.find(`.temper-card[data-value="${temper}"] .edit-button`).on('click', (event) => {
-      const temperSelect = html.find(`#${temper}-select`);
-      temperSelect.toggleClass('hidden'); // Affiche/masque la liste déroulante
-    });
-
-    // Mettre à jour la valeur de Temper
-    html.find(`#${temper}-select`).on('change', async (event) => {
-      const newValue = event.target.value;
-      await this.actor.update({ [`system.tempers.${temper}.currentValue`]: newValue });
-
-      // Met à jour la couleur et la valeur affichée
-      const temperCard = html.find(`.temper-card[data-value="${temper}"]`);
-      temperCard.attr('data-value', newValue);
-      this.render(); // Re-rendu pour appliquer les styles
-    });
+      setupDropdownHandler(html, temper);
   });
 }
 
- // This function adds event listeners for managing injury checkboxes
-manageInjuriesListeners(html, attribute) {
-  const attr = this.actor.system.attributes[attribute];
-  const injury1 = html.find(`#${attribute}-injury1`);
-  const injury2 = html.find(`#${attribute}-injury2`);
-  const injury3 = html.find(`#${attribute}-injury3`);
 
-  // Initial checkbox management
-  this.manageWoundCheckboxes(attribute, injury1, injury2, injury3);
-
-  // Add change listeners for each injury checkbox
-  injury1.on('change', async (event) => {
-    const checked = event.target.checked;
-    await this.actor.update({ [`system.attributes.${attribute}.injuries.injury1`]: checked });
-    this.updateAttributeCurrentValue(attribute);
-  });
-
-  injury2.on('change', async (event) => {
-    const checked = event.target.checked;
-    await this.actor.update({ [`system.attributes.${attribute}.injuries.injury2`]: checked });
-    this.updateAttributeCurrentValue(attribute);
-  });
-
-  injury3.on('change', async (event) => {
-    const checked = event.target.checked;
-    await this.actor.update({ [`system.attributes.${attribute}.injuries.injury3`]: checked });
-    this.updateAttributeCurrentValue(attribute);
-  });
-}
-
-manageWoundCheckboxes(attribute, injury1, injury2, injury3) {
-  const attr = this.actor.system.attributes[attribute];
-  const injuries = attr.injuries;
-
-  if (attr.baseValue === 'malus') {
-    injury1.prop('disabled', true);
-    injury2.prop('disabled', true);
-    injury3.prop('disabled', true);
-  } else if (attr.currentValue === 'malus') {
-    if (injuries.injury3) {
-      injury1.prop('disabled', true);
-      injury2.prop('disabled', true);
-      injury3.prop('disabled', false);
-    } else if (injuries.injury2) {
-      injury1.prop('disabled', true);
-      injury2.prop('disabled', false);
-      injury3.prop('disabled', true);
-    } else if (injuries.injury1) {
-      injury1.prop('disabled', false);
-      injury2.prop('disabled', true);
-      injury3.prop('disabled', true);
-    }
-  } else {
-    if (!injuries.injury1 && !injuries.injury2 && !injuries.injury3) {
-      injury1.prop('disabled', false);
-      injury2.prop('disabled', true);
-      injury3.prop('disabled', true);
-    } else if (injuries.injury1 && !injuries.injury2 && !injuries.injury3) {
-      injury1.prop('disabled', false);
-      injury2.prop('disabled', false);
-      injury3.prop('disabled', true);
-    } else if (injuries.injury2 && !injuries.injury3) {
-      injury1.prop('disabled', true);
-      injury2.prop('disabled', false);
-      injury3.prop('disabled', false);
-    } else if (injuries.injury3) {
-      injury1.prop('disabled', true);
-      injury2.prop('disabled', true);
-      injury3.prop('disabled', false);
-    }
-  }
-}
 
 // This function degrades the value of the attribute as the injuries increase
 degradeAttributeValue(value) {
@@ -1040,115 +1149,121 @@ handleStaminaMaxEditing(html) {
 handleStaminaEditing(html) {
   const staminaMinus = html.find('#stamina-minus');
   const staminaPlus = html.find('#stamina-plus');
-  const staminaContainer = html.find('.resource.stamina'); // Conteneur global
-  const currentStaminaElement = html.find('#current-stamina');
   const maxStamina = this.actor.system.stamina.max;
-
-  if (!staminaMinus.length || !staminaPlus.length || !staminaContainer.length || !currentStaminaElement.length) {
-    console.error("Stamina elements or container are missing in the template.");
-    return;
-  }
-
-  // Fonction pour afficher une erreur visuelle sur le conteneur
-  const showOutOfBounds = () => {
-    staminaContainer.addClass('out-of-bounds');
-    setTimeout(() => {
-      staminaContainer.removeClass('out-of-bounds');
-    }, 300); // Supprimer la classe après 300ms
-  };
 
   // Diminuer la Stamina
   staminaMinus.on('click', async () => {
     const currentStamina = this.actor.system.stamina.current;
-    if (currentStamina <= 0) {
-      showOutOfBounds(); // Tremblement si déjà à 0
-      return;
+    if (currentStamina > 0) {
+      await this.actor.update({ "system.stamina.current": currentStamina - 1 });
     }
-
-    const newStamina = Math.max(0, currentStamina - 1);
-    await this.actor.update({ "system.stamina.current": newStamina });
-    currentStaminaElement.text(newStamina);
   });
 
   // Augmenter la Stamina
   staminaPlus.on('click', async () => {
     const currentStamina = this.actor.system.stamina.current;
-    if (currentStamina >= maxStamina) {
-      showOutOfBounds(); // Tremblement si déjà au maximum
-      return;
+    if (currentStamina < maxStamina) {
+      await this.actor.update({ "system.stamina.current": currentStamina + 1 });
     }
-
-    const newStamina = Math.min(maxStamina, currentStamina + 1);
-    await this.actor.update({ "system.stamina.current": newStamina });
-    currentStaminaElement.text(newStamina);
   });
 }
+
 
 handleFocusToggle(html) {
-  const focusToggle = html.find('#focus-toggle');
-
-  if (!focusToggle.length) {
-    console.error("Focus toggle element is missing in the template.");
-    return;
-  }
-
-  // Écouter les changements sur la case à cocher
-  focusToggle.on('change', async (event) => {
+  const toggle = html.find('#focus-toggle');
+  
+  toggle.on('change', async (event) => {
     const isVisible = event.target.checked;
-
-    // Mettre à jour l'état de visibilité dans les données de l'acteur
     await this.actor.update({ "system.focusPoints.isVisible": isVisible });
-
-    // Si "Show" est activé, envoyer un message aux autres joueurs (hors propriétaire et GM)
-    if (isVisible) {
-      const focusValue = this.actor.system.focusPoints.current || 0;
-      const actorName = this.actor.name;
-
-      // Filtrer les joueurs : exclure le propriétaire et le GM
-      const playersToNotify = game.users.filter(
-        user => !user.isGM && user.id !== this.actor.owner.id
-      );
-
-      if (playersToNotify.length > 0) {
-        ChatMessage.create({
-          user: game.user.id,
-          speaker: ChatMessage.getSpeaker({ actor: this.actor }),
-          content: `<strong>${actorName}</strong> shares their Focus: <strong>${focusValue}</strong>`,
-          whisper: playersToNotify.map(user => user.id), // Envoyer seulement aux joueurs ciblés
-        });
-      }
-    }
   });
 }
+
+
+Untitled
 
 handleFocusEditing(html) {
-  const focusMinus = html.find('#focus-minus');
-  const focusPlus = html.find('#focus-plus');
-  const focusValueElement = html.find('#focus-value');
-
-  if (!focusMinus.length || !focusPlus.length || !focusValueElement.length) {
-    console.error("Focus buttons or display element are missing in the template.");
-    return;
-  }
-
-  // Diminuer le Focus
-  focusMinus.on('click', async () => {
-    const currentFocus = this.actor.system.focusPoints.current;
-    const newFocus = Math.max(0, currentFocus - 1); // Empêcher une valeur négative
-    await this.actor.update({ "system.focusPoints.current": newFocus });
-    focusValueElement.text(newFocus);
+  // Gestion du bouton -
+  html.find('#focus-minus').on('click', async () => {
+    const current = this.actor.system.focusPoints.current;
+    if (current > 0) {
+      await this.actor.update({
+        'system.focusPoints.current': current - 1
+      });
+    }
   });
 
-  // Augmenter le Focus
-  focusPlus.on('click', async () => {
-    const currentFocus = this.actor.system.focusPoints.current;
-    const newFocus = currentFocus + 1; // Pas de limite supérieure pour le moment
-    await this.actor.update({ "system.focusPoints.current": newFocus });
-    focusValueElement.text(newFocus);
+  // Gestion du bouton +
+  html.find('#focus-plus').on('click', async () => {
+    const current = this.actor.system.focusPoints.current;
+    await this.actor.update({
+      'system.focusPoints.current': current + 1
+    });
   });
 }
 
+handleMasteryLevelEditing(html) {
+   // Mastery Level Edit
+   const masteryLevelView = html.find("#mastery-level-view");
+   const masteryLevelEdit = html.find("#mastery-level-edit");
+ 
+   masteryLevelView.on("click", () => {
+     masteryLevelView.addClass("hidden");
+     masteryLevelEdit.removeClass("hidden").focus();
+   });
+ 
+   masteryLevelEdit.on("blur change", (event) => {
+     const newValue = parseInt(event.target.value);
+     if (!isNaN(newValue)) {
+       this.actor.update({ "system.masteryLevel": newValue });
+     }
+     masteryLevelEdit.addClass("hidden");
+     masteryLevelView.removeClass("hidden");
+   });
+}
 
+calculateMasteryPoints() {
+  const attributes = this.actor.system.attributes;
+  let points = 0;
+  
+  Object.values(attributes).forEach(attr => {
+    switch(attr.baseValue) {
+      case 'malus': points -= 1; break;
+      case 'neutral': break;  // +0
+      case 'bonus': points += 1; break;
+      case 'critical': points += 2; break;
+    }
+  });
+
+  return points;
+}
+
+_recalculateMasteryPoints() {
+  let masteryPoints = 0;
+  for (let attrKey in this.actor.system.attributes) {
+    const attr = this.actor.system.attributes[attrKey];
+    switch (attr.baseValue) {
+      case 'malus': masteryPoints -= 1; break;
+      case 'neutral': masteryPoints += 0; break;
+      case 'bonus': masteryPoints += 1; break;
+      case 'critical': masteryPoints += 2; break;
+    }
+  }
+  this.actor.update({ 'system.masteryPoints': masteryPoints });
+}
+
+// _updateMasteryColors() {
+//   const masteryPoints = this.actor.system.masteryPoints;
+//   const masteryLevel = this.actor.system.masteryLevel;
+//   const masteryElement = this.element.querySelector('.mastery-points .mastery-value');
+
+//   if (masteryPoints !== masteryLevel) {
+//     masteryElement.classList.add('mismatched');
+//     masteryElement.style.color = "#f28b82"; // Rouge des dés "Critical"
+//   } else {
+//     masteryElement.classList.remove('mismatched');
+//     masteryElement.style.color = "#81c995"; // Vert des dés "Bonus"
+//   }
+// }
 
   handleElementEditing(html) {
     const elementView = html.find('#element-view');
@@ -1181,57 +1296,95 @@ handleFocusEditing(html) {
       elementSelect.hide();
     });
   }
+
+  handleCardEdit(event, html) {
+    event.preventDefault();
+    event.stopPropagation();
+    
+    const indicator = $(event.currentTarget);
+    const card = indicator.closest('.attribute-card, .temper-card');
+    const dropdown = card.find('.value-select');
+    const type = card.data('type');
+    const fieldName = card.data('field');
+
+    // Fonction de mise à jour commune
+    const updateValue = async (newValue) => {
+      try {
+        await this.actor.update({
+          [`system.${type}.${fieldName}.baseValue`]: newValue,
+          [`system.${type}.${fieldName}.currentValue`]: newValue
+        });
   
-  
+        // Calculer et mettre à jour les mastery points
+        const attributes = this.actor.system.attributes;
+        let points = 0;
+        Object.values(attributes).forEach(attr => {
+          switch(attr.baseValue) {
+            case 'malus': points -= 1; break;
+            case 'neutral': break; // +0
+            case 'bonus': points += 1; break;
+            case 'critical': points += 2; break;
+          }
+        });
+        
+        await this.actor.update({ 'system.masteryPoints': points });
+        
+        await this.render(false);
+        return true;
+      } catch (error) {
+        console.error('Error updating value:', error);
+        return false;
+      }
+    };
 
-  enableAttributeEditing(html) {
-    const fields = ['fire', 'water', 'earth', 'air', 'mind', 'body', 'soul', 'martial', 'elementary', 'rhetoric'];
-    fields.forEach(field => {
-      const labelSelector = `#${field}-label`;
-      const viewSelector = `#${field}-view`;
-      const editSelector = `#${field}-edit`;
+    // Gestionnaire pour le clic sur une option
+    const handleOptionClick = async (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        const newValue = $(e.currentTarget).data('value');
+        dropdown.removeClass('visible');
+        
+        $(document).off('mousedown.cardEdit');
+        dropdown.find('.option').off('click.cardEdit');
+        
+        await updateValue(newValue);
+    };
 
-      html.find(labelSelector).on('click', () => {
-        html.find(viewSelector).hide();
-        html.find(editSelector).prop('disabled', false).show().focus();
-      });
-
-      html.find(editSelector).on('blur', async () => {
-        const newValue = html.find(editSelector).val();
-        let updateData = {};
-        if (['fire', 'water', 'earth', 'air'].includes(field)) {
-          updateData[`system.tempers.${field}.baseValue`] = newValue;
-          updateData[`system.tempers.${field}.currentValue`] = newValue;
-        } else {
-          updateData[`system.attributes.${field}.baseValue`] = newValue;
-          updateData[`system.attributes.${field}.currentValue`] = newValue;
+    // Gestionnaire pour le clic en dehors
+    const handleClickOutside = async (e) => {
+        if (!$(e.target).closest('.value-select').length && 
+            !$(e.target).closest('.edit-button').length) {
+            
+            const dropdownValue = dropdown.val();
+            
+            if (dropdownValue) {
+                $(document).off('mousedown.cardEdit');
+                dropdown.find('.option').off('click.cardEdit');
+                dropdown.removeClass('visible');
+                
+                await updateValue(dropdownValue);
+            } else {
+                dropdown.removeClass('visible');
+            }
         }
-        await this.actor.update(updateData);
-        html.find(viewSelector).text(newValue).show();
-        html.find(editSelector).hide();
-      });
-    });
-  }
+    };
 
-  manageAttributeInjuries(html) {
-    const attributes = ['body', 'mind', 'soul', 'martial', 'elementary', 'rhetoric'];
-    attributes.forEach(attr => {
-      const injury1 = html.find(`#${attr}-injury1`);
-      const injury2 = html.find(`#${attr}-injury2`);
-      const injury3 = html.find(`#${attr}-injury3`);
-      this.manageWoundCheckboxes(attr, injury1, injury2, injury3);
-
-      injury1.on('change', async () => this.updateWoundState(attr, 'injury1', injury1));
-      injury2.on('change', async () => this.updateWoundState(attr, 'injury2', injury2));
-      injury3.on('change', async () => this.updateWoundState(attr, 'injury3', injury3));
-    });
-  }
-
-  async updateWoundState(attribute, injury, checkbox) {
-    const checked = checkbox.is(':checked');
-    await this.actor.update({ [`system.attributes.${attribute}.injuries.${injury}`]: checked });
-    this.updateAttributeCurrentValue(attribute);
-  }
+    // Gérer l'affichage du dropdown
+    if (!dropdown.hasClass('visible')) {
+        dropdown.addClass('visible');
+        
+        const currentValue = this.actor.system[type][fieldName].currentValue;
+        dropdown.find('.option').removeClass('selected');
+        dropdown.find(`.option[data-value="${currentValue}"]`).addClass('selected');
+        
+        dropdown.find('.option').on('click.cardEdit', handleOptionClick);
+        
+        setTimeout(() => {
+            $(document).on('mousedown.cardEdit', handleClickOutside);
+        }, 0);
+    }
+}
 
   async updateAttributeCurrentValue(attribute) {
     const attr = this.actor.system.attributes[attribute];
@@ -1259,14 +1412,36 @@ handleFocusEditing(html) {
 
   manageTemperTrauma(html) {
     ['fire', 'water', 'earth', 'air'].forEach(temper => {
-      html.find(`#${temper}-trauma`).on('change', async () => {
-        const isChecked = html.find(`#${temper}-trauma`).is(':checked');
-        await this.actor.update({ [`system.tempers.${temper}.injury`]: isChecked });
-        this.render();  // Re-render to apply trauma change
+      html.find(`#${temper}-trauma`).on('change', async (event) => {
+        const isChecked = event.target.checked;
+        
+        // Mise à jour du trauma uniquement
+        await this.actor.update({
+          [`system.tempers.${temper}.injury`]: isChecked,
+        });
+  
+        this.render();
       });
     });
   }
-
+  
+  
+  
+  // Fonction d'aide pour dégrader la valeur
+  degradeAttributeValue(value) {
+    switch (value) {
+      case 'critical':
+        return 'bonus';
+      case 'bonus':
+        return 'neutral';
+      case 'neutral':
+        return 'malus';
+      case 'malus':
+        return 'malus';  // Reste à malus
+      default:
+        return value;
+    }
+  }
   addDiceListeners(html) {
     ['malus', 'neutral', 'bonus', 'critical'].forEach(dieType => {
       html.find(`#${dieType}Die`).on('click', () => this.handleSingleDiceRoll(dieType));
@@ -1604,6 +1779,7 @@ addRelationshipListeners(html) {
       this.render(false);
     }
   }
+
 }
 
 // Dice rolling logic

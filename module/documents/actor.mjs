@@ -21,10 +21,10 @@ export class WoeActor extends Actor {
       };
     }
 
-    
+
     // Ensure attributes are initialized for all keys, including "mind" and "elementary"
     const attributes = ["body", "martial", "soul", "elementary", "mind", "rhetoric"];
-   
+
     attributes.forEach((attr, index) => {
       if (!systemData.attributes[attr]) {
         systemData.attributes[attr] = {}; // Assure que l'objet existe
@@ -37,9 +37,7 @@ export class WoeActor extends Actor {
       }
       if (!systemData.attributes[attr].injuries) {
         systemData.attributes[attr].injuries = {
-          injury1: false,
-          injury2: false,
-          injury3: false,
+            injury :false
         };
       }
       // Ajoute l'ordre explicite
@@ -68,7 +66,25 @@ export class WoeActor extends Actor {
       systemData.relationships = [];
     }
 
+    if (!systemData.wounds) {
+      systemData.wounds = {
+        wound1: false,
+        wound2: false,
+        wound3: false,
+        knockedOut: false
+      };
+    }
+
+    if (systemData.masteryLevel === undefined) {
+      systemData.masteryLevel = 0;
+    }
+    if (systemData.masteryPoints === undefined) {
+      systemData.masteryPoints = 0;
+    }
+
     
+
+
   }
 
   /**
@@ -105,33 +121,39 @@ export class WoeActor extends Actor {
           body: {
             baseValue: "neutral",
             currentValue: "neutral",
-            injuries: { injury1: false, injury2: false, injury3: false }
+            injury :false,
           },
           soul: {
             baseValue: "neutral",
             currentValue: "neutral",
-            injuries: { injury1: false, injury2: false, injury3: false }
+            injury :false,
           },
           mind: {
             baseValue: "neutral",
             currentValue: "neutral",
-            injuries: { injury1: false, injury2: false, injury3: false }
+            injury :false,
           },
           martial: {
             baseValue: "neutral",
             currentValue: "neutral",
-            injuries: { injury1: false, injury2: false, injury3: false }
+            injury :false,
           },
           elementary: {
             baseValue: "neutral",
             currentValue: "neutral",
-            injuries: { injury1: false, injury2: false, injury3: false }
+            injury :false,
           },
           rhetoric: {
             baseValue: "neutral",
             currentValue: "neutral",
-            injuries: { injury1: false, injury2: false, injury3: false }
+            injury :false,
           }
+        },
+        wounds : {
+          wound1: false,
+          wound2: false,
+          wound3: false,
+          knockedOut: false
         },
         relationships: [] // Default relationships array
       }
@@ -141,18 +163,18 @@ export class WoeActor extends Actor {
     await Actor.create(actorData);
   }
 
-  
+
 }
 WoeActor.prototype.calculateBaseFocusPoints = function (groupMembers) {
   let baseFocus = 0;
 
   groupMembers.forEach(memberName => {
-      const member = game.actors.getName(memberName);
-      const relation = this.system.relationships.find(r => r.characterName === memberName);
+    const member = game.actors.getName(memberName);
+    const relation = this.system.relationships.find(r => r.characterName === memberName);
 
-      if (relation && relation.relationshipLevel < 0) {
-          baseFocus -= Math.abs(relation.relationshipLevel);  // Chaque relation négative réduit le focus
-      }
+    if (relation && relation.relationshipLevel < 0) {
+      baseFocus -= Math.abs(relation.relationshipLevel);  // Chaque relation négative réduit le focus
+    }
   });
 
   // Utiliser update pour mettre à jour les Focus Points de base
@@ -161,7 +183,7 @@ WoeActor.prototype.calculateBaseFocusPoints = function (groupMembers) {
 WoeActor.prototype.modifyCurrentFocusPoints = async function (amount) {
   const newCurrent = Math.max(0, this.system.focusPoints.current + amount);
   await this.update({ 'system.focusPoints.current': newCurrent });
-  
+
   // Forcer le rendu de la fiche après la mise à jour
   if (this.sheet) {
     this.sheet.render(false); // Forcer un re-render

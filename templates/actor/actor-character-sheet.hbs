@@ -16,148 +16,294 @@
     <div class="tab-content">
       
 <div class="tab active" data-tab="profile">
- <section class="identity-section">
+<!-- Identity Section -->
+<section class="identity-section" style="width: 807px; margin: 0 auto;">
   <h2 class="section-header">Identity</h2>
   
   <div class="basic-info">
-   <div class="info-field">
-  <label class="info-label">Name:</label>
-  <span id="actor-name" class="clickable">{{actorName}}</span>
-  <input id="name-edit" type="text" class="hidden" />
-</div>
-     <div class="info-field">
-  <label class="info-label">Element:</label>
-  <span id="element-view" class="clickable">
-    {{capitalize system.element.value}}
-    <i class="element-icon {{system.element.value}}"></i>
-  </span>
-  <select id="element-edit" class="hidden">
-    <option value="fire">Fire</option>
-    <option value="water">Water</option>
-    <option value="earth">Earth</option>
-    <option value="air">Air</option>
-  </select>
-</div>
+    <div class="info-field">
+      <label class="info-label">Name:</label>
+      <span id="actor-name" class="clickable">{{actorName}}</span>
+      <input id="name-edit" type="text" class="hidden" />
+    </div>
 
+    <div class="info-field">
+      <label class="info-label">Element:</label>
+      <span id="element-view" class="clickable">
+        {{capitalize system.element.value}}
+        <i class="element-icon {{system.element.value}}"></i>
+      </span>
+      <select id="element-edit" class="hidden">
+        <option value="fire" {{#if (eq system.element.value "fire")}}selected{{/if}}>Fire</option>
+        <option value="water" {{#if (eq system.element.value "water")}}selected{{/if}}>Water</option>
+        <option value="earth" {{#if (eq system.element.value "earth")}}selected{{/if}}>Earth</option>
+        <option value="air" {{#if (eq system.element.value "air")}}selected{{/if}}>Air</option>
+      </select>
+    </div>
   </div>
+</section>
 
-  <div class="resources">
- <div class="resource stamina">
+<div class="profile-resources-container">
+  <div class="profile-container">
+    <div class="profile-image">
+      <img src="{{actor.img}}" alt="{{actor.name}}" />
+    </div>
+  </div>
+ 
+ <!-- Resource Cards -->
+<div class="resource stamina">
   <label class="resource-label">Stamina</label>
-  <div class="stamina-display">
-    <span id="current-stamina" class="resource-value">{{system.stamina.current}}</span>
-   <div class="stamina-controls">
-  <button id="stamina-minus" class="resource-btn">-</button>
-  <button id="stamina-plus" class="resource-btn">+</button>
-</div>
+  <div class="resource-value">{{system.stamina.current}}</div>
+  <div class="resource-controls">
+    <button id="stamina-minus" class="resource-btn">-</button>
+    <button id="stamina-plus" class="resource-btn">+</button>
   </div>
-  <div class="stamina-max-container">
-    <span id="stamina-max-container" class="clickable">
-      Max: <span id="stamina-max">{{system.stamina.max}}</span>
-    </span>
-    <input id="stamina-max-edit" type="number" class="hidden" min="1" />
+  <div class="resource-max-container" id="stamina-max-container">
+    Max: <span id="stamina-max">{{system.stamina.max}}</span>
   </div>
+  <input type="number" id="stamina-max-edit" class="hidden" min="1" max="6" value="{{system.stamina.max}}" />
 </div>
 
-  <div class="resource focus">
+<div class="resource focus">
   <label class="resource-label">Focus</label>
-  <span id="focus-value" class="resource-value">{{system.focusPoints.current}}</span>
+  <div class="resource-value">{{system.focusPoints.current}}</div>
   <div class="resource-controls">
     <button id="focus-minus" class="resource-btn">-</button>
     <button id="focus-plus" class="resource-btn">+</button>
   </div>
-  <div class="resource-visibility">
-    <input id="focus-toggle" type="checkbox" {{#if system.focusPoints.isVisible}}checked{{/if}} />
-    <label for="focus-toggle">Show</label>
+  <div class="focus-toggle-container">
+    <label>
+      <input type="checkbox" id="focus-toggle" {{checked system.focusPoints.isVisible}} /> Show
+    </label>
   </div>
 </div>
 
-<div class="resource synergy">
-  <div class="resource-label">Synergy</div>
-  <div class="resource-value {{#if isNotInGroup}}not-in-group{{/if}}">
-    {{#if isNotInGroup}}
-      Not in a group yet
-    {{else}}
-      {{currentSynergy}}
-    {{/if}}
-  </div>
-  {{#unless isNotInGroup}}
-    <div class="resource-controls">
-      <div>Base: {{maxSynergy}}</div>
+    <div class="resource synergy">
+      <label class="resource-label">Synergy</label>
+      <div class="resource-value {{#if isNotInGroup}}not-in-group{{/if}}">
+        {{#if isNotInGroup}}
+          Not in a group yet
+        {{else}}
+          {{currentSynergy}}
+        {{/if}}
+      </div>
+      {{#unless isNotInGroup}}
+        <div class="resource-controls">
+          <div>Base: {{maxSynergy}}</div>
+        </div>
+      {{/unless}}
     </div>
-  {{/unless}}
+  </div>
 </div>
 
-  </div>
-
-  <div class="profile-image">
-    <img src="{{actor.img}}" data-edit="img" title="{{actor.name}}"/>
-  </div>
 </section>
 </div>
 <div class="section-container">
 
+<!-- Section principale des Tempers et Attributes -->
 <div class="tempers-attributes-container">
-  <!-- Tempers Section -->
-    <div class="tempers-maneuver-wrapper">
-<section class="tempers-section">
+  <!-- Wrapper pour Tempers et Maneuver -->
+  <div class="tempers-maneuver-wrapper">
+    <!-- Section Tempers -->
+  <section class="tempers-section">
   <h2>Tempers</h2>
-  <div class="tempers-container">
-    {{#each system.tempers}}
-    <div class="temper-card" data-value="{{this.currentValue}}" data-injury="{{this.injury}}">
-      <div class="temper-header">
-        <h3 class="temper-title">{{@key}}</h3>
-        <button class="edit-button" data-temper="{{@key}}" title="Edit">
-          <i class="fas fa-pencil-alt"></i>
-        </button>
+  <div class="tempers-grid">
+    {{#each system.tempers as |temper key|}}
+      <div 
+        class="temper-card {{#if temper.injury}}disabled{{/if}}" 
+        data-value="{{temper.currentValue}}" 
+        data-field="{{key}}" 
+        data-type="tempers"
+      >
+        <!-- Header de la carte -->
+        <div class="card-header">
+          <h3>{{capitalize key}}</h3>
+          <div class="edit-controls">
+            <!-- Bouton crayon -->
+            <button class="edit-button">
+              <i class="fas fa-pencil-alt"></i>
+            </button>
+            <!-- Menu déroulant pour modifier la valeur -->
+            <select 
+              class="value-select hidden" 
+              data-path="system.tempers.{{key}}.baseValue"
+            >
+              <option value="malus" {{#if (eq temper.currentValue "malus")}}selected{{/if}}>Malus</option>
+              <option value="neutral" {{#if (eq temper.currentValue "neutral")}}selected{{/if}}>Neutral</option>
+              <option value="bonus" {{#if (eq temper.currentValue "bonus")}}selected{{/if}}>Bonus</option>
+              <option value="critical" {{#if (eq temper.currentValue "critical")}}selected{{/if}}>Critical</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Valeur actuelle affichée -->
+        <div class="card-value {{#if temper.injury}}disabled-text{{/if}}">
+          {{capitalize temper.currentValue}}
+        </div>
+
+        <!-- Checkbox pour la gestion du trauma -->
+        <label class="trauma-label">
+          <input 
+            type="checkbox" 
+            id="{{key}}-trauma" 
+            {{checked temper.injury}} 
+          /> 
+          Trauma
+        </label>
       </div>
-      <span class="temper-value">{{this.currentValue}}</span>
-      <label class="trauma-label">
-        <input type="checkbox" id="{{@key}}-trauma" {{checked this.injury}} /> Trauma
-      </label>
-    </div>
     {{/each}}
   </div>
 </section>
 
-<div class="maneuver-section">
-      <div class="maneuver-container">
-       <h2>Maneuver</h2> 
+
+
+    <div class="dice-launcher">
+  <h2>DICE LAUNCHER</h2>
+  <div class="maneuver-container">
+    <h3>Maneuver</h3>
+  </div>
+  <div class="dice-buttons">
+    <button class="die-button malus">M</button>
+    <button class="die-button neutral">N</button>
+    <button class="die-button bonus">B</button>
+    <button class="die-button critical">C</button>
+  </div>
+</div>
+  </div>
+
+  <!-- Section Attributes -->
+<section class="attributes-section">
+  <div class="attributes-header">
+  <h2>Attributes</h2>
+<div class="mastery-container">
+  <!-- Mastery Row -->
+  <div class="mastery-row">
+    <!-- Mastery Level -->
+    <div class="mastery-box">
+  <span class="mastery-label">Mastery Level</span>
+  <span id="mastery-level-view" class="mastery-value clickable">{{system.masteryLevel}}</span>
+  <input type="number" id="mastery-level-edit" class="hidden" min="0" value="{{system.masteryLevel}}" />
+</div>
+
+    <!-- Mastery Points + Dice Indicators -->
+    <div class="mastery-box mastery-points {{#if (ne system.masteryPoints system.masteryLevel)}}mismatched{{/if}}">
+      <span class="mastery-label">Mastery Points</span>
+      <span class="mastery-value">{{system.masteryPoints}}</span>
+
+      <!-- Dice Indicators -->
+      <div class="mastery-dice-indicators">
+        <div class="die-indicator die-malus">
+          <span>M</span>
+          <span>-1</span>
+        </div>
+        <div class="die-indicator die-neutral">
+          <span>N</span>
+          <span>+0</span>
+        </div>
+        <div class="die-indicator die-bonus">
+          <span>B</span>
+          <span>+1</span>
+        </div>
+        <div class="die-indicator die-critical">
+          <span>C</span>
+          <span>+2</span>
+        </div>
       </div>
     </div>
+  </div>
 </div>
 
-<section class="attributes-section">
-  <h2>Attributes</h2>
-  <div class="attributes-container">
-{{#each (sort (objectToArray system.attributes) 'order') as |attribute|}}
-<div class="attribute-card-wrapper">
-  <div class="attribute-card" data-value="{{attribute.currentValue}}" data-injury="{{attribute.injuries.injury1}}">
-    <div class="attribute-header">
-      <h3 class="attribute-title">{{capitalize attribute.key}}</h3>
-      <button class="edit-button" title="Edit">
-        <i class="fa-solid fa-pencil"></i>
-      </button>
-    </div>
-    <div class="attribute-value">{{attribute.currentValue}}</div>
-    <label class="wounded-label">
-      <input type="checkbox" {{checked attribute.wounded}} /> Wounded
-    </label>
-  </div>
-  <div class="attribute-injuries">
-    <label><input type="checkbox" {{checked attribute.injuries.injury1}} /> Injury 1</label>
-    <label><input type="checkbox" {{checked attribute.injuries.injury2}} /> Injury 2</label>
-    <label><input type="checkbox" {{checked attribute.injuries.injury3}} /> Injury 3</label>
-  </div>
+
+
 </div>
-{{/each}}
+  <!-- Grid des attributs -->
+  <div class="attributes-grid">
+    {{#each system.attributes as |attribute key|}}
+      <div class="attribute-row">
+        <!-- Carte d'attribut -->
+        <div class="attribute-card" 
+             data-value="{{attribute.currentValue}}" 
+             data-field="{{key}}" 
+             data-type="attributes">
+          <!-- En-tête de la carte -->
+          <div class="card-header">
+            <h3>{{capitalize key}}</h3>
+            <div class="edit-controls">
+  <!-- Indicateur de la valeur de base, affichant la première lettre -->
+  <div class="base-value-indicator" data-value="{{attribute.baseValue}}">
+    {{firstLetter attribute.baseValue}}
   </div>
-</section>
-</div>
   
+  <!-- Sélecteur de valeur avec des options dynamiques -->
+  <select class="value-select hidden" data-path="system.attributes.{{key}}.baseValue">
+    <option value="malus" {{#if (eq attribute.baseValue "malus")}}selected{{/if}}>Malus</option>
+    <option value="neutral" {{#if (eq attribute.baseValue "neutral")}}selected{{/if}}>Neutral</option>
+    <option value="bonus" {{#if (eq attribute.baseValue "bonus")}}selected{{/if}}>Bonus</option>
+    <option value="critical" {{#if (eq attribute.baseValue "critical")}}selected{{/if}}>Critical</option>
+  </select>
+</div>
 
-
+          </div>
+          <!-- Valeur actuelle -->
+          <div class="card-value">
+            {{capitalize attribute.currentValue}}
+          </div>
+          <!-- Checkbox pour les blessures -->
+          <label class="injury-label">
+  <input 
+    type="checkbox" 
+    id="{{key}}-injury" 
+    class="injury-checkbox" 
+    {{#if attribute.injury}}checked{{/if}} 
+    {{#if (eq attribute.baseValue "malus")}}disabled{{/if}} />
+  <span>Injured</span>
+</label>
+        </div>
+      </div>
+    {{/each}}
   </div>
+
+<!-- Global Wounds Section -->
+{{#if system.wounds}}
+  <div class="wounds-section">
+    <h3>Wounds</h3>
+    <div class="wounds-row">
+      <!-- Wound 1 -->
+      <div class="wound-box {{#if system.wounds.wound1}}ticked{{/if}}" data-wound="1">
+        <span class="wound-label">Wound 1</span>
+        <div class="wound-mark"></div>
+      </div>
+      <!-- Wound 2 -->
+      <div class="wound-box 
+                  {{#if system.wounds.wound2}}ticked{{/if}} 
+                  {{#unless system.wounds.wound1}}disabled{{/unless}}" 
+           data-wound="2">
+        <span class="wound-label">Wound 2</span>
+        <div class="wound-mark"></div>
+      </div>
+      <!-- Wound 3 -->
+      <div class="wound-box 
+                  {{#if system.wounds.wound3}}ticked{{/if}} 
+                  {{#unless system.wounds.wound2}}disabled{{/unless}}" 
+           data-wound="3">
+        <span class="wound-label">Wound 3</span>
+        <div class="wound-mark"></div>
+      </div>
+      <!-- Knocked Out -->
+      <div class="wound-box knocked" data-wound="knocked">
+        <span class="wound-label">Knocked Out</span>
+        <div class="wound-mark"></div>
+      </div>
+    </div>
+  </div>
+{{/if}}
+
+
+</section>
+
+
+</div>
+
 
 
 </div> <!-- End of Profile Tab -->
