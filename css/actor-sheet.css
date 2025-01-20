@@ -563,8 +563,8 @@ h3 {
   margin-top: 10px;
 }
 
-.temper-card h3 {
-  font-size: 0.91em;
+.temper-card[data-field="independence"] h3 {
+  font-size: 0.9em; /* Exemple de taille spécifique pour Independence */
 }
 
 /* Cartes des attributs */
