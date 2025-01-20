@@ -34,11 +34,12 @@
         <i class="element-icon {{system.element.value}}"></i>
       </span>
       <select id="element-edit" class="hidden">
-        <option value="fire" {{#if (eq system.element.value "fire")}}selected{{/if}}>Fire</option>
-        <option value="water" {{#if (eq system.element.value "water")}}selected{{/if}}>Water</option>
-        <option value="earth" {{#if (eq system.element.value "earth")}}selected{{/if}}>Earth</option>
-        <option value="air" {{#if (eq system.element.value "air")}}selected{{/if}}>Air</option>
-      </select>
+  <option value="none" {{#if (eq system.element.value "none")}}selected{{/if}}>None</option>
+  <option value="fire" {{#if (eq system.element.value "fire")}}selected{{/if}}>Fire</option>
+  <option value="water" {{#if (eq system.element.value "water")}}selected{{/if}}>Water</option>
+  <option value="earth" {{#if (eq system.element.value "earth")}}selected{{/if}}>Earth</option>
+  <option value="air" {{#if (eq system.element.value "air")}}selected{{/if}}>Air</option>
+</select>
     </div>
   </div>
 </section>
@@ -155,20 +156,33 @@
   </div>
 </section>
 
-
-
-    <div class="dice-launcher">
-  <h2>DICE LAUNCHER</h2>
-  <div class="maneuver-container">
-    <h3>Maneuver</h3>
+  <!-- Dice Launcher Section -->
+  <div class="dice-launcher">
+    <h2>DICE LAUNCHER</h2>
+    <div class="maneuver-container">
+      <h3>Maneuver</h3>
+    </div>
+    <div class="dice-buttons">
+      <button class="die-button malus" data-die-type="malus">M</button>
+      <button class="die-button neutral" data-die-type="neutral">N</button>
+      <button class="die-button bonus" data-die-type="bonus">B</button>
+      <button class="die-button critical" data-die-type="critical">C</button>
+    </div>
+    <div class="selected-dice-area">
+      <div class="selected-dice">
+        <div class="dice-slot"></div>
+        <div class="dice-slot"></div>
+        <div class="dice-slot"></div>
+        <div class="dice-slot"></div>
+        <div class="dice-slot"></div>
+        <div class="dice-slot"></div>
+      </div>
+      <div class="dice-controls">
+        <button class="roll-selected-dice" disabled>Roll</button>
+        <button class="reset-selected-dice" disabled>Reset</button>
+      </div>
+    </div>
   </div>
-  <div class="dice-buttons">
-    <button class="die-button malus">M</button>
-    <button class="die-button neutral">N</button>
-    <button class="die-button bonus">B</button>
-    <button class="die-button critical">C</button>
-  </div>
-</div>
   </div>
 
   <!-- Section Attributes -->

@@ -221,10 +221,16 @@
   align-items: center;
   justify-content: center;
   font-size: 1.2em;
+ 
 }
 
 .resource-btn:hover {
   background: rgba(139, 69, 19, 0.2); /* Hover par défaut */
+  box-shadow: none !important;
+}
+
+.resource-btn:focus {
+  box-shadow: none !important;
 }
 
 /* Spécificité pour la ressource Focus */
@@ -332,7 +338,7 @@
   }
   
   .element-icon.air::before {
-    content: "💨"; /* Symbole pour l'air */
+    content: "💨"; /* Symbole pour l'independence */
   }
 
   #stamina-max-edit {
@@ -557,6 +563,10 @@ h3 {
   margin-top: 10px;
 }
 
+.temper-card h3 {
+  font-size: 0.91em;
+}
+
 /* Cartes des attributs */
 .attribute-card,
 .temper-card {
@@ -647,6 +657,8 @@ h3 {
   flex-direction: column;
   gap: 20px;
   width: 300px;
+  position: relative;
+  top: -20px;
 }
 
 /* Section Tempers */
@@ -677,7 +689,7 @@ h3 {
   border-radius: 8px;
   width: 480px;
   position: relative;
-  top: -30px;
+  top: -20px;
 }
 
 .attribute-row {
@@ -1053,6 +1065,8 @@ label {
 
 .attributes-header h2 {
   margin: 0;
+  margin-top: 25px;
+  margin-left: 5px;
 }
 
 /* Mastery Section */
@@ -1162,8 +1176,121 @@ label {
   background-color: #f28b82; /* Rouge */
   color: black;
 }
+/* Dice Launcher Section */
+.dice-launcher {
+  background: #f5f5dc;
+  padding: 15px;
+  border-radius: 8px;
+  width: 100%;
+  text-align: center;
+}
 
+.dice-launcher h2 {
+  text-transform: uppercase;
+  margin-bottom: 15px;
+  color: #4a2810;
+}
 
+.dice-buttons {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  margin-top: 15px;
+  margin-bottom: 15px;
+}
+
+.die-button {
+  width: 50px;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2em;
+  font-weight: bold;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  transition: filter 0.3s ease;
+}
+
+/* Zone des dés sélectionnés */
+.selected-dice-area {
+  margin-top: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 15px;
+}
+
+.selected-dice {
+  background: rgba(74, 40, 16, 0.1);
+  display: flex;
+  gap: 8px;
+  height: 40px;
+  width: 230px;
+  padding: 5px;
+  border-radius: 6px;
+  justify-content: flex-start;
+  position: relative; /* Pour le positionnement des dés */
+}
+
+.selected-die {
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9em;
+  transition: all 0.2s ease;
+  position: relative; /* Permet aux dés d'apparaître correctement */
+}
+
+.selected-die:hover {
+  transform: scale(0.9);
+  opacity: 0.8;
+}
+
+/* Contrôles (boutons Roll et Reset) */
+.dice-controls {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin-top: 10px;
+}
+
+.dice-controls button {
+  padding: 8px 16px;
+  border-radius: 4px;
+  border: none;
+  cursor: pointer;
+  font-weight: bold;
+  transition: all 0.2s ease;
+  background: rgba(74, 40, 16, 0.1);
+  color: #4a2810;
+  min-width: 80px;
+}
+
+.dice-controls button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.dice-controls button:not(:disabled):hover {
+  background: rgba(74, 40, 16, 0.2);
+}
+
+/* Couleurs des dés */
+.die-button.malus,
+.selected-die.malus { background-color: #aecbfa; }
+.die-button.neutral,
+.selected-die.neutral { background-color: #fef49c; }
+.die-button.bonus,
+.selected-die.bonus { background-color: #81c995; }
+.die-button.critical,
+.selected-die.critical { background-color: #f28b82; }
 /* Attribute tags */
 .attribute-row {
   display: flex;

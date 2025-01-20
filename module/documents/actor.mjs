@@ -44,8 +44,8 @@ export class WoeActor extends Actor {
       systemData.attributes[attr].order = index + 1;
     });
 
-    // Initialize tempers for fire, water, earth, and air
-    const tempers = ["fire", "water", "earth", "air"];
+    // Initialize tempers for passion, empathy, rigor, and independence
+    const tempers = ["passion", "empathy", "rigor", "independence"];
     tempers.forEach(temper => {
       if (!systemData.tempers[temper]) {
         systemData.tempers[temper] = {}; // Ensure the temper object exists
@@ -111,10 +111,26 @@ export class WoeActor extends Actor {
           current: 4 // Default Current Stamina value
         },
         tempers: {
-          fire: { value: "neutral" }, // Default fire temper value
-          water: { value: "neutral" }, // Default water temper value
-          earth: { value: "neutral" }, // Default earth temper value
-          air: { value: "neutral" } // Default air temper value
+          passion: {
+            baseValue: "neutral",
+            currentValue: "neutral",
+            injury: false
+          },
+          empathy: {
+            baseValue: "neutral",
+            currentValue: "neutral",
+            injury: false
+          },
+          rigor: {
+            baseValue: "neutral",
+            currentValue: "neutral",
+            injury: false
+          },
+          independence: {
+            baseValue: "neutral",
+            currentValue: "neutral",
+            injury: false
+          }
         },
         attributes: {
           // Initialize all attributes with default values

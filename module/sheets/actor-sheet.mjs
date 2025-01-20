@@ -88,7 +88,7 @@ export class WoeActorSheet extends ActorSheet {
     const actorData = this.document.toObject(false);
 
     // Ensure tempers are initialized with baseValue and currentValue
-    ['fire', 'water', 'earth', 'air'].forEach(temper => {
+    ['passion', 'empathy', 'rigor', 'independence'].forEach(temper => {
       if (!actorData.system.tempers[temper].baseValue) actorData.system.tempers[temper].baseValue = 'neutral';
       if (!actorData.system.tempers[temper].currentValue) actorData.system.tempers[temper].currentValue = 'neutral';
     });
@@ -479,7 +479,7 @@ getColorForValue(value) {
   }
 
   manageTemperTrauma(html) {
-    ['fire', 'water', 'earth', 'air'].forEach(temper => {
+    ['passion', 'empathy', 'rigor', 'independence'].forEach(temper => {
       html.find(`#${temper}-trauma`).on('change', async (event) => {
         const isChecked = event.target.checked;
         const temperCard = html.find(`.temper-card[data-field="${temper}"]`);
@@ -539,7 +539,7 @@ getColorForValue(value) {
                 <div class="section">
                     <h3>What is your current state of mind?</h3>
                     <div id="temper-section" class="button-group">
-                        ${['fire', 'water', 'earth', 'air'].map(temper => 
+                        ${['passion', 'empathy', 'rigor', 'independence'].map(temper => 
                             `<div class="temper-choice die-${this.getDieType(temper, 'tempers')}" data-temper="${temper}">
                                 ${temper}
                             </div>`
@@ -1011,7 +1011,7 @@ getCheckedBoxes(type) {
   
   // Disable any traumatized tempers in the maneuver modal
   disableTraumatizedTempers(html) {
-    const tempers = ['fire', 'water', 'earth', 'air'];
+    const tempers = ['passion', 'empathy', 'rigor', 'independence'];
   
     tempers.forEach(temper => {
       if (this.actor.system.tempers[temper].injury) { // If trauma exists for this temper
@@ -1396,7 +1396,7 @@ manageTemperEdition(html) {
   };
 
   // Pour chaque temper, configurez les gestionnaires d'événements
-  ['fire', 'water', 'earth', 'air'].forEach(temper => {
+  ['passion', 'empathy', 'rigor', 'independence'].forEach(temper => {
       setupDropdownHandler(html, temper);
   });
 }
@@ -1420,31 +1420,33 @@ degradeAttributeValue(value) {
 }
 
 handleNameEditing(html) {
-  const nameDisplay = html.find('#actor-name');
   const nameInput = html.find('#name-edit');
+  const nameSpan = html.find('#actor-name');
 
-  if (!nameDisplay.length || !nameInput.length) {
-    console.error("Name editing elements missing in the template.");
-    return;
-  }
-
-  nameDisplay.on('click', () => {
-    nameInput.val(nameDisplay.text().trim()); // Pré-remplir avec la valeur actuelle
-    nameDisplay.hide();
-    nameInput.prop('disabled', false).show().focus();
+  // Rendre le champ éditable au clic
+  nameSpan.on('click', () => {
+    nameSpan.addClass('hidden');
+    nameInput.removeClass('hidden').focus().val(this.actor.name);
   });
 
-  nameInput.on('blur', async () => {
-    const newName = nameInput.val().trim();
-    if (newName) {
-      await this.actor.update({ "name": newName });
-      nameDisplay.text(newName).show();
-    } else {
-      nameDisplay.show();
+  // Sauvegarde au blur ou à l'appui sur Entrée
+  nameInput.on('blur keydown', async (event) => {
+    if (event.type === 'keydown' && event.key === 'Enter') {
+      event.preventDefault(); // Empêche l'événement de se propager à d'autres éléments
+      event.stopPropagation(); // Arrête la propagation de l'événement
     }
-    nameInput.hide();
+
+    if (event.type === 'blur' || (event.type === 'keydown' && event.key === 'Enter')) {
+      const newName = nameInput.val().trim();
+      if (newName && newName !== this.actor.name) {
+        await this.actor.update({ name: newName });
+      }
+      nameInput.addClass('hidden');
+      nameSpan.removeClass('hidden');
+    }
   });
 }
+
 
 
 handleStaminaMaxEditing(html) {
@@ -1758,7 +1760,7 @@ _recalculateMasteryPoints() {
   }
 
   manageTemperTrauma(html) {
-    ['fire', 'water', 'earth', 'air'].forEach(temper => {
+    ['passion', 'empathy', 'rigor', 'independence'].forEach(temper => {
       html.find(`#${temper}-trauma`).on('change', async (event) => {
         const isChecked = event.target.checked;
         
@@ -1789,9 +1791,89 @@ _recalculateMasteryPoints() {
         return value;
     }
   }
+
   addDiceListeners(html) {
-    ['malus', 'neutral', 'bonus', 'critical'].forEach(dieType => {
-      html.find(`#${dieType}Die`).on('click', () => this.handleSingleDiceRoll(dieType));
+    const selectedDice = []; // Pour stocker les dés sélectionnés
+    const selectedDiceContainer = html.find('.selected-dice');
+    const diceSlots = html.find('.dice-slot');
+    const rollButton = html.find('.roll-selected-dice');
+    const resetButton = html.find('.reset-selected-dice');
+
+    // Gestionnaire pour l'ajout de dés
+    html.find('.die-button').on('click', (event) => {
+      const dieType = event.currentTarget.dataset.dieType;
+      if (selectedDice.length < 6) {
+        selectedDice.push(dieType);
+        const dieElement = `<div class="selected-die ${dieType}" data-index="${selectedDice.length - 1}">${dieType.charAt(0).toUpperCase()}</div>`;
+        diceSlots.eq(selectedDice.length - 1).html(dieElement);
+        
+        // Activation des boutons
+        rollButton.prop('disabled', false);
+        resetButton.prop('disabled', false);
+      }
+    });
+
+    // Suppression d'un dé sélectionné
+    selectedDiceContainer.on('click', '.selected-die', (event) => {
+      const index = $(event.currentTarget).data('index');
+      selectedDice.splice(index, 1);
+      this.updateSelectedDice(diceSlots, selectedDice);
+      
+      // Mise à jour des boutons
+      rollButton.prop('disabled', selectedDice.length === 0);
+      resetButton.prop('disabled', selectedDice.length === 0);
+    });
+
+    // Reset des dés
+    resetButton.on('click', () => {
+      selectedDice.length = 0;
+      diceSlots.empty(); // Vide tous les slots
+      rollButton.prop('disabled', true);
+      resetButton.prop('disabled', true);
+    });
+
+    // Lancer les dés avec le même code de gestion des résultats...
+    rollButton.on('click', async () => {
+      const results = [];
+      for (let i = 0; i < selectedDice.length; i++) {
+        const result = await this.rollDie(selectedDice[i]);
+        results.push({ type: selectedDice[i], result: result });
+      }
+
+      let chatContent = `<div class="dice-roll">
+        <div class="dice-result">
+          <div style="margin-bottom: 10px;">
+            <strong>${this.actor.name}</strong> launched ${selectedDice.length} dice:
+          </div>`;
+
+      results.forEach((res, index) => {
+        chatContent += `
+          <div style="margin: 5px 0;">
+            Die ${index + 1} (${res.type}): ${this.getIconWithResult(res.result)}
+          </div>`;
+      });
+
+      chatContent += `</div></div>`;
+
+      await ChatMessage.create({
+        user: game.user.id,
+        speaker: ChatMessage.getSpeaker({ actor: this.actor }),
+        content: chatContent
+      });
+
+      // Reset après le lancer
+      selectedDice.length = 0;
+      diceSlots.empty();
+      rollButton.prop('disabled', true);
+      resetButton.prop('disabled', true);
+    });
+  }
+
+  updateSelectedDice(container, selectedDice) {
+    container.empty(); // Vide tous les slots
+    selectedDice.forEach((dieType, index) => {
+      const dieElement = `<div class="selected-die ${dieType}" data-index="${index}">${dieType.charAt(0).toUpperCase()}</div>`;
+      container.eq(index).html(dieElement);
     });
   }
 

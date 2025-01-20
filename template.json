@@ -9,22 +9,26 @@
         "element": {
           "value": "none"
         },
-        "tempers": {
-          "fire": {
+       "tempers": {
+          "passion": {
             "baseValue": "neutral",
-            "currentValue": "neutral"
+            "currentValue": "neutral",
+            "injury": false
           },
-          "water": {
+          "empathy": {
             "baseValue": "neutral",
-            "currentValue": "neutral"
+            "currentValue": "neutral",
+            "injury": false
           },
-          "earth": {
+          "rigor": {
             "baseValue": "neutral",
-            "currentValue": "neutral"
+            "currentValue": "neutral",
+            "injury": false
           },
-          "air": {
+          "independence": {
             "baseValue": "neutral",
-            "currentValue": "neutral"
+            "currentValue": "neutral",
+            "injury": false
           }
         },
         "attributes": {
