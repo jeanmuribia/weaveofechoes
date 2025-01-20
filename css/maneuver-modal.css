@@ -1,0 +1,237 @@
+/* General styles for the maneuver modal */
+.maneuver-modal {
+  font-family: 'Quicksand', sans-serif;
+  background-color: #f5f5dc; /* Harmonized background */
+  border-radius: 12px;
+  padding: 20px;
+  width: 100%;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Title */
+.maneuver-modal .maneuver-title {
+  text-align: center;
+  font-size: 24px;
+  margin-bottom: 20px;
+  color: #333;
+  font-weight: bold;
+}
+
+/* Grid Layout */
+.maneuver-modal .maneuver-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 15px; 
+}
+
+.maneuver-modal h3 {
+  font-weight: 600;
+}
+/* Sections */
+.maneuver-modal .section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+}
+
+/* Button Group */
+.maneuver-modal .button-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.maneuver-modal .button-group div {
+  width: 100px;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  border: 2px solid transparent;
+  font-weight: bold;
+  text-transform: capitalize;
+}
+
+.maneuver-modal .button-group div.selected {
+  transform: translateY(2px);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+  border-color: rgba(0, 0, 0, 0.3);
+}
+
+.maneuver-modal .die-malus.selected {
+  background-color: #aecbfa !important;
+  border-color: #8ab5f8 !important;
+}
+
+.maneuver-modal .die-neutral.selected {
+  background-color: #fef49c !important;
+  border-color: #fdec6c !important;
+}
+
+.maneuver-modal .die-bonus.selected {
+  background-color: #81c995 !important;
+  border-color: #5db075 !important;
+}
+
+.maneuver-modal .die-critical.selected {
+  background-color: #f28b82 !important;
+  border-color: #ee675c !important;
+}
+
+.maneuver-modal .button-group div:hover:not(.selected) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+
+
+.maneuver-modal .button-group div:hover {
+  background-color: rgba(0, 0, 0, 0.1); /* Lighter hover effect */
+}
+
+/* Enlarged selected dice */
+
+.maneuver-modal .button-group div.active {
+  border: 3px solid #4CAF50; /* Bordure verte pour indiquer la sélection */
+  box-shadow: 0 0 10px rgba(76, 175, 80, 0.5); /* Halo vert léger */
+}
+/* Focus Checkboxes */
+.maneuver-modal .focus-checkbox-container {
+  display: flex;
+  justify-content: center;
+  gap: 5px;
+  margin-top: 5px;
+  min-height: 20px;
+}
+
+.maneuver-modal .focus-checkbox {
+  width: 20px;
+  height: 20px;
+  border-radius: 25%;
+  margin: 0;
+  appearance: none;
+  -webkit-appearance: none;
+  border: 1px solid #999;
+  background-color: #f0f0f0;
+  position: relative;
+  cursor: pointer;
+}
+
+.maneuver-modal .focus-checkbox::before {
+  content: "F";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.maneuver-modal .focus-checkbox:checked {
+  background-color: #4CAF50;
+}
+
+.maneuver-modal .focus-checkbox:checked::before {
+  color: white;
+}
+
+/* Die Display */
+.maneuver-modal .die-display {
+  width: 100px;
+  height: 100px;
+  border-radius: 8px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-weight: bold;
+  font-size: 20px;
+  margin-top: 10px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Die Colors */
+.maneuver-modal .die-display.malus {
+  background-color: #aecbfa;
+}
+
+.maneuver-modal .die-display.neutral {
+  background-color: #fef49c;
+}
+
+.maneuver-modal .die-display.bonus {
+  background-color: #81c995;
+}
+
+.maneuver-modal .die-display.critical {
+  background-color: #f28b82;
+}
+
+/* Footer Section */
+.maneuver-modal .footer {
+  display: flex;
+  justify-content: space-evenly;
+  align-items: center;
+  margin-top: 20px;
+}
+
+.maneuver-modal .focus-counter {
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  background-color: rgba(0, 0, 0, 0.1);
+  padding: 10px;
+  border-radius: 20px;
+}
+
+.maneuver-modal .focus-counter #maneuver-focus-number {
+  font-size: 24px;
+  font-weight: bold;
+  color: #4CAF50;
+  margin-right: 5px;
+}
+
+/* Roll the Dice Button */
+.maneuver-modal .roll-dice {
+  padding: 10px 20px;
+  background-color: #f0e68c; /* Pale beige */
+  color: #333;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 18px;
+  min-width: 200px;
+  text-align: center;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.maneuver-modal .roll-dice:hover {
+  background-color: #f5deb3; /* Slightly darker beige on hover */
+}
+
+.maneuver-modal .roll-dice.disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+
+.chat-die-malus {
+  color: #aecbfa; /* Bleu clair */
+}
+
+.chat-die-neutral {
+  color: #fef49c; /* Jaune */
+}
+
+.chat-die-bonus {
+  color: #81c995; /* Vert */
+}
+
+.chat-die-critical {
+  color: #f28b82; /* Rouge clair */
+}

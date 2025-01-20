@@ -1,5 +1,6 @@
 @import url('initiative-tracker.css');
 @import url('actor-sheet.css');
+@import url('maneuver-modal.css');
 
 #interface {
   width: 100vw;
@@ -490,7 +491,7 @@ button {
   cursor: pointer;
 }
 
-.pool-controls, .group-members, .maneuver-section {
+.pool-controls, .group-members,  {
   margin-bottom: 20px;
 }
 
@@ -782,10 +783,6 @@ h2 {
   font-size: 18px;
 }
 
-.maneuver-modal .focus-label {
-  font-size: 10px;
-  margin-right: 5px;
-}
 
 .current-focus-section {
   display: flex;
@@ -902,149 +899,3 @@ button:hover {
 
 
 * Conteneur principal de la modale de manœuvre */
-.maneuver-modal {
-  font-family: 'Roboto', sans-serif;
-  width: 100%;
-}
-
-.maneuver-modal .maneuver-title {
-  text-align: center;
-  font-size: 24px;
-  margin-bottom: 20px;
-}
-
-.maneuver-modal .maneuver-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-
-.maneuver-modal .section {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.maneuver-modal .button-group {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 10px;
-  margin-bottom: 10px;
-}
-
-.maneuver-modal .button-group div {
-  width: 80px;
-  height: 40px;
-  padding: 5px;
-  font-weight: bold;
-  font-size: 16px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 5px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.maneuver-modal .button-group div:hover,
-.maneuver-modal .button-group div.active {
-  transform: scale(1.05);
-  box-shadow: 0 0 5px rgba(0,0,0,0.3);
-  border: 2px solid black;
-}
-
-.maneuver-modal .focus-checkbox-container {
-  display: flex;
-  justify-content: center;
-  gap: 5px;
-  margin-top: 5px;
-  min-height: 20px; /* Ensure space is reserved even when empty */
-}
-
-.maneuver-modal .focus-checkbox {
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  margin: 0;
-  appearance: none;
-  -webkit-appearance: none;
-  border: 1px solid #999;
-  background-color: #f0f0f0;
-  position: relative;
-  cursor: pointer;
-}
-
-.maneuver-modal .focus-checkbox::before {
-  content: "F";
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  font-size: 12px;
-  font-weight: bold;
-}
-
-.maneuver-modal .focus-checkbox:checked {
-  background-color: #4CAF50;
-}
-
-.maneuver-modal .focus-checkbox:checked::before {
-  color: white;
-}
-.maneuver-modal .die-display {
-  width: 90px;
-  height: 90px;
-  border-radius: 10px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  font-weight: bold;
-  font-size: 20px;
-  margin-top: 10px;
-}
-
-.maneuver-modal .footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-top: 20px;
-}
-
-.maneuver-modal .focus-counter {
-  font-size: 18px;
-  display: flex;
-  align-items: center;
-  background-color: rgba(0, 0, 0, 0.1);
-  padding: 10px;
-  border-radius: 20px;
-}
-
-.maneuver-modal .focus-counter #maneuver-focus-number {
-  font-size: 24px;
-  font-weight: bold;
-  color: #4CAF50;
-  margin-right: 5px;
-}
-
-.maneuver-modal .roll-dice {
-  padding: 10px 20px;
-  background-color: #4CAF50;
-  color: white;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-  font-size: 18px;
-  min-width: 200px;
-  text-align: center;
-}
-
-.maneuver-modal .roll-dice.disabled {
-  background-color: #ccc;
-  cursor: not-allowed;
-}
-
-.maneuver-modal .die-malus { background-color: #b3cde0; }
-.maneuver-modal .die-neutral { background-color: #f5e665; }
-.maneuver-modal .die-bonus { background-color: #66c266; }
-.maneuver-modal .die-critical { background-color: #ff6666; }

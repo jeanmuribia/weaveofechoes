@@ -31,40 +31,58 @@
           "body": {
             "baseValue": "neutral",  
             "currentValue": "neutral",  
-            "injury":false
+            "injury":false,
+            "tag1": "",
+    "tag2": "",
+    "tag3": ""
             
           },
           "soul": {
             "baseValue": "neutral",
             "currentValue": "neutral",
-            "injury":false
+            "injury":false,
+            "tag1": "",
+    "tag2": "",
+    "tag3": ""
             
           },
           "mind": {
             "baseValue": "neutral",
             "currentValue": "neutral",
-            "injury":false
+            "injury":false,
+            "tag1": "",
+    "tag2": "",
+    "tag3": ""
             
           },
           "martial": {
             
             "baseValue": "neutral",
             "currentValue": "neutral",
-            "injury":false
+            "injury":false,
+            "tag1": "",
+    "tag2": "",
+    "tag3": ""
             
           },
           "elementary": {
             
             "baseValue": "neutral",
             "currentValue": "neutral",
-            "injury":false
+            "injury":false,
+            "tag1": "",
+    "tag2": "",
+    "tag3": ""
             
           },
           "rhetoric": {
             
             "baseValue": "neutral",
             "currentValue": "neutral",
-            "injury":false
+            "injury":false,
+            "tag1": "",
+    "tag2": "",
+    "tag3": ""
             
           }
         },

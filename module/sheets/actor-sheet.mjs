@@ -55,6 +55,11 @@ export class WoeActorSheet extends ActorSheet {
     this.selectedContext = null;
     this.selectedMembers = [];
     this.maneuverCost = null;
+    this.maneuverSelections = {
+      attribute: null,
+      temper: null,
+      context: null
+  };
 
     Hooks.on('synergyVisibilityChanged', (actor, isHidden) => {
       if (actor.id === this.actor.id) {
@@ -116,11 +121,59 @@ export class WoeActorSheet extends ActorSheet {
     //focus point
     this._prepareFocusPointsData(context);
 
-    console.log("Prepared data:", context);
     return context;
 
    
   }
+
+  async rollDie(type) {
+    if (!type) return "undefined";
+
+    type = type.toLowerCase();
+    const roll = await Roll.create("1d12").evaluate({async: false}); // Nouvelle syntaxe
+
+    let result;
+    switch (type) {
+        case 'malus':
+            result = (roll.total <= 7) ? "Setback" : (roll.total <= 11) ? "Nothing" : "Gain";
+            break;
+        case 'neutral':
+            result = (roll.total <= 3) ? "Setback" : (roll.total <= 9) ? "Nothing" : "Gain";
+            break;
+        case 'bonus':
+            result = (roll.total <= 2) ? "Setback" : (roll.total <= 7) ? "Nothing" : "Gain";
+            break;
+        case 'critical':
+            result = (roll.total == 1) ? "Setback" : (roll.total <= 5) ? "Nothing" : "Gain";
+            break;
+        default:
+            result = "undefined";
+    }
+
+    return result;
+}
+
+formatResult(result) {
+    switch (result) {
+        case "Gain":
+            return `<span class="result-gain"><strong>${result}</strong></span>`;
+        case "Setback":
+            return `<span class="result-setback"><strong>${result}</strong></span>`;
+        default:
+            return result; // Aucun changement pour "Nothing"
+    }
+}
+
+getColorForValue(value) {
+  const colors = {
+      critical: "gold",
+      bonus: "green",
+      neutral: "blue",
+      malus: "red"
+  };
+  return colors[value] || "gray";
+}
+  
 
   _prepareFocusPointsData(sheetData) {
     const actorData = sheetData;
@@ -166,11 +219,14 @@ export class WoeActorSheet extends ActorSheet {
     html.find('.base-value-indicator').on('click', (event) => {
       this.handleCardEdit(event, html);
     });
+
+    html.find('.attribute-tag-field').on('change', this._onTagChange.bind(this));
   
     // Focus points visibility
     html.find('input[name="system.focusPoints.isVisible"]').change(this._onFocusPointsVisibilityChange.bind(this));
     html.find('.focus-add').click(this._onAddFocusPoints.bind(this));
     html.find('.focus-subtract').click(this._onSubtractFocusPoints.bind(this));
+    
   
     
     // Wounds, Injuries, and Trauma management
@@ -192,6 +248,13 @@ export class WoeActorSheet extends ActorSheet {
     // Relationships
     this.displayRelationships(html);
     this.addRelationshipListeners(html);
+
+    html.find('.attribute-tag-field').on('keydown', (event) => {
+      if (event.key === 'Enter') {
+        event.preventDefault(); // Empêche le retour à la ligne
+        event.target.blur(); // Simule la fin de l'édition si nécessaire
+      }
+    });
   }
 
   rollTemperOrAttribute(field, type) {
@@ -204,8 +267,6 @@ export class WoeActorSheet extends ActorSheet {
       value = this.actor.system.attributes[field].currentValue;
     }
   
-    // Log the roll for debugging
-    console.log("Rolling die for:", type, field, "with value:", value);
   
     // Roll the die with the current value (like 'malus', 'neutral', etc.)
     this.handleSingleDiceRoll(value);  // Use "this" to reference the method correctly
@@ -226,6 +287,7 @@ export class WoeActorSheet extends ActorSheet {
     });
   }
 
+  // Function to set up attribute listeners for injuries
   async _setupAttributeListeners(html) {
     const attributes = ['body', 'mind', 'soul', 'martial', 'elementary', 'rhetoric'];
     
@@ -233,6 +295,7 @@ export class WoeActorSheet extends ActorSheet {
       const injuryCheckbox = html.find(`#${attr}-injury`);
       const baseValue = this.actor.system.attributes[attr].baseValue;
   
+      // Configuration initiale pour Malus
       if (baseValue === 'malus') {
         injuryCheckbox.prop('disabled', true)
                       .parent().addClass('disabled')
@@ -242,39 +305,81 @@ export class WoeActorSheet extends ActorSheet {
   
       injuryCheckbox.on('click', async event => {
         const isChecked = event.currentTarget.checked;
-        
-        await this.actor.update({
-          [`system.attributes.${attr}.injury`]: isChecked,
-          [`system.attributes.${attr}.currentValue`]: isChecked ? 'malus' : baseValue
-        });
+        const updates = {
+          [`system.attributes.${attr}.injury`]: isChecked
+        };
   
+        if (!isChecked) {
+          // Si l'injury est enlevée, il faut calculer la current value basée sur les wounds
+          const wounds = Object.values(this.actor.system.wounds).filter(w => w).length;
+          let newValue = baseValue;
+          for(let i = 0; i < wounds; i++) {
+            newValue = this._degradeValue(newValue);
+          }
+          updates[`system.attributes.${attr}.currentValue`] = newValue;
+        } else {
+          updates[`system.attributes.${attr}.currentValue`] = 'malus';
+        }
+  
+        await this.actor.update(updates);
         this.render();
       });
     });
   }
+  
 
   _setupWoundListeners(html) {
-    ['1', '2', '3'].forEach(number => {
+    ['1', '2', '3', 'knockedOut'].forEach(number => {
       const woundBox = html.find(`.wound-box[data-wound="${number}"]`);
-      woundBox.on('click', () => this._handleWoundClick(number));
+      if (number === 'knockedOut') {
+        woundBox.on('click', () => this._handleKnockedOut());
+      } else {
+        woundBox.on('click', () => this._handleWoundClick(number));
+      }
     });
   }
   
-  async _handleWoundClick(number) {
-    const wounds = foundry.utils.deepClone(this.actor.system.wounds);
-    
-    // Vérifier si on peut interagir avec cette wound
-    if (!this._canInteractWithWound(number, wounds)) return;
-  
-    if (wounds[`wound${number}`]) {
-      // Unticking
-      await this._untickWound(number);
-    } else {
-      // Ticking
-      await this._tickWound(number);
-    }
+  async _handleKnockedOut() {
+    // Toggle le knockedOut
+    const isKnockedOut = this.actor.system.wounds.knockedOut;
+    await this.actor.update({
+      'system.wounds.knockedOut': !isKnockedOut
+    });
   }
   
+  _handleWoundClick(number) {
+    const wounds = this.actor.system.wounds;
+    const attributes = this.actor.system.attributes;
+    const isActivating = !wounds[`wound${number}`]; // true si on active la wound
+    
+    const updates = {
+      [`system.wounds.wound${number}`]: isActivating
+    };
+  
+    // Pour chaque attribut, mettre à jour la current value SI PAS INJURED
+    Object.entries(attributes).forEach(([key, attr]) => {
+      if (!attr.injury) {  
+        let newValue = attr.baseValue;
+        let activeWounds = 0;
+        
+        // Compter les wounds actives en incluant celle qu'on est en train de modifier
+        Object.entries(wounds).forEach(([woundKey, isActive]) => {
+          if (woundKey.startsWith('wound') && (woundKey === `wound${number}` ? isActivating : isActive)) {
+            activeWounds++;
+          }
+        });
+  
+        // Dégrader la valeur en fonction du nombre de wounds actives
+        for(let i = 0; i < activeWounds; i++) {
+          newValue = this._degradeValue(newValue);
+        }
+        
+        updates[`system.attributes.${key}.currentValue`] = newValue;
+      }
+    });
+  
+    this.actor.update(updates);
+  }
   _canInteractWithWound(number, wounds) {
     if (wounds[`wound${number}`]) {
       // Pour untick
@@ -289,35 +394,7 @@ export class WoeActorSheet extends ActorSheet {
     }
   }
   
-  async _tickWound(number) {
-    const updates = {
-      [`system.wounds.wound${number}`]: true
-    };
-  
-    // Dégrader tous les attributs non-malus
-    Object.entries(this.actor.system.attributes).forEach(([key, attr]) => {
-      if (attr.baseValue !== 'malus' && attr.currentValue !== 'malus') {
-        updates[`system.attributes.${key}.currentValue`] = this._degradeValue(attr.currentValue);
-      }
-    });
-  
-    await this.actor.update(updates);
-  }
-  
-  async _untickWound(number) {
-    const updates = {
-      [`system.wounds.wound${number}`]: false
-    };
-  
-    // Améliorer les attributs si possible
-    Object.entries(this.actor.system.attributes).forEach(([key, attr]) => {
-      if (!attr.injury && attr.baseValue !== 'malus') {
-        updates[`system.attributes.${key}.currentValue`] = this._improveValue(attr.currentValue, attr.baseValue);
-      }
-    });
-  
-    await this.actor.update(updates);
-  }
+
   
   _degradeValue(value) {
     const values = ['critical', 'bonus', 'neutral', 'malus'];
@@ -421,138 +498,257 @@ export class WoeActorSheet extends ActorSheet {
     });
   }
 
+  async _onTagChange(event) {
+    const input = event.currentTarget;
+    const attribute = input.dataset.attribute;
+    const tagNumber = input.dataset.tag;
+    const newValue = input.value;
+  
+    await this.actor.update({
+      [`system.attributes.${attribute}.tag${tagNumber}`]: newValue
+    });
+  }
 
   openManeuverWindow() {
-    this.maneuverFocus = this.actor.system.focusPoints.current;
-    this.focusPointsUsed = 0;  // Initialize the focus points counter to 0
+    this.maneuverSelections = {
+        attribute: null,
+        temper: null,
+        context: null
+    };
+    this.focusPointsByRow = {
+        attributes: 0,
+        tempers: 0
+    };
+
     const content = `
-      <div class="maneuver-modal">
-        <h2 class="maneuver-title">Maneuver Launcher</h2>
-        
-        <div class="maneuver-grid">
-          <div class="section attribute-section">
-            <h3>On which of your attributes are you relying on?</h3>
-            <div id="attribute-section" class="button-group">
-              ${['body', 'soul', 'mind', 'martial', 'elementary', 'rhetoric'].map(attr => 
-                `<div class="attribute-choice die-${this.getDieType(attr, 'attributes')}" data-attribute="${attr}">
-                  <span>${attr}</span>
-                </div>`
-              ).join('')}
+        <div class="maneuver-modal">
+            <div class="maneuver-grid">
+                <div class="section">
+                    <h3>On which of your attributes are you relying on?</h3>
+                    <div id="attribute-section" class="button-group">
+                        ${['body', 'soul', 'mind', 'martial', 'elementary', 'rhetoric'].map(attr => 
+                            `<div class="attribute-choice die-${this.getDieType(attr, 'attributes')}" data-attribute="${attr}">
+                                ${attr}
+                            </div>`
+                        ).join('')}
+                    </div>
+                    <div class="focus-checkbox-container" id="focus-attributes"></div>
+                    <div class="die-display" id="attributes-die"></div>
+                </div>
+
+                <div class="section">
+                    <h3>What is your current state of mind?</h3>
+                    <div id="temper-section" class="button-group">
+                        ${['fire', 'water', 'earth', 'air'].map(temper => 
+                            `<div class="temper-choice die-${this.getDieType(temper, 'tempers')}" data-temper="${temper}">
+                                ${temper}
+                            </div>`
+                        ).join('')}
+                    </div>
+                    <div class="focus-checkbox-container" id="focus-tempers"></div>
+                    <div class="die-display" id="tempers-die"></div>
+                </div>
+
+                <div class="section">
+                    <h3>Is the context advantageous?</h3>
+                    <div id="context-section" class="button-group">
+                        <div class="context-choice die-malus" data-context="malus">Detrimental</div>
+                        <div class="context-choice die-neutral" data-context="neutral">Neutral</div>
+                        <div class="context-choice die-bonus" data-context="bonus">Favorable</div>
+                        <div class="context-choice die-critical" data-context="critical">Highly Beneficial</div>
+                    </div>
+                    <div class="die-display" id="context-die"></div>
+                </div>
             </div>
-            <div class="focus-checkbox-container" id="focus-attributes"></div>
-            <div class="die-display" id="attributes-die"></div>
-          </div>
-  
-          <div class="section temper-section">
-            <h3>What is your current state of mind?</h3>
-            <div id="temper-section" class="button-group">
-              ${['fire', 'water', 'earth', 'air'].map(temper => 
-                `<div class="temper-choice die-${this.getDieType(temper, 'tempers')}" data-temper="${temper}">
-                  <span>${temper}</span>
-                </div>`
-              ).join('')}
+
+            <div class="footer">
+                <div class="focus-counter">
+                    <span id="maneuver-focus-number">${this.actor.system.focusPoints.current}</span> focus points remaining
+                </div>
+                <button class="roll-dice disabled" id="roll-dice-button">
+                    <i class="fas fa-dice"></i>
+                    <span class="roll-text">Please answer all 3 questions</span>
+                </button>
             </div>
-            <div class="focus-checkbox-container" id="focus-tempers"></div>
-            <div class="die-display" id="tempers-die"></div>
-          </div>
-  
-          <div class="section context-section">
-            <h3>Is the context advantageous?</h3>
-            <div id="context-section" class="button-group">
-              <div class="context-choice die-malus" data-context="malus">Detrimental</div>
-              <div class="context-choice die-neutral" data-context="neutral">Neutral</div>
-              <div class="context-choice die-bonus" data-context="bonus">Favorable</div>
-              <div class="context-choice die-critical" data-context="critical">Highly beneficial</div>
-            </div>
-            <div class="die-display" id="context-die"></div>
-          </div>
         </div>
-  
-        <div class="footer">
-          <div class="focus-counter">
-            <span id="maneuver-focus-number">${this.maneuverFocus}</span> focus points remaining
-          </div>
-          <div class="roll-dice-container">
-            <div class="roll-dice disabled">
-              <i class="fas fa-dice"></i> 
-              <span class="roll-text">Please answer all 3 questions</span>
-            </div>
-          </div>
-        </div>
-      </div>
     `;
-  
-    let dialog = new Dialog({
-      title: "Maneuver",
-      content: content,
-      buttons: {},
-      render: (html) => {
-        this.disableTraumatizedTempers(html);
 
-         // Handle click events for the checkboxes to track focus points
-      html.find('.focus-checkbox').on('change', (event) => {
-        if (event.target.checked) {
-          this.focusPointsUsed++;  // Increment when checked
-        } else {
-          this.focusPointsUsed--;  // Decrement when unchecked
-        }
-        console.log("Focus points used: ", this.focusPointsUsed);  // Debug log to check the counter
-      });
+    new Dialog({
+        title: "Maneuver",
+        content: content,
+        buttons: {},
+        render: (html) => this.attachManeuverListeners(html)
+    },{
+      width: 800,  // Ajuster cette valeur selon vos besoins
+      height: 975  // Ajuster cette valeur selon vos besoins
+  }).render(true);
+}
+attachManeuverListeners(html) {
+  // Attributs
+  html.find('.attribute-choice').on('click', (event) => {
+      const element = $(event.currentTarget);
+      const attribute = element.data('attribute');
+      
+      element.siblings().removeClass('selected');
+      element.addClass('selected');
+      
+      this.maneuverSelections.attribute = attribute;
+      this.updateDieDisplay(html, 'attributes', attribute);
+      this.updateFocusRow(html, 'attributes', attribute);
+      this.checkAndUpdateRollButton(html);
+  });
 
-        
-      html.find('.attribute-choice, .temper-choice').on('click', (event) => {
-        const $target = $(event.currentTarget);
-        const type = $target.hasClass('attribute-choice') ? 'attributes' : 'tempers';
-        const selectedItem = $target.data(type === 'attributes' ? 'attribute' : 'temper');
+  // Tempers
+  html.find('.temper-choice').on('click', (event) => {
+      const element = $(event.currentTarget);
+      const temper = element.data('temper');
       
-        // Deselect all other elements in the current section
-        html.find(`.${type}-choice`).removeClass('active');  // Remove active class from all
-        $target.addClass('active');  // Set the clicked one as active
+      element.siblings().removeClass('selected');
+      element.addClass('selected');
       
-        this[type === 'attributes' ? 'selectedAttribute' : 'selectedTemper'] = selectedItem;
-        this.updateFocusSection(html, selectedItem, type);
-        this.updateDieDisplay(html, type, selectedItem);
-        this.updateRollButtonState(html);
-      });
-  
-        html.find('.context-choice').on('click', (event) => {
-          event.preventDefault();
-          event.stopPropagation(); // Empêche la propagation de l'événement
-        
-          const selectedContext = $(event.currentTarget).data('context');
-          console.log(`Context selected: ${selectedContext}`); // Log le contexte sélectionné
-          this.selectedContext = selectedContext;
-        
-          // Pas de modifications sur les autres sections ici
-          this.updateDieDisplay(html, 'context', selectedContext);
-          this.updateActiveState(html, '.context-choice', event.currentTarget);
-          this.updateRollButtonState(html);
-        
-          // Aucune manipulation des checkboxes pour le contexte
-          console.log('Context click handled: no focus checkboxes should be affected');
-        });
-  
-        // Bouton de lancement
-        html.find('.roll-dice').on('click', () => this.launchManeuver());
-      },
-      close: () => {
-        this.selectedAttribute = null;
-        this.selectedTemper = null;
-        this.selectedContext = null;
-        this.selectedAttributeValue = null;
-        this.selectedTemperValue = null;
-        this.selectedContextValue = null;
-        this.focusPointsUsed = 0;  // Reset focus points used on modal close
-        this.maneuverFocus = this.actor.system.focusPoints.current; // Reset maneuver focus to current state
+      this.maneuverSelections.temper = temper;
+      this.updateDieDisplay(html, 'tempers', temper);
+      this.updateFocusRow(html, 'tempers', temper);
+      this.checkAndUpdateRollButton(html);
+  });
+
+  // Contexte
+  html.find('.context-choice').on('click', (event) => {
+      const element = $(event.currentTarget);
+      const context = element.data('context');
+      
+      element.siblings().removeClass('selected');
+      element.addClass('selected');
+      
+      this.maneuverSelections.context = context;
+      this.updateDieDisplay(html, 'context', context);
+      this.checkAndUpdateRollButton(html);
+  });
+
+  // Bouton de lancement
+  html.find('#roll-dice-button').on('click', () => {
+      if (this.checkAllSelections()) {
+          this.launchManeuver();
       }
-    }, {
-      width: 600,
-      height: 'auto',
-      resizable: false
-    });
+  });
+}
+
+checkAllSelections() {
+  return this.maneuverSelections.attribute && 
+         this.maneuverSelections.temper && 
+         this.maneuverSelections.context;
+}
+
+
+checkAndUpdateRollButton(html) {
+  const canRoll = this.checkAllSelections();
+  const rollButton = html.find('#roll-dice-button');
+  const rollText = rollButton.find('.roll-text');
   
-    dialog.render(true);
+  if (canRoll) {
+      rollButton.removeClass('disabled');
+      rollText.text('Roll the Dice!');
+  } else {
+      rollButton.addClass('disabled');
+      rollText.text('Please answer all 3 questions');
   }
+}
+
+
+updateFocusRow(html, type, selectedItem) {
+  const focusContainer = html.find(`#focus-${type}`);
+  const previousFocusPoints = this.focusPointsByRow[type];
+
+  // Rétablir les points focus précédents au compteur remaining
+  const remainingFocus = parseInt(html.find('#maneuver-focus-number').text());
+  const newRemaining = remainingFocus + previousFocusPoints;
+  html.find('#maneuver-focus-number').text(newRemaining);
+  
+  // Réinitialiser les points de focus pour cette ligne
+  this.focusPointsByRow[type] = 0;
+  
+  // Vider le conteneur existant
+  focusContainer.empty();
+  
+  if (type === 'context') return;
+  
+  const baseValue = type === 'attributes' 
+      ? this.actor.system.attributes[selectedItem]?.currentValue
+      : this.actor.system.tempers[selectedItem]?.currentValue;
+  
+  let numCheckboxes = 0;
+  switch(baseValue) {
+      case 'malus': numCheckboxes = 3; break;
+      case 'neutral': numCheckboxes = 2; break;
+      case 'bonus': numCheckboxes = 1; break;
+      case 'critical': numCheckboxes = 0; break;
+  }
+  
+  for (let i = 0; i < numCheckboxes; i++) {
+      const checkbox = $(`<input type="checkbox" class="focus-checkbox" data-type="${type}" />`);
+      focusContainer.append(checkbox);
+      
+      checkbox.on('change', (event) => {
+          const currentRemaining = parseInt(html.find('#maneuver-focus-number').text());
+          
+          if (event.target.checked) {
+              if (currentRemaining > 0) {
+                  this.focusPointsByRow[type]++;
+                  // Mettre à jour l'affichage des points restants
+                  html.find('#maneuver-focus-number').text(currentRemaining - 1);
+              } else {
+                  event.preventDefault();
+                  return;
+              }
+          } else {
+              this.focusPointsByRow[type]--;
+              // Rendre le point au compteur remaining
+              html.find('#maneuver-focus-number').text(currentRemaining + 1);
+          }
+          
+          const newDieType = this.calculateDieTypeWithFocus(baseValue, this.focusPointsByRow[type]);
+          this.updateDieDisplay(html, type, selectedItem, newDieType);
+      });
+  }
+  
+  this.updateDieDisplay(html, type, selectedItem, baseValue);
+}
+updateFocusPointsDisplay(html, remainingFocus) {
+  const focusDisplay = html.find('#maneuver-focus-number');
+  focusDisplay.text(remainingFocus);
+
+  // Si le focus restant est 0, désactivez les checkbox
+  if (remainingFocus <= 0) {
+      html.find('.focus-checkbox:not(:checked)').prop('disabled', true);
+  } else {
+      html.find('.focus-checkbox').prop('disabled', false);
+  }
+}
+
+updateFocusPointsDisplay(html, remainingFocus) {
+    const focusDisplay = html.find('#maneuver-focus-number');
+    focusDisplay.text(remainingFocus);
+
+    // Si le focus restant est 0, désactivez les checkbox
+    if (remainingFocus <= 0) {
+        html.find('.focus-checkbox:not(:checked)').prop('disabled', true);
+    } else {
+        html.find('.focus-checkbox').prop('disabled', false);
+    }
+}
+
+disableFocusCheckboxes(html) {
+  html.find('.focus-checkbox').prop('disabled', true);
+}
+
+initializeFocusState(html) {
+  const currentFocus = this.actor.system.focusPoints.current;
+  if (currentFocus <= 0) {
+      this.disableFocusCheckboxes(html);
+  }
+}
+
+
 
   handleProfileImageEditing(html) {
     html.find('.profile-image').on('click', async () => {
@@ -578,7 +774,6 @@ export class WoeActorSheet extends ActorSheet {
 
   updateFocusSection(html, selectedItem, type) {
     if (type === 'context') {
-      console.log('Context selected: skipping focus section update for other sections');
       return; // Skip context focus handling
     }
 
@@ -627,7 +822,6 @@ export class WoeActorSheet extends ActorSheet {
       // ** Blip effect for disabled checkboxes when clicked **
       checkbox.on('click', (event) => {
         if (checkbox.prop('disabled')) {
-          console.log("Disabled checkbox clicked");
           this.blipFocusCounter();  // Trigger the blip effect for disabled checkboxes
         }
       });
@@ -650,6 +844,20 @@ export class WoeActorSheet extends ActorSheet {
         return 0; // Default case
     }
   }
+
+  refundFocusPoints(selectedItem) {
+    if (!selectedItem) return;
+  
+    // Logique pour rembourser les focus points utilisés
+    const usedFocusPoints = this.focusPointsUsed; // À ajuster selon votre structure
+    this.maneuverFocus += usedFocusPoints; // Remboursement des points
+    this.focusPointsUsed = 0; // Réinitialisation du compteur de points utilisés
+  
+    // Mettez à jour l'affichage des focus points
+    const focusDisplay = $('.focus-counter #maneuver-focus-number');
+    focusDisplay.text(this.maneuverFocus);
+  }
+  
 
   updateRollButtonState(html) {
     const rollButton = html.find('.roll-dice');
@@ -818,42 +1026,64 @@ getCheckedBoxes(type) {
     });
   }
   
-  updateDieDisplay(html, type, selectedItem, newValue) {
-    const dieDisplay = html.find(`#${type}-die`);
-    if (dieDisplay.length === 0) {
-      console.error(`Die display element not found for ${type}`);
-      return;
-    }
-    
-    let dieType = newValue || this.getDieType(selectedItem, type);
-    dieType = String(dieType).toLowerCase();
-    
-    dieDisplay.attr('class', 'die-display die-' + dieType);
-    dieDisplay.html(`<i class="fas fa-dice-d20"></i><span>${dieType.charAt(0).toUpperCase() + dieType.slice(1)}</span>`);
-
-    // Update the selected value
-    if (type === 'attributes') {
-      this.selectedAttribute = selectedItem;
-      this.selectedAttributeValue = dieType;
-    } else if (type === 'tempers') {
-      this.selectedTemper = selectedItem;
-      this.selectedTemperValue = dieType;
-    } else if (type === 'context') {
-      this.selectedContext = selectedItem;
-      this.selectedContextValue = dieType;
-    }
-
-    this.updateFocusDisplay();
+// Mise à jour de la méthode updateDieDisplay
+updateDieDisplay(html, type, selectedItem) {
+  const dieDisplay = html.find(`#${type}-die`);
+  if (!dieDisplay.length) return;
+  
+  let dieType;
+  
+  // Déterminer le type de dé en fonction du focus
+  if (type === 'context') {
+      dieType = selectedItem;
+  } else {
+      const baseValue = type === 'attributes' ? 
+          this.actor.system.attributes[selectedItem]?.currentValue : 
+          this.actor.system.tempers[selectedItem]?.currentValue;
+      const focusPoints = this.focusPointsByRow[type] || 0;
+      dieType = this.calculateDieTypeWithFocus(baseValue, focusPoints);
   }
 
+  dieType = String(dieType).toLowerCase();
+  dieDisplay.attr('class', `die-display die-${dieType}`);
+  dieDisplay.html(`<i class="fas fa-dice"></i> ${dieType.charAt(0).toUpperCase() + dieType.slice(1)}`);
+}
+// Nouvelle méthode pour mettre à jour le bouton Roll the Dice
+updateRollButton(html) {
+  const rollButton = html.find('.roll-dice');
+  const rollText = rollButton.find('.roll-text');
+  const isComplete = this.checkAllSelectionsComplete();
+
+  if (isComplete) {
+      rollButton.removeClass('disabled');
+      rollText.text('Roll the Dice!');
+  } else {
+      rollButton.addClass('disabled');
+      rollText.text('Please answer all 3 questions');
+  }
+}
+
+// Méthode auxiliaire pour vérifier si toutes les sélections sont faites
+checkAllSelectionsComplete() {
+  return this.maneuverSelections.attribute && 
+         this.maneuverSelections.temper && 
+         this.maneuverSelections.context;
+}
   
- getDieType(type, category) {
+getDieType(item, category) {
   if (category === 'attributes') {
-    return this.actor.system.attributes[type]?.currentValue || 'neutral';
+      return this.actor.system.attributes[item]?.currentValue || 'neutral';
   } else if (category === 'tempers') {
-    return this.actor.system.tempers[type]?.currentValue || 'neutral';
+      return this.actor.system.tempers[item]?.currentValue || 'neutral';
   } else if (category === 'context') {
-    return type;
+      // Mapping direct des labels de contexte vers les types de dés
+      const contextMapping = {
+          'Detrimental': 'malus',
+          'Neutral': 'neutral',
+          'Favorable': 'bonus',
+          'Highly Beneficial': 'critical'
+      };
+      return contextMapping[item] || 'neutral';
   }
   return 'neutral';
 }
@@ -938,60 +1168,176 @@ updateFocusPointsFromRelationships() {
 
 
     async launchManeuver() {
-      if (!this.selectedAttribute || !this.selectedTemper || !this.selectedContext) {
-        ui.notifications.error("You must answer all three questions.");
-        return;
+      if (!this.checkAllSelections()) return;
+  
+      // Calculer le total des focus points utilisés
+      const totalFocusUsed = Object.values(this.focusPointsByRow).reduce((a, b) => a + b, 0);
+      console.log("Total Focus Used :", totalFocusUsed);
+  
+      // Vérifier si totalFocusUsed est NaN
+      if (isNaN(totalFocusUsed)) {
+          console.error("Erreur : totalFocusUsed est NaN !");
+          return;
       }
-    
-      console.log("Selected Attribute:", this.selectedAttribute, "Value:", this.selectedAttributeValue);
-      console.log("Selected Temper:", this.selectedTemper, "Value:", this.selectedTemperValue);
-      console.log("Selected Context:", this.selectedContext, "Value:", this.selectedContextValue);
-    
-      const attributeValue = this.selectedAttributeValue;
-      const temperValue = this.selectedTemperValue;
-      const contextValue = this.selectedContextValue;
-    
-      // Retrieve focus points used from the stored value during modal interaction
-      const usedFocus = this.focusPointsUsed || 0; // Default to 0 if undefined
-      console.log("Focus points used during maneuver:", usedFocus);
-    
-      // Log only if focus points are used
-      const focusMessage = usedFocus > 0 ? ` with ${usedFocus} focus points used` : '';
-    
-      await this.actor.update({ 'system.focusPoints.current': this.maneuverFocus });
-    
-      const attributeResult = await rollDie(attributeValue);
-      const temperResult = await rollDie(temperValue);
-      const contextResult = await rollDie(contextValue);
-    
-      const message = `
-        <div class="maneuver-result">
-          <span class="maneuver-choices">
-            ${this.getColoredLabel(this.selectedAttribute, attributeValue)}, 
-            ${this.getColoredLabel(this.selectedTemper, temperValue)} & 
-            ${this.getColoredLabel(this.getContextName(this.selectedContext), contextValue)} 
-            rolled${focusMessage}:
-          </span>
-          <span class="maneuver-results">
-            ${attributeResult}, ${temperResult}, ${contextResult}
-          </span>
-        </div>
-      `;
-    
-      ChatMessage.create({
-        content: message,
-        speaker: ChatMessage.getSpeaker({ actor: this.actor }),
+  
+      // Déduire les points de focus
+      const currentFocus = this.actor.system.focusPoints.current;
+      const remainingFocus = currentFocus - totalFocusUsed;
+      console.log("Current Focus :", currentFocus, "Remaining Focus :", remainingFocus);
+  
+      if (remainingFocus < 0) {
+          console.warn("Focus points cannot be negative. Resetting to 0.");
+          await this.actor.update({ 'system.focusPoints.current': 0 });
+      } else {
+          await this.actor.update({
+              'system.focusPoints.current': remainingFocus,
+              'system.focusPoints.base': remainingFocus
+          });
+      }
+  
+      // Procéder aux dés et autres logiques
+      const attributeValue = this.calculateFinalDieValue('attributes');
+      const temperValue = this.calculateFinalDieValue('tempers');
+      const contextValue = this.maneuverSelections.context;
+  
+      const results = await Promise.all([
+          this.rollDie(attributeValue),
+          this.rollDie(temperValue),
+          this.rollDie(contextValue)
+      ]);
+  
+      const focusMessage = totalFocusUsed > 0 ? ` with ${totalFocusUsed} focus points` : '';
+  
+      const chatContent = `
+      <div class="dice-roll">
+          <div class="dice-result">
+              <!-- Message décrivant ce qui a été lancé -->
+              <div style="margin-bottom: 5px;">
+                  <strong>${this.actor.name}</strong> rolled 
+                  <span style="color: #e63946;">
+                      ${this.maneuverSelections.attribute.charAt(0).toUpperCase() + this.maneuverSelections.attribute.slice(1)}
+                  </span>, 
+                  <span style="color: #2a9d8f;">
+                      ${this.maneuverSelections.temper.charAt(0).toUpperCase() + this.maneuverSelections.temper.slice(1)}
+                  </span>, and 
+                  <span style="color: #8f8f8f;"> 
+                      ${this.getContextName(this.maneuverSelections.context)}
+                  </span> 
+                  with ${totalFocusUsed} focus points.
+              </div>
+  
+              <!-- Icônes et résultats -->
+              <div style="display: flex; gap: 10px; justify-content: center; align-items: center;">
+                  ${this.getIconWithResult(results[0], 'attribute')}
+                  ${this.getIconWithResult(results[1], 'temper')}
+                  ${this.getIconWithResult(results[2], 'context')}
+              </div>
+          </div>
+      </div>
+  `;
+  
+
+      await ChatMessage.create({
+          user: game.user.id,
+          speaker: ChatMessage.getSpeaker({ actor: this.actor }),
+          content: chatContent
       });
-    
-      // Reset selections and focus points
-      this.selectedAttribute = null;
-      this.selectedTemper = null;
-      this.selectedContext = null;
-    
-      // Close the modal and reset focus
+  
       this.closeManeuverModal();
+  }
+  
+  getIconWithResult(result, type) {
+    let color = '';
+    let iconPath = '';
+    switch (result.toLowerCase()) {
+        case 'setback':
+            color = '#e63946'; // Rouge pour setback
+            iconPath = 'systems/weave_of_echoes/module/icons/setbackIcon.svg';
+            break;
+        case 'gain':
+            color = '#2a9d8f'; // Vert pour gain
+            iconPath = 'systems/weave_of_echoes/module/icons/gainIcon.svg';
+            break;
+        case 'nothing':
+        case 'neutral':
+            color = '#8f8f8f'; // Gris pour nothing/neutral
+            iconPath = 'systems/weave_of_echoes/module/icons/nothingIcon.svg';
+            break;
+        default:
+            color = '#f4a261'; // Couleur par défaut (orange clair)
+            iconPath = 'systems/weave_of_echoes/module/icons/defaultIcon.svg'; // Par exemple, une icône générique
     }
+
+    return `
+        <span style="color: ${color};">
+            <img src="${iconPath}" style="width: 24px; height: 24px; vertical-align: middle; border: none;" />
+            ${result.charAt(0).toUpperCase() + result.slice(1)} <!-- Affiche le texte du résultat -->
+        </span>
+    `;
+}
+  async syncFocusPointsWithRemaining(remainingFocus) {
+    console.log("Synchronizing focus points:", remainingFocus);
+
+    if (remainingFocus < 0) {
+        console.warn("Focus points cannot be negative. Resetting to 0.");
+        await this.actor.update({ 'system.focusPoints.current': 0 });
+    } else {
+        await this.actor.update({
+            'system.focusPoints.current': remainingFocus,
+            'system.focusPoints.base': remainingFocus
+        });
+    }
+}
+
+
+  
+  formatDieResult(result, dieType) {
+      const getIcon = (result) => {
+          if (result.includes('Gain')) return '✓';
+          if (result.includes('Setback')) return '✗';
+          return '−';
+      };
+  
+      const getColor = (dieType) => {
+          const colors = {
+              malus: '#aecbfa',
+              neutral: '#fef49c',
+              bonus: '#81c995',
+              critical: '#f28b82'
+          };
+          return colors[dieType] || '#fef49c';
+      };
+  
+      return `
+          <span style="color: ${getColor(dieType)};">
+              ${getIcon(result)} ${result}
+          </span>
+      `;
+  }
+    // Fonction pour calculer la valeur finale en tenant compte des focus points
+    calculateFinalDieValue(type) {
+      const selection = this.maneuverSelections[type === 'attributes' ? 'attribute' : 'temper'];
+      const baseValue = type === 'attributes' ?
+          this.actor.system.attributes[selection]?.currentValue :
+          this.actor.system.tempers[selection]?.currentValue;
+      return this.calculateDieTypeWithFocus(baseValue, this.focusPointsByRow[type] || 0);
+  }
+  
+  calculateDieTypeWithFocus(baseValue, focusPoints) {
+    const dieValues = ['malus', 'neutral', 'bonus', 'critical'];
+    const currentIndex = dieValues.indexOf(baseValue);
+    return dieValues[Math.min(currentIndex + focusPoints, dieValues.length - 1)];
+}
+
+    getResultIcon(result) {
+      const icons = {
+        Gain: '<i class="fas fa-check-circle" style="color: #81c995;"></i>',
+        Stalemate: '<i class="fas fa-minus-circle" style="color: #fef49c;"></i>',
+        Setback: '<i class="fas fa-times-circle" style="color: #f28b82;"></i>'
+      };
     
+      return icons[result] || result; // Retourne l'icône si elle existe, sinon le texte brut
+    }
     
   
     closeManeuverModal() {
@@ -1003,8 +1349,6 @@ updateFocusPointsFromRelationships() {
         }
       }
     
-      // Reset focusPointsUsed when modal is closed
-      console.log("Resetting focus points");
       this.focusPointsUsed = 0;
     }
 
@@ -1020,11 +1364,15 @@ getContextName(contextType) {
 }
 
 // Helper method to get the colored label with capitalized words
-getColoredLabel(name, type) {
-  const capitalizedName = name.split(' ')
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-    .join(' ');
-  return `<span class="color-${type}">${capitalizedName}</span>`;
+getColoredLabel(label) {
+  if (!label) {
+    console.error("Label is null or undefined in getColoredLabel.");
+    return ""; // Retourne une chaîne vide ou une valeur par défaut appropriée
+  }
+
+  // Le label est valide, continuez avec le traitement normal
+  const [firstPart, secondPart] = label.split(":");
+  return `<span style="color: ${secondPart}">${firstPart}</span>`;
 }
 
 
@@ -1043,7 +1391,6 @@ manageTemperEdition(html) {
           const select = $(event.currentTarget);
           const newValue = select.val(); // La nouvelle valeur sélectionnée
           const path = select.data('path'); // Le chemin de la propriété (baseValue)
-          console.log(`Temper: ${temper}, Path: ${path}, New Value: ${newValue}`); // Debug
           await updateTemper(path, newValue);
       });
   };
@@ -1608,13 +1955,11 @@ addRelationshipListeners(html) {
         .map(rel => rel.characterName)   // Get all related character names
         .filter(name => name);           // Exclude empty names from incomplete relationships
 
-    console.log("Existing Relationships:", existingRelationships);
 
     const availableCharacters = allCharacters
         .filter(char => !existingRelationships.includes(char.name) || char.name === selectedCharacterName)
         .filter(char => char.name !== currentActorName); // Exclude the current actor themselves
 
-    console.log("Available Characters:", availableCharacters);
 
     // Build the options HTML for the available characters dropdown
     let options = `<option value="" disabled selected>Choose another character</option>`;
@@ -1662,7 +2007,6 @@ addRelationshipListeners(html) {
   }
 
   _onGroupMemberClick(event) {
-    console.log("Group member clicked:", event.currentTarget.dataset.character);
     const characterName = event.currentTarget.dataset.character;
     const clickedElement = event.currentTarget;
     
@@ -1682,9 +2026,7 @@ addRelationshipListeners(html) {
   }
 
   updateManeuverCost() {
-    console.log("Updating maneuver cost");
     this.maneuverCost = this.calculateManeuverCost();
-    console.log("New maneuver cost:", this.maneuverCost);
     this.render(false);
   }
 
@@ -1717,7 +2059,6 @@ addRelationshipListeners(html) {
   }
 
  calculateManeuverCost() {
-  console.log("Selected members:", this.selectedMembers);
   
   if (this.selectedMembers.length < 1) return null;
 
@@ -1756,7 +2097,6 @@ addRelationshipListeners(html) {
     }
   }
 
-  console.log("Calculated synergy cost:", synergyCost);
   return Math.max(1, synergyCost);
 }
 
@@ -1767,7 +2107,7 @@ addRelationshipListeners(html) {
         return tracker;
       }
     }
-    console.warn(`No associated synergy tracker found for ${this.actor.name}`);
+  
     return null;
   }
 
@@ -1793,16 +2133,16 @@ async function rollDie(type) {
   let result;
   switch (type) {
     case 'malus':
-      result = (roll.total <= 7) ? "Setback" : (roll.total <= 11) ? "Stalemate" : "Gain";
+      result = (roll.total <= 7) ? "Setback" : (roll.total <= 11) ? "Nothing" : "Gain";
       break;
     case 'neutral':
-      result = (roll.total <= 3) ? "Setback" : (roll.total <= 9) ? "Stalemate" : "Gain";
+      result = (roll.total <= 3) ? "Setback" : (roll.total <= 9) ? "Nothing" : "Gain";
       break;
     case 'bonus':
-      result = (roll.total <= 2) ? "Setback" : (roll.total <= 7) ? "Stalemate" : "Gain";
+      result = (roll.total <= 2) ? "Setback" : (roll.total <= 7) ? "Nothing" : "Gain";
       break;
     case 'critical':
-      result = (roll.total == 1) ? "Setback" : (roll.total <= 5) ? "Stalemate" : "Gain";
+      result = (roll.total == 1) ? "Setback" : (roll.total <= 5) ? "Nothing" : "Gain";
       break;
     default:
       result = "undefined";

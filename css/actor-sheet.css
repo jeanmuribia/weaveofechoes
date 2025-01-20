@@ -676,6 +676,8 @@ h3 {
   padding: 15px;
   border-radius: 8px;
   width: 480px;
+  position: relative;
+  top: -30px;
 }
 
 .attribute-row {
@@ -822,7 +824,6 @@ label {
   width: 100%;
   margin-top: auto;
   padding-top: 4px;
-  border-top: 1px solid rgba(0, 0, 0, 0.1);
   font-size: 0.9em;
   gap: 5px;
 }
@@ -869,18 +870,17 @@ label {
 }
 
 .wound-box {
-  position: relative;
   width: 80px;
   height: 80px;
-  background: #ffffff;
+  background: white;
   border-radius: 8px;
-  cursor: pointer;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  cursor: pointer;
   transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
 .wound-box:not(.disabled):hover {
@@ -890,7 +890,21 @@ label {
 
 .wound-box.ticked {
   background: #e6c5c5;
-  border-color: #8b0000;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.wound-box.locked {
+  opacity: 0.7;
+  cursor: not-allowed;
+  background: #d3d3d3;
+}
+
+
+
+.wound-box.knocked.ticked {
+  background: #8b4343; /* Rouge plus doux */
+  color: rgba(255, 255, 255, 0.9); /* Texte blanc légèrement transparent */
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
 }
 
 .wound-box.disabled {
@@ -1148,3 +1162,54 @@ label {
   background-color: #f28b82; /* Rouge */
   color: black;
 }
+
+
+/* Attribute tags */
+.attribute-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 15px;
+  margin-bottom: 10px;
+}
+
+.attribute-card {
+  width: 120px; /* Taille fixe pour toutes les cartes */
+  height: 120px; /* Taille fixe pour toutes les cartes */
+  min-width: 120px; /* Pour éviter le rétrécissement */
+  padding: 10px;
+}
+
+.attribute-tags {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+  height: 120px; /* Même hauteur que la carte */
+  padding: 10px 0;
+}
+
+.attribute-tag-field {
+  width: 80px;
+  height: 20px;
+  padding: 0;
+  border: none;
+  border-bottom: 1px solid rgba(139, 69, 19, 0.3); /* Marron très clair et fin */
+  background: transparent;
+  font-family: inherit;
+  font-size: 1em;
+  color: #4a2810;
+  font-weight: 700;
+  display: inline-block;
+  white-space: nowrap; /* Empêche les sauts de ligne */
+  overflow: hidden;
+  text-overflow: ellipsis; /* Affiche des "..." si le texte est trop long */
+}
+
+.attribute-tag-field[contenteditable="true"] {
+  outline: none; /* Supprime le contour bleu/jaune lors de l'édition */
+}
+
+.attribute-tag-field:focus {
+  outline: none;
+  border-bottom: 1px solid rgba(139, 69, 19, 0.6); /* Marron un peu plus foncé au focus */
+}
+
