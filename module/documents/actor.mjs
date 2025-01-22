@@ -1,18 +1,16 @@
 export class WoeActor extends Actor {
   /** @override */
   prepareData() {
+    // Appelons d'abord la méthode parente
     super.prepareData();
-    const systemData = this.system;
 
-    // Initialize Stamina if not present
-    if (!systemData.stamina) {
-      systemData.stamina = {
-        max: 4,
-        current: 4
-      };
-    }
+    // Accéder aux données du system
+    const systemData = this.system || {};
 
-    //initialize Focus Points
+    // S'assurer que les données de base existent
+    if (!this.system) this.system = {};
+    
+    // Initialisation des Focus Points
     if (!systemData.focusPoints) {
       systemData.focusPoints = {
         base: 0,
@@ -21,51 +19,55 @@ export class WoeActor extends Actor {
       };
     }
 
+    // Initialiser Stamina
+    if (!systemData.stamina) {
+      systemData.stamina = {
+        max: 4,
+        current: 4
+      };
+    }
 
-    // Ensure attributes are initialized for all keys, including "mind" and "elementary"
+    // Initialiser et valider les attributs
+    if (!systemData.attributes) systemData.attributes = {};
     const attributes = ["body", "martial", "soul", "elementary", "mind", "rhetoric"];
-
     attributes.forEach((attr, index) => {
       if (!systemData.attributes[attr]) {
-        systemData.attributes[attr] = {}; // Assure que l'objet existe
+        systemData.attributes[attr] = {};
       }
       if (!systemData.attributes[attr].baseValue) {
-        systemData.attributes[attr].baseValue = "neutral"; // Valeur par défaut
+        systemData.attributes[attr].baseValue = "neutral";
       }
       if (!systemData.attributes[attr].currentValue) {
         systemData.attributes[attr].currentValue = systemData.attributes[attr].baseValue;
       }
-      if (!systemData.attributes[attr].injuries) {
-        systemData.attributes[attr].injuries = {
-            injury :false
-        };
+      if (systemData.attributes[attr].injury === undefined) {
+        systemData.attributes[attr].injury = false;
       }
-      // Ajoute l'ordre explicite
+      if (!systemData.attributes[attr].tag1) systemData.attributes[attr].tag1 = "";
+      if (!systemData.attributes[attr].tag2) systemData.attributes[attr].tag2 = "";
+      if (!systemData.attributes[attr].tag3) systemData.attributes[attr].tag3 = "";
       systemData.attributes[attr].order = index + 1;
     });
 
-    // Initialize tempers for passion, empathy, rigor, and independence
+    // Initialiser les tempers
+    if (!systemData.tempers) systemData.tempers = {};
     const tempers = ["passion", "empathy", "rigor", "independence"];
     tempers.forEach(temper => {
       if (!systemData.tempers[temper]) {
-        systemData.tempers[temper] = {}; // Ensure the temper object exists
+        systemData.tempers[temper] = {};
       }
       if (!systemData.tempers[temper].baseValue) {
-        systemData.tempers[temper].baseValue = "neutral"; // Default base value for temper
+        systemData.tempers[temper].baseValue = "neutral";
       }
       if (!systemData.tempers[temper].currentValue) {
-        systemData.tempers[temper].currentValue = systemData.tempers[temper].baseValue; // Default currentValue to baseValue
+        systemData.tempers[temper].currentValue = systemData.tempers[temper].baseValue;
       }
-      if (!systemData.tempers[temper].injury) {
-        systemData.tempers[temper].injury = false; // Default to no trauma
+      if (systemData.tempers[temper].injury === undefined) {
+        systemData.tempers[temper].injury = false;
       }
     });
 
-    // Initialize relationships if not present
-    if (!systemData.relationships) {
-      systemData.relationships = [];
-    }
-
+    // Initialiser wounds
     if (!systemData.wounds) {
       systemData.wounds = {
         wound1: false,
@@ -75,143 +77,64 @@ export class WoeActor extends Actor {
       };
     }
 
-    if (systemData.masteryLevel === undefined) {
-      systemData.masteryLevel = 0;
+    // Initialiser mastery
+    if (!systemData.masteryLevel) systemData.masteryLevel = 0;
+    if (!systemData.masteryPoints) systemData.masteryPoints = 0;
+
+    // Initialiser les relations
+    if (!systemData.relationships) {
+      systemData.relationships = {
+        connections: []
+      };
+    } else if (!systemData.relationships.connections) {
+      systemData.relationships.connections = [];
     }
-    if (systemData.masteryPoints === undefined) {
-      systemData.masteryPoints = 0;
+
+    // Initialiser biography
+    if (!systemData.biography) {
+      systemData.biography = { entries: [] };
+    } else if (!Array.isArray(systemData.biography.entries)) {
+      systemData.biography.entries = [];
     }
-
-    
-
-
   }
 
-  /**
-   * Create a new actor with default values for attributes
-   * 
-   * @param {string} name - The actor's name
-   * @param {string} type - The actor's type
-   */
-  static async createActor(name, type) {
-    if (!name || name.trim() === "") {
-      name = "Unnamed"; // Use "Unnamed" if no name is provided
+  _getAffinityLabel(value) {
+    switch (value) {
+        case 1:
+            return "Enemy";
+        case 2:
+            return "Acquaintance";
+        case 3:
+            return "Friend";
+        case 4:
+            return "Soulmate";
+        default:
+            return "Unknown";
     }
-
-    // Define initial values for the new actor
-    const actorData = {
-      name: name || "Unnamed", // Use "Unnamed" if no name is passed
-      type: type,
-      img: "icons/svg/mystery-man.svg", // Default icon for the actor
-      system: {
-        name: { value: name }, // Actor's name
-        element: { value: "none" }, // Default element value (e.g., "none")
-        stamina: {
-          max: 4, // Default Stamina Max value
-          current: 4 // Default Current Stamina value
-        },
-        tempers: {
-          passion: {
-            baseValue: "neutral",
-            currentValue: "neutral",
-            injury: false
-          },
-          empathy: {
-            baseValue: "neutral",
-            currentValue: "neutral",
-            injury: false
-          },
-          rigor: {
-            baseValue: "neutral",
-            currentValue: "neutral",
-            injury: false
-          },
-          independence: {
-            baseValue: "neutral",
-            currentValue: "neutral",
-            injury: false
-          }
-        },
-        attributes: {
-          // Initialize all attributes with default values
-          body: {
-            baseValue: "neutral",
-            currentValue: "neutral",
-            injury :false,
-          },
-          soul: {
-            baseValue: "neutral",
-            currentValue: "neutral",
-            injury :false,
-          },
-          mind: {
-            baseValue: "neutral",
-            currentValue: "neutral",
-            injury :false,
-          },
-          martial: {
-            baseValue: "neutral",
-            currentValue: "neutral",
-            injury :false,
-          },
-          elementary: {
-            baseValue: "neutral",
-            currentValue: "neutral",
-            injury :false,
-          },
-          rhetoric: {
-            baseValue: "neutral",
-            currentValue: "neutral",
-            injury :false,
-          }
-        },
-        wounds : {
-          wound1: false,
-          wound2: false,
-          wound3: false,
-          knockedOut: false
-        },
-        relationships: [] // Default relationships array
-      }
-    };
-
-    // Create a new actor in the Foundry system
-    await Actor.create(actorData);
-  }
-
-
 }
-WoeActor.prototype.calculateBaseFocusPoints = function (groupMembers) {
-  let baseFocus = 0;
 
-  groupMembers.forEach(memberName => {
-    const member = game.actors.getName(memberName);
-    const relation = this.system.relationships.find(r => r.characterName === memberName);
-
-    if (relation && relation.relationshipLevel < 0) {
-      baseFocus -= Math.abs(relation.relationshipLevel);  // Chaque relation négative réduit le focus
-    }
-  });
-
-  // Utiliser update pour mettre à jour les Focus Points de base
-  this.update({ 'system.focusPoints.base': Math.max(0, baseFocus) });
-};
-WoeActor.prototype.modifyCurrentFocusPoints = async function (amount) {
-  const newCurrent = Math.max(0, this.system.focusPoints.current + amount);
-  await this.update({ 'system.focusPoints.current': newCurrent });
-
-  // Forcer le rendu de la fiche après la mise à jour
-  if (this.sheet) {
-    this.sheet.render(false); // Forcer un re-render
+_getDynamicLabel(value) {
+  switch (value) {
+      case 0.5:
+          return "Superior";
+      case 0.7:
+          return "Collaborative";
+      case 1.0:
+          return "Equal";
+      case 1.3:
+          return "Supportive";
+      default:
+          return "Unknown";
   }
-};
-
-Handlebars.registerHelper("capitalize", function (str) {
+}
+}
+// Register Handlebars helpers
+Handlebars.registerHelper("capitalize", function(str) {
   if (typeof str !== "string") return "";
   return str.charAt(0).toUpperCase() + str.slice(1);
 });
 
-Handlebars.registerHelper('sort', function (context, field) {
+Handlebars.registerHelper('sort', function(context, field) {
   if (!Array.isArray(context)) return [];
   return context.sort((a, b) => {
     if (a[field] < b[field]) return -1;
@@ -220,9 +143,9 @@ Handlebars.registerHelper('sort', function (context, field) {
   });
 });
 
-Handlebars.registerHelper('objectToArray', function (obj) {
+Handlebars.registerHelper('objectToArray', function(obj) {
   if (typeof obj !== 'object') return [];
   return Object.keys(obj).map(key => {
-    return { ...obj[key], key }; // Ajoute la clé pour accéder dans le Handlebars
+    return { ...obj[key], key };
   });
 });

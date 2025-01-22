@@ -148,6 +148,57 @@ Hooks.once('ready', () => {
     
 });
 
+// Ces helpers devraient être dans weave_of_echoes.mjs ou dans un fichier de helpers dédié
+
+// Helper pour capitaliser
+Handlebars.registerHelper('capitalize', function(str) {
+  if (typeof str !== 'string') return '';
+  return str.charAt(0).toUpperCase() + str.slice(1);
+});
+
+// Helper pour vérifier l'égalité
+Handlebars.registerHelper('eq', function(a, b) {
+  return a === b;
+});
+
+// Helper pour vérifier si une valeur est différente
+Handlebars.registerHelper('ne', function(a, b) {
+  return a !== b;
+});
+
+// Helper pour les checked boxes
+Handlebars.registerHelper('checked', function(value) {
+  return value ? 'checked' : '';
+});
+
+// Helper pour la première lettre
+Handlebars.registerHelper('firstLetter', function(value) {
+  if (!value) return '';
+  return value.charAt(0).toUpperCase();
+});
+
+// Helper pour les includes
+Handlebars.registerHelper('includes', function(array, value) {
+  return Array.isArray(array) && array.includes(value);
+});
+
+// Helper pour la conversion markdown
+Handlebars.registerHelper('markdownToHtml', function(markdown) {
+  if (!markdown) return '';
+  return markdown
+    .replace(/^# (.+)$/gm, '<h1>$1</h1>')
+    .replace(/^## (.+)$/gm, '<h2>$1</h2>')
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*(.+?)\*/g, '<em>$1</em>')
+    .replace(/^- (.+)$/gm, '<li>$1</li>')
+    .replace(/\n/g, '<br>');
+});
+
+// Helper pour get Actor
+Handlebars.registerHelper('getActor', function(actorId) {
+  return game.actors.get(actorId);
+});
+
 Hooks.on('getSceneControlButtons', (controls) => {
   if (game.user.isGM) {
     let tokenControls = controls.find(c => c.name === "token");
@@ -198,31 +249,14 @@ Hooks.on('getSceneControlButtons', (controls) => {
   }
 });
 
-// Mettre à jour le Focus Tracker quand les relations changent
 Hooks.on('updateActor', (actor, changes, options, userId) => {
   if (changes.system?.relationships && game.user.isGM) {
-    game.weaveOfEchoes.focusTracker.render();
-  }
-});
-
-Hooks.on('updateActor', (actor, changes, options, userId) => {
-  if (changes.system?.relationships && game.user.isGM) {
-      // Recalculer les Focus Points pour cet acteur
-      actor.calculateBaseFocusPoints(game.weaveOfEchoes.focusTracker.selectedGroupMembers);
-
-      // Rendre le Focus Tracker pour refléter les nouvelles valeurs
+    // Pour l'instant, on se contente de rafraîchir le Focus Tracker
+    if (game.weaveOfEchoes.focusTracker) {
       game.weaveOfEchoes.focusTracker.render();
+    }
   }
 });
-
-Hooks.on('updateSynergyTracker', (actor) => {
-  for (const trackerId in game.weaveOfEchoes.additionalTrackers) {
-    const tracker = game.weaveOfEchoes.additionalTrackers[trackerId];
-    tracker.calculateMaxSynergy();
-    tracker.render(false); // Mise à jour visuelle du tracker
-  }
-});
-
 Hooks.on('updateInitiativeTracker', (tracker) => {
   console.log("updateInitiativeTracker hook triggered with:", tracker);
 
@@ -323,7 +357,13 @@ function rollItemMacro(itemUuid) {
     // Trigger the item roll
     item.roll();
   });
+
+
+  
 }
+
+
+
 
 // Ajout d'un bouton personnalisé dans la barre latérale de Foundry VTT pour ouvrir les trackers
 Hooks.on('renderJournalDirectory', (app, html) => {
@@ -396,5 +436,35 @@ Hooks.on('renderJournalDirectory', (app, html) => {
     function() { $(this).css('background', '#58574f'); },
     function() { $(this).css('background', '#4b4a44'); }
   );
+});
+
+Handlebars.registerHelper('getActor', function(actorId) {
+  console.log("getActor helper called with id:", actorId);
+  const actor = game.actors.get(actorId);
+  console.log("Found actor:", actor);
+  return actor;
+});
+
+Handlebars.registerHelper('hasPermission', function(entry) {
+  const currentUser = game.user;
+  const viewers = entry.viewers || [];
+  return viewers.includes(currentUser.character?.id) || 
+         game.user.isGM || 
+         // Vous pouvez ajouter d'autres conditions ici
+         false;
+});
+
+
+Handlebars.registerHelper('markdownToHtml', function (markdown) {
+  if (!markdown) return '';
+  
+  // Conversion Markdown simple vers HTML (ajoute une bibliothèque si nécessaire)
+  return markdown
+    .replace(/^# (.+)$/gm, '<h1>$1</h1>') // Titres de niveau 1
+    .replace(/^## (.+)$/gm, '<h2>$1</h2>') // Titres de niveau 2
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>') // Texte en gras
+    .replace(/\*(.+?)\*/g, '<em>$1</em>') // Texte en italique
+    .replace(/^- (.+)$/gm, '<li>$1</li>') // Listes
+    .replace(/\n/g, '<br>'); // Sauts de ligne
 });
 

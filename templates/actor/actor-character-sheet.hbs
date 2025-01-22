@@ -95,10 +95,9 @@
       {{/unless}}
     </div>
   </div>
-</div>
+
 
 </section>
-</div>
 <div class="section-container">
 
 <!-- Section principale des Tempers et Attributes -->
@@ -331,102 +330,234 @@
 </div>
 
 
-
-</div> <!-- End of Profile Tab -->
+</div>
+</div>
+ <!-- End of Profile Tab -->
 
 <!-- Relationships Tab -->
 <div class="tab" data-tab="relationships">
-  <h2>Relationships</h2>
-  
-  <!-- Synergy Section -->
-  <div class="character-synergy-container {{#if isSynergyHidden}}hidden-by-gm{{/if}}">
-    <h3>Group Synergy</h3>
-    <div class="character-group-members">
-      {{#each groupMembers}}
-        {{#unless this.isCurrentActor}}
-          <div class="character-member-item {{#if ../isSynergyHidden}}disabled{{else}}{{#if this.isSelected}}selected{{/if}}{{/if}}" data-character="{{this.name}}">
-            <span class="character-member-name">{{this.name}}</span>
+  <!-- Section Synergy -->
+  <div class="synergy-section">
+    <div class="synergy-resources">
+      <div class="synergy-card group-synergy">
+        <label>Group Synergy</label>
+        <div class="resource-value">{{#if isNotInGroup}}Not in a group yet{{else}}{{currentSynergy}}/{{maxSynergy}}{{/if}}</div>
+      </div>
+      
+      <div class="synergy-card maneuver-cost">
+        <label>Maneuver Cost</label>
+        <div class="resource-value">{{#if maneuverCost}}{{maneuverCost}}{{else}}Select members{{/if}}</div>
+      </div>
+    </div>
+
+    <!-- Group Members -->
+    <div class="group-members-section">
+      <h3>Group Members</h3>
+      <div class="members-grid">
+        {{#each groupMembers}}
+          <div class="member-card {{#if this.isSelected}}selected{{/if}}" data-member="{{this.name}}">
+            <span class="member-name">{{this.name}}</span>
           </div>
-        {{/unless}}
-      {{/each}}
-    </div>
-    <div class="character-synergy-circle">
-      <div>
-        <h4>Group Synergy</h4>
-        <div class="character-synergy-values">
-          {{#if isSynergyHidden}}
-            <span>Hidden by GM</span>
-          {{else}}
-            <span>{{currentSynergy}}/{{maxSynergy}}</span>
-          {{/if}}
-        </div>
-      </div>
-      <div>
-        <h4>Synergic Maneuver Cost</h4>
-        <div class="character-synergy-values {{#if isSynergyHidden}}hidden-cost{{else}}{{#if maneuverCost}}has-cost{{else}}no-cost{{/if}}{{/if}}">
-          {{#if isSynergyHidden}}
-            <span>Hidden by GM</span>
-          {{else}}
-            {{#if maneuverCost}}
-              <span>{{maneuverCost}}</span>
-            {{else}}
-              <span>Select at least one mate</span>
-            {{/if}}
-          {{/if}}
-        </div>
+        {{/each}}
       </div>
     </div>
   </div>
-  
-  <div class="tab-content"></div>
-  <!-- Existing Relationships Section -->
-  <h3>Existing Relationships</h3>
-  <div id="relationship-list">
-    <!-- Relationships will be dynamically populated here -->
+
+  <!-- Relationships Section -->
+  <div class="relationships-section">
+    <div class="section-header">
+      <h3>Relationships</h3>
+      <button class="add-relationship custom-button" type="button">
+        <i class="fas fa-plus"></i> Add Relationship
+      </button>
+    </div>
+
+    <!-- Grid des relations -->
+    <div class="relationships-grid">
+      {{#each system.relationships.connections}}
+      <div class="relationship-card">
+        <!-- Avatar à gauche -->
+        <div class="card-avatar">
+          <img src="{{img}}" alt="{{characterName}}">
+        </div>
+
+        <!-- Contenu principal -->
+        <div class="relationship-card-content">
+          <!-- En-tête avec nom et contrôles -->
+          <div class="card-header">
+            <div class="character-info">
+              <h3 class="character-name">{{characterName}}</h3>
+              <p class="player-name">Played by {{playerName}}</p>
+            </div>
+            <div class="relationship-card-controls">
+              <i class="fas fa-eye card-control-icon visibility-toggle"></i>
+              <i class="fas fa-trash card-control-icon delete-relationship"></i>
+            </div>
+          </div>
+<div class="relationship-values">
+  <!-- Colonne Affinité (gauche) -->
+  <div class="affinity-column">
+    <label class="{{#if (eq affinity.value 1)}}selected{{/if}}" data-value="1">
+      <input type="radio" name="affinity-{{@index}}" value="1" {{checked (eq affinity.value 1)}}>
+      Enemy
+    </label>
+    <label class="{{#if (eq affinity.value 2)}}selected{{/if}}" data-value="2">
+      <input type="radio" name="affinity-{{@index}}" value="2" {{checked (eq affinity.value 2)}}>
+      Acquaintance
+    </label>
+    <label class="{{#if (eq affinity.value 3)}}selected{{/if}}" data-value="3">
+      <input type="radio" name="affinity-{{@index}}" value="3" {{checked (eq affinity.value 3)}}>
+      Friend
+    </label>
+    <label class="{{#if (eq affinity.value 4)}}selected{{/if}}" data-value="4">
+      <input type="radio" name="affinity-{{@index}}" value="4" {{checked (eq affinity.value 4)}}>
+      Soulmate
+    </label>
   </div>
 
-  <!-- Button to Add a New Relationship -->
-  <button id="add-relationship">Add Relationship</button>
+  <!-- Valeur de relation (centre) -->
+  <div class="relationship-value">
+    {{relationshipValue}}
+  </div>
 
-  <!-- Form to Add or Edit a Relationship -->
-  <div id="relationship-form" style="display: none;">
-    <!-- Player Name -->
-    <label for="player-name">Player:</label>
-    <div id="player-view" class="view-mode">Click to edit Player Name</div>
-    <input type="text" id="player-edit" class="edit-mode" style="display:none;" />
-
-    <!-- Character Name (Dropdown) -->
-    <label for="character-name">Character:</label>
-    <div id="character-view" class="view-mode">Choose another character</div>
-    <select id="character-edit" class="edit-mode" style="display:none;">
-      <option value="" disabled selected>Choose another character</option>
-      {{#each ../actors}}
-        <option value="{{this.id}}">{{this.name}}</option>
-      {{/each}}
-    </select>
-
-    <!-- Relationship Level (Radio Buttons) -->
-    <label for="relationship-level">Relation:</label>
-    <div id="relationship-level">
-      {{#each relationshipLevels}}
-        <label>
-          <input type="radio" name="relationship" value="{{this.value}}" {{#if (eq this.value 0)}}checked{{/if}}>
-          {{this.label}}
-        </label>
-      {{/each}}
-    </div>
-    
-    <button id="save-relationship">Save Relationship</button>
+  <!-- Colonne Dynamic (droite) -->
+  <div class="dynamic-column">
+    <label class="{{#if (eq dynamic.value 0.5)}}selected{{/if}}" data-value="0.5">
+      <input type="radio" name="dynamic-{{@index}}" value="0.5" {{checked (eq dynamic.value 0.5)}}>
+      Superior
+    </label>
+    <label class="{{#if (eq dynamic.value 0.7)}}selected{{/if}}" data-value="0.7">
+      <input type="radio" name="dynamic-{{@index}}" value="0.7" {{checked (eq dynamic.value 0.7)}}>
+      Inferior
+    </label>
+    <label class="{{#if (eq dynamic.value 0.8)}}selected{{/if}}" data-value="0.8">
+      <input type="radio" name="dynamic-{{@index}}" value="0.8" {{checked (eq dynamic.value 0.8)}}>
+      Rival
+    </label>
+    <label class="{{#if (eq dynamic.value 1.0)}}selected{{/if}}" data-value="1.0">
+      <input type="radio" name="dynamic-{{@index}}" value="1.0" {{checked (eq dynamic.value 1.0)}}>
+      Equal
+    </label>
   </div>
 </div>
 
-      <!-- Biography Tab -->
-      <div class="tab" data-tab="biography">
-        <h2>Biography</h2>
-        <textarea id="biography" name="biography">{{system.biography}}</textarea>
+<!-- Nouveau conteneur pour les notes -->
+<div class="relationship-notes">
+  <!-- Mode affichage -->
+  <div class="notes-display">
+    A few words about him/her...
+  </div>
+
+  <!-- Mode édition (caché par défaut) -->
+  <textarea 
+    class="notes-edit hidden" 
+    maxlength="200"
+    placeholder="Edit your notes..."
+  ></textarea>
+</div>
+
+          <!-- Support Section -->
+          <div class="relationship-support">
+            <div class="support-action">Support</div>
+            <div class="dice-display"></div>
+          </div>
+        </div>
+      </div>
+      {{/each}}
+    </div>
+  </div>
+</div>
+  
+
+<!-- Dans actor-character-sheet.hbs (section biographie) -->
+<div class="tab" data-tab="biography">
+  <h2>Biography</h2>
+  
+  <!-- Bouton Add Entry -->
+  <button id="add-entry" class="biography-add clickable">
+    <i class="fas fa-plus"></i>
+    Add an Entry
+  </button>
+
+  <!-- Conteneur des entrées -->
+ <div class="biography-entries">
+  {{#each this.system.biography.entries as |entry index|}}
+  <div class="entryContainer" data-index="{{index}}">
+    <!-- Titre -->
+    <div class="entryBox">
+      <div class="entryTitle" contenteditable="true">{{entry.title}}</div>
+    </div>
+
+    <!-- Contenu -->
+    <div class="content-wrapper">
+      <!-- Zone de prévisualisation -->
+      <div class="preview-pane markdown-preview {{#if entry.content}}filled{{else}}empty{{/if}}">
+        {{#if entry.content}}
+          {{{markdownToHtml entry.content}}}
+        {{else}}
+          <em>Your entry content</em>
+        {{/if}}
       </div>
 
-      <!-- Private Notes Tab -->
+      <!-- Zone d'édition Markdown -->
+      <div class="editor-wrapper hidden">
+        <div class="markdown-toolbar">
+  <button class="md-button" data-md="# " title="Heading"><i class="fas fa-heading"></i></button>
+  <button class="md-button" data-md="**" title="Bold"><i class="fas fa-bold"></i></button>
+  <button class="md-button" data-md="*" title="Italic"><i class="fas fa-italic"></i></button>
+  <button class="md-button" data-md="- " title="List"><i class="fas fa-list"></i></button>
+</div>
+        <textarea class="markdown-editor">{{entry.content}}</textarea>
+      </div>
+    </div>
+
+    <!-- Contrôles -->
+    <div class="entryControls">
+  <div class="selected-avatars">
+    {{#each entry.viewers}}
+      {{#with (getActor this)}}
+        <img src="{{this.img}}" title="{{this.name}}" class="pj-avatar">
+      {{/with}}
+    {{/each}}
+  </div>
+  <div class="entry-buttons">
+    <div class="visibility-entry clickable" data-tooltip="Manage visibility">
+      <i class="fas fa-eye"></i>
+    </div>
+    <div class="save-entry clickable disabled" data-tooltip="Save changes">
+      <i class="fas fa-save"></i>
+    </div>
+    <div class="delete-entry clickable" data-tooltip="Delete entry">
+      <i class="fas fa-trash"></i>
+    </div>
+  </div>
+</div>
+
+  </div>
+  {{/each}}
+</div>
+
+
+
+</div>
+<!-- Template pour la modale de sélection des personnages -->
+<script type="text/template" id="character-selection-template">
+  <div class="character-selection-modal">
+    <h2>Select Viewers</h2>
+    <div class="character-list">
+      {{#each characters}}
+      <div class="character-option {{#if (includes ../selectedViewers this.id)}}selected{{/if}}" data-id="{{this.id}}">
+        <img src="{{this.img}}" alt="{{this.name}}">
+        <span>{{this.name}}</span>
+      </div>
+      {{/each}}
+    </div>
+  </div>
+</script>
+
+
+
+        <!-- Private Notes Tab -->
       <div class="tab" data-tab="private-notes">
         <h2>Private Notes</h2>
         <textarea id="private-notes" name="private-notes">{{system.privateNotes}}</textarea>

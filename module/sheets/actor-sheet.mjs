@@ -1,4 +1,7 @@
 import { onManageActiveEffect, prepareActiveEffectCategories } from '../helpers/effects.mjs';
+import { BiographySystem } from '../biography-system.js';
+console.log("BiographySystem imported successfully");
+
 
 // Helper function to capitalize the first letter of a string
 function toUpperCaseValue(value) {
@@ -71,7 +74,7 @@ export class WoeActorSheet extends ActorSheet {
   static get defaultOptions() {
     return foundry.utils.mergeObject(super.defaultOptions, {
       classes: ['weave-of-echoes', 'sheet', 'actor'],
-      width:900,
+      width:1100,
       height: 1300,
       tabs: [
         { navSelector: '.sheet-tabs', contentSelector: '.tab-content', initial: 'profile' },
@@ -85,45 +88,117 @@ export class WoeActorSheet extends ActorSheet {
 
   async getData() {
     const context = await super.getData();
-    const actorData = this.document.toObject(false);
-
-    // Ensure tempers are initialized with baseValue and currentValue
+    
+    // S'assurer que context.actor existe
+    if (!context.actor) context.actor = {};
+    if (!context.actor.system) context.actor.system = {};
+  
+    const actorData = this.actor.toObject(false);
+    
+    // Initialiser toutes les structures de données nécessaires
+    if (!actorData.system) actorData.system = {};
+  
+    // Stamina
+    if (!actorData.system.stamina) {
+      actorData.system.stamina = {
+        max: 4,
+        current: 4
+      };
+    }
+  
+    // Focus Points
+    if (!actorData.system.focusPoints) {
+      actorData.system.focusPoints = {
+        base: 0,
+        current: 0,
+        isVisible: false
+      };
+    }
+  
+    // Tempers
+    if (!actorData.system.tempers) actorData.system.tempers = {};
     ['passion', 'empathy', 'rigor', 'independence'].forEach(temper => {
-      if (!actorData.system.tempers[temper].baseValue) actorData.system.tempers[temper].baseValue = 'neutral';
-      if (!actorData.system.tempers[temper].currentValue) actorData.system.tempers[temper].currentValue = 'neutral';
+      if (!actorData.system.tempers[temper]) {
+        actorData.system.tempers[temper] = {
+          baseValue: 'neutral',
+          currentValue: 'neutral',
+          injury: false
+        };
+      }
     });
-
-    // Available actors for relationship dropdown
-    context.actors = game.actors.filter(actor => actor.id !== this.actor.id && actor.type === "character");
+  
+    // Attributes
+    if (!actorData.system.attributes) actorData.system.attributes = {};
+    ['body', 'martial', 'soul', 'elementary', 'mind', 'rhetoric'].forEach((attr, index) => {
+      if (!actorData.system.attributes[attr]) {
+        actorData.system.attributes[attr] = {
+          baseValue: 'neutral',
+          currentValue: 'neutral',
+          injury: false,
+          order: index + 1,
+          tag1: '',
+          tag2: '',
+          tag3: ''
+        };
+      }
+    });
+  
+    // Wounds
+    if (!actorData.system.wounds) {
+      actorData.system.wounds = {
+        wound1: false,
+        wound2: false,
+        wound3: false,
+        knockedOut: false
+      };
+    }
+  
+    // Mastery
+    if (!actorData.system.masteryLevel) actorData.system.masteryLevel = 0;
+    if (!actorData.system.masteryPoints) actorData.system.masteryPoints = 0;
+  
+    // Relationships
+    if (!actorData.system.relationships) {
+      actorData.system.relationships = {
+        connections: []
+      };
+    }
+    if (!Array.isArray(actorData.system.relationships.connections)) {
+      actorData.system.relationships.connections = [];
+    }
+  
+    // Biography
+    if (!actorData.system.biography) {
+      actorData.system.biography = {
+        entries: []
+      };
+    }
+    if (!Array.isArray(actorData.system.biography.entries)) {
+      actorData.system.biography.entries = [];
+    }
+  
+    // Mise à jour des relations avec les images
+    actorData.system.relationships.connections = actorData.system.relationships.connections.map(conn => {
+      const relatedActor = game.actors.get(conn.characterId);
+      return {
+        ...conn,
+        img: relatedActor?.img || "icons/svg/mystery-man.svg",
+        playerName: relatedActor?.owner?.name || "Unknown"
+      };
+    });
+  
+    // Ajouter les acteurs disponibles pour de nouvelles relations
+    context.actors = game.actors.filter(actor => 
+      actor.id !== this.actor.id && 
+      actor.type === "character" &&
+      !actorData.system.relationships.connections.some(conn => conn.characterId === actor.id)
+    );
+  
+    // Configuration finale du contexte
     context.system = actorData.system;
     context.actorName = this.actor.name;
-
-    context.isNotInGroup = !context.currentSynergy && !context.maxSynergy;
-
-    // Relationship Levels
-    context.relationshipLevels = [
-      { value: -3, label: "Hatred" },
-      { value: -2, label: "Hostility" },
-      { value: -1, label: "Displeasure" },
-      { value: 0, label: "Indifference" },
-      { value: 1, label: "Liking" },
-      { value: 2, label: "Friendship" },
-      { value: 3, label: "Love" }
-    ];
-
-    // Synergy data
-    context.groupMembers = this.getGroupMembers();
-    context.currentSynergy = this.getCurrentSynergy();
-    context.maxSynergy = this.getMaxSynergy();
-    context.maneuverCost = this.calculateManeuverCost();
-    context.isSynergyHidden = this.actor.getFlag('weave_of_echoes', 'synergyHidden') || false;
-
-    //focus point
-    this._prepareFocusPointsData(context);
-
+  
     return context;
-
-   
   }
 
   async rollDie(type) {
@@ -175,21 +250,26 @@ getColorForValue(value) {
 }
   
 
-  _prepareFocusPointsData(sheetData) {
-    const actorData = sheetData;
-
-    // Ensure focus points data exists
-    if (!actorData.system.focusPoints) {
-      actorData.system.focusPoints = {
-        base: 0,
-        current: 0,
-        isVisible: false
-      };
-    }
-
-    sheetData.focusPoints = actorData.system.focusPoints;
+_prepareFocusPointsData(context) {
+  // S'assurer que context.system existe
+  if (!context.system) {
+    context.system = {};
   }
-  
+
+  // S'assurer que focusPoints existe avec des valeurs par défaut
+  if (!context.system.focusPoints) {
+    context.system.focusPoints = {
+      base: 0,
+      current: 0,
+      isVisible: false
+    };
+  }
+
+  // Rendre les données disponibles dans le contexte
+  context.focusPoints = context.system.focusPoints;
+
+  return context;
+}
   // Activate Listeners for sheet interactions
   activateListeners(html) {
     super.activateListeners(html);
@@ -227,8 +307,117 @@ getColorForValue(value) {
     html.find('.focus-add').click(this._onAddFocusPoints.bind(this));
     html.find('.focus-subtract').click(this._onSubtractFocusPoints.bind(this));
     
+ 
+    html.find('.add-relationship').click(async (event) => {
+      event.preventDefault();
+      await this._onAddRelationship(event);
+    });
   
+
+    html.find('input[name^="affinity-"]').on('change', async (event) => {
+      const index = event.currentTarget.name.split('-')[1];
+      const newValue = parseInt(event.currentTarget.value);
+      
+      // Récupérer les connections actuelles
+      const connections = [...this.actor.system.relationships.connections];
+      
+      // Mettre à jour l'affinity
+      connections[index].affinity = {
+        value: newValue,
+        label: this.actor._getAffinityLabel(newValue)
+      };
+      
+      // Recalculer la relationshipValue
+      connections[index].relationshipValue = Math.round(
+        newValue * connections[index].dynamic.value
+      );
+      
+      // Mettre à jour l'acteur
+      await this.actor.update({
+        'system.relationships.connections': connections
+      });
+    });
     
+    // Gérer les changements de Dynamic
+    html.find('input[name^="dynamic-"]').on('change', async (event) => {
+      const index = event.currentTarget.name.split('-')[1];
+      const newValue = parseFloat(event.currentTarget.value);
+      
+      // Récupérer les connections actuelles
+      const connections = [...this.actor.system.relationships.connections];
+      
+      // Mettre à jour le dynamic
+      connections[index].dynamic = {
+        value: newValue,
+        label: this.actor._getDynamicLabel(newValue)
+      };
+      
+      // Recalculer la relationshipValue
+      connections[index].relationshipValue = Math.round(
+        connections[index].affinity.value * newValue
+      );
+      
+      // Mettre à jour l'acteur
+      await this.actor.update({
+        'system.relationships.connections': connections
+      });
+    });
+    
+    // Gérer la suppression d'une relation
+    html.find('.delete-relationship').on('click', async (event) => {
+      const card = event.currentTarget.closest('.relationship-card');
+      const index = Array.from(card.parentElement.children).indexOf(card);
+      
+      const connections = [...this.actor.system.relationships.connections];
+      connections.splice(index, 1);
+      
+      await this.actor.update({
+        'system.relationships.connections': connections
+      });
+    });
+    
+    // Gérer la visibilité d'une relation
+    html.find('.visibility-toggle').on('click', async (event) => {
+      const card = event.currentTarget.closest('.relationship-card');
+      const index = Array.from(card.parentElement.children).indexOf(card);
+      
+      const connections = [...this.actor.system.relationships.connections];
+      connections[index].isHidden = !connections[index].isHidden;
+      
+      await this.actor.update({
+        'system.relationships.connections': connections
+      });
+      
+      // Toggle la classe pour l'affichage visuel
+      $(card).toggleClass('hidden-relationship');
+    });
+    
+
+    html.find('.notes-edit').on('blur', (event) => {
+      const textarea = $(event.currentTarget);
+      const newValue = textarea.val(); // Récupérer la valeur du champ
+      const index = textarea.closest('.relationship-card').data('index'); // Identifier l'index de la relation
+      const path = `system.relationships.connections.${index}.notes`; // Chemin des données
+  
+      // Mise à jour des données dans l'acteur
+      this.actor.update({ [path]: newValue }).then(() => {
+        // Revenir en mode affichage après la sauvegarde
+        const displayDiv = textarea.siblings('.notes-display');
+        displayDiv.text(newValue);
+        textarea.addClass('hidden');
+        displayDiv.removeClass('hidden');
+      });
+    });
+  
+    // Passage au mode édition
+    html.find('.notes-display').on('click', (event) => {
+      const displayDiv = $(event.currentTarget);
+      const textarea = displayDiv.siblings('.notes-edit');
+      displayDiv.addClass('hidden');
+      textarea.removeClass('hidden').focus();
+    });
+  
+
     // Wounds, Injuries, and Trauma management
     this.handleMasteryLevelEditing(html);
     this._setupAttributeListeners(html);
@@ -246,15 +435,18 @@ getColorForValue(value) {
     html.find('.maneuver-container').on('click', () => { this.openManeuverWindow(); });
   
     // Relationships
-    this.displayRelationships(html);
-    this.addRelationshipListeners(html);
 
+   
     html.find('.attribute-tag-field').on('keydown', (event) => {
       if (event.key === 'Enter') {
         event.preventDefault(); // Empêche le retour à la ligne
         event.target.blur(); // Simule la fin de l'édition si nécessaire
       }
     });
+
+    //Biography
+    BiographySystem.setup(html, this.actor);
+   
   }
 
   rollTemperOrAttribute(field, type) {
@@ -584,7 +776,21 @@ getColorForValue(value) {
   }).render(true);
 }
 attachManeuverListeners(html) {
-  // Attributs
+  // Désactiver les tempers traumatisés
+  const tempers = ['passion', 'empathy', 'rigor', 'independence'];
+  tempers.forEach(temper => {
+      if (this.actor.system.tempers[temper].injury) { // Vérifie si le temper est en état de trauma
+          const temperButton = html.find(`.temper-choice[data-temper="${temper}"]`);
+          temperButton.prop('disabled', true).addClass('disabled').css({
+              'background-color': 'lightgrey',
+              'color': 'darkgrey',
+              'cursor': 'not-allowed',
+              'border': 'none', // Supprime la bordure pour un état désactivé visuel
+          });
+      }
+  });
+
+  // Écouteurs pour les attributs
   html.find('.attribute-choice').on('click', (event) => {
       const element = $(event.currentTarget);
       const attribute = element.data('attribute');
@@ -598,21 +804,24 @@ attachManeuverListeners(html) {
       this.checkAndUpdateRollButton(html);
   });
 
-  // Tempers
+  // Écouteurs pour les tempers
   html.find('.temper-choice').on('click', (event) => {
       const element = $(event.currentTarget);
       const temper = element.data('temper');
-      
+
+      // Empêcher la sélection si le temper est traumatisé
+      if (this.actor.system.tempers[temper].injury) return;
+
       element.siblings().removeClass('selected');
       element.addClass('selected');
-      
+
       this.maneuverSelections.temper = temper;
       this.updateDieDisplay(html, 'tempers', temper);
       this.updateFocusRow(html, 'tempers', temper);
       this.checkAndUpdateRollButton(html);
   });
 
-  // Contexte
+  // Écouteurs pour le contexte
   html.find('.context-choice').on('click', (event) => {
       const element = $(event.currentTarget);
       const context = element.data('context');
@@ -625,13 +834,14 @@ attachManeuverListeners(html) {
       this.checkAndUpdateRollButton(html);
   });
 
-  // Bouton de lancement
+  // Bouton de lancer
   html.find('#roll-dice-button').on('click', () => {
       if (this.checkAllSelections()) {
           this.launchManeuver();
       }
   });
 }
+
 
 checkAllSelections() {
   return this.maneuverSelections.attribute && 
@@ -750,21 +960,22 @@ initializeFocusState(html) {
 
 
 
-  handleProfileImageEditing(html) {
-    html.find('.profile-image').on('click', async () => {
-        const filePicker = new FilePicker({ type: 'image' });
-        await filePicker.render(true);
-        const newImagePath = filePicker.result; // Utilisez "result" pour le chemin de fichier
-
-        if (newImagePath) {
-            const validExtensions = ['.png', '.jpg', '.jpeg', '.webp'];
-            if (validExtensions.some(ext => newImagePath.endsWith(ext))) {
-                await this.actor.update({ img: newImagePath });
-            } else {
-                ui.notifications.error("Invalid image format. Use PNG, JPG, JPEG, or WEBP.");
-            }
-        }
-    });
+handleProfileImageEditing(html) {
+  html.find('.profile-image').on('click', async () => {
+      const filePicker = new FilePicker({
+          type: 'image',
+          current: this.actor.img,
+          callback: async (path) => {
+              const validExtensions = ['.png', '.jpg', '.jpeg', '.webp'];
+              if (validExtensions.some(ext => path.endsWith(ext))) {
+                  await this.actor.update({ img: path });
+              } else {
+                  ui.notifications.error("Invalid image format. Use PNG, JPG, JPEG, or WEBP.");
+              }
+          }
+      });
+      filePicker.render(true);
+  });
 }
 
   updateActiveState(html, selector, activeElement) {
@@ -1363,6 +1574,26 @@ getContextName(contextType) {
   }
 }
 
+getAffinityLabel(value) {
+  switch (value) {
+    case 1: return "Enemy";
+    case 2: return "Acquaintance";
+    case 3: return "Friend";
+    case 4: return "Soulmate";
+    default: return "Acquaintance";
+  }
+}
+
+getDynamicLabel(value) {
+  switch (value) {
+    case 0.5: return "Superior";
+    case 0.7: return "Inferior";
+    case 0.8: return "Rival";
+    case 1.0: return "Equal";
+    default: return "Equal";
+  }
+}
+
 // Helper method to get the colored label with capitalized words
 getColoredLabel(label) {
   if (!label) {
@@ -1883,69 +2114,7 @@ _recalculateMasteryPoints() {
     this.displayRollResultsInChat(capitalizedType, result);
   }
 
-  displayRelationships(html) {
-    const relationships = this.actor.system.relationships || [];
-    const relationshipList = html.find('#relationship-list');
-    relationshipList.empty();
 
-    relationships.forEach((rel, index) => {
-      const relationshipHtml = `
-        <div class="relationship-item">
-          <label>Player:</label>
-          <input type="text" class="relationship-input" data-index="${index}" data-field="playerName" value="${rel.playerName}" />
-
-          <label>Character:</label>
-          <span>${rel.characterName}</span>  <!-- Show plain text once character is chosen -->
-
-          <label>Relation:</label>
-          <div id="relationship-level">
-            ${this.getRelationshipLevelOptions(rel.relationshipLevel, index)}
-          </div>
-          
-          <button class="delete-relationship" data-index="${index}">Delete</button>
-        </div>`;
-      relationshipList.append(relationshipHtml);
-    });
-
-    this.activateRelationshipListeners(html);  // Ensure listeners are activated after rendering
-  }
-
-  activateRelationshipListeners(html) {
-    const relationships = this.actor.system.relationships || [];
-    
-    relationships.forEach((rel, index) => {
-        // Player Name
-        html.find(`input[data-field="playerName"][data-index="${index}"]`)
-            .on('change', this._onUpdateRelationship.bind(this));
-        
-        // Relationship Level
-        html.find(`input[name="relationship-level-${index}"]`)
-            .on('change', this._onUpdateRelationship.bind(this));
-        
-        // Delete relationship
-        html.find(`.delete-relationship[data-index="${index}"]`)
-            .on('click', this._onDeleteRelationship.bind(this));
-    });
-
-   
-}
-
-async _onUpdateRelationship(event) {
-  event.preventDefault();
-  const index = event.currentTarget.dataset.index;
-  const field = event.currentTarget.dataset.field || 'relationshipLevel';
-  const value = field === 'relationshipLevel' ? parseInt(event.currentTarget.value) : event.currentTarget.value;
-
-  const relationships = foundry.utils.deepClone(this.actor.system.relationships);
-  relationships[index][field] = value;
-
-  await this.actor.update({ 'system.relationships': relationships });
-
-  // Notifier les trackers de synergie que les relations ont changé
-  Hooks.call('updateSynergyTracker', this.actor);
-
-  this.render();
-}
 
 async _onDeleteRelationship(event) {
   event.preventDefault();
@@ -1962,69 +2131,98 @@ async _onDeleteRelationship(event) {
   this.render();
 }
 
-async addRelationship() {
-  const availableCharacters = game.actors.filter(actor => actor.type === "character")
-    .filter(char => !this.actor.system.relationships.some(rel => rel.characterName === char.name))
-    .filter(char => char.name !== this.actor.name);
+async _onAddRelationship(event) {
+  event.preventDefault();
+  
+  // Garder une référence au sheet/actor pour l'utiliser dans le callback
+  const sheet = this;
+  const actor = this.actor;
+  
+  // Helper functions pour les labels
+  const getAffinityLabel = (value) => {
+    switch (value) {
+      case 1: return "Enemy";
+      case 2: return "Acquaintance";
+      case 3: return "Friend";
+      case 4: return "Soulmate";
+      default: return "Acquaintance";
+    }
+  };
 
-  if (availableCharacters.length === 0) {
-    ui.notifications.error("You are already tied to every other character.");
-    return;
+  const getDynamicLabel = (value) => {
+    switch (value) {
+      case 0.5: return "Superior";
+      case 0.7: return "Inferior";
+      case 0.8: return "Rival";
+      case 1.0: return "Equal";
+      default: return "Equal";
+    }
+  };
+  
+  // Filtrer les acteurs disponibles
+  const currentConnections = this.actor.system.relationships.connections || [];
+  const availableActors = game.actors.filter(actor => 
+      actor.id !== this.actor.id && 
+      actor.type === "character" && 
+      !currentConnections.some(conn => conn.characterId === actor.id)
+  );
+
+  if (availableActors.length === 0) {
+      ui.notifications.warn("No available characters to add a relationship with.");
+      return;
   }
 
-  const characterOptions = availableCharacters.map(char => `<option value="${char.name}">${char.name}</option>`).join('');
-
-  let dialog = new Dialog({
-    title: "Choose a Character",
+  // Créer la boîte de dialogue
+  new Dialog({
+    title: "Add New Relationship",
     content: `
-      <form>
-        <div class="form-group">
-          <label for="character">Please choose a character to be tied with:</label>
-          <select id="character" name="character">
-            ${characterOptions}
-          </select>
-        </div>
-      </form>
+        <form>
+            <div class="form-group">
+                <label>Select a character:</label>
+                <select id="character-select" name="character">
+                    ${availableActors.map(actor => `
+                        <option value="${actor.id}">${actor.name}</option>
+                    `).join('')}
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Affinity:</label>
+                <select name="affinity">
+                    <option value="1">Enemy</option>
+                    <option value="2" selected>Acquaintance</option>
+                    <option value="3">Friend</option>
+                    <option value="4">Soulmate</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Dynamic:</label>
+                <select name="dynamic">
+                    <option value="0.5">Superior</option>
+                    <option value="0.7">Inferior</option>
+                    <option value="0.8">Rival</option>
+                    <option value="1.0" selected>Equal</option>
+                </select>
+            </div>
+        </form>
     `,
     buttons: {
-      add: {
-        icon: '<i class="fas fa-check"></i>',
-        label: "Add Relationship",
-        callback: async (html) => {
-          const selectedCharacter = html.find('#character').val();
-          if (selectedCharacter) {
-            const relationships = foundry.utils.deepClone(this.actor.system.relationships);
-            relationships.push({
-              playerName: '',
-              characterName: selectedCharacter,
-              relationshipLevel: 0
-            });
-
-            await this.actor.update({ 'system.relationships': relationships });
-            this.render();
-          }
+        add: {
+            icon: '<i class="fas fa-plus"></i>',
+            label: "Add",
+            callback: async (html) => {
+                // Votre logique
+            }
+        },
+        cancel: {
+            icon: '<i class="fas fa-times"></i>',
+            label: "Cancel"
         }
-      },
-      cancel: {
-        icon: '<i class="fas fa-times"></i>',
-        label: "Cancel"
-      }
     },
-    default: "add"
-  });
+    default: "add",
+    classes: ["relationship-dialog"] // Ajout de la classe spécifique
+}).render(true);
 
-  dialog.render(true);
 }
-
-
-
-addRelationshipListeners(html) {
-  html.find('#add-relationship').on('click', (event) => {
-      event.preventDefault();
-      this.addRelationship();  // Call the new modal-based method
-  });
-}
-
   getAvailableCharactersOptions(selectedCharacterName) {
     // Initialize the selectedCharacterName in case it's undefined
     selectedCharacterName = selectedCharacterName || '';
@@ -2056,24 +2254,6 @@ addRelationshipListeners(html) {
 
     return options;
 }
-  getRelationshipLevelOptions(selectedLevel, index) {
-    const levels = [
-      { value: -3, label: "Hatred" },
-      { value: -2, label: "Hostility" },
-      { value: -1, label: "Displeasure" },
-      { value: 0, label: "Indifference" },
-      { value: 1, label: "Liking" },
-      { value: 2, label: "Friendship" },
-      { value: 3, label: "Love" }
-    ];
-    
-    return levels.map(level => `
-      <label><input type="radio" class="relationship-input" data-index="${index}" 
-        data-field="relationshipLevel" name="relationship-level-${index}" 
-        value="${level.value}" ${level.value === selectedLevel ? 'checked' : ''}> 
-        ${level.label}</label>
-    `).join('');
-  }
 
   getGroupMembers() {
     const tracker = this.getAssociatedSynergyTracker();

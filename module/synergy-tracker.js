@@ -69,15 +69,65 @@ export class SynergyTracker extends Application {
     html.find('.eye-toggle').click(this._onEyeToggle.bind(this));
   }
 
-  updateCharacterSheets() {
-    this.data.characters.forEach(charName => {
-      const actor = game.actors.getName(charName);
-      if (actor && actor.sheet) {
-        actor.sheet.render(false);
-      }
-    });
-  }
+//   updateCharacterSheets() {
+//     this.data.characters.forEach(charName => {
+//         const actor = game.actors.getName(charName);
+//         if (actor && actor.sheet) {
+//             actor.sheet.render(false);
 
+//             // Localisation de la fiche de personnage
+//             const sheetElement = actor.sheet.element;
+//             console.log("Sheet Element Found:", sheetElement.length > 0);
+
+//             // Vérification de la tab "Relationships"
+//             let relationshipsTab = sheetElement.find('.tab[data-tab="relationships"]');
+//             console.log("Relationships Tab Found:", relationshipsTab.length > 0);
+
+//             if (relationshipsTab.length === 0) {
+//                 console.warn("Relationships tab not found. Trying to activate it...");
+//                 const tabNav = sheetElement.find('.sheet-tabs [data-tab="relationships"]');
+//                 if (tabNav.length) {
+//                     tabNav.click(); // Activer la tab "Relationships"
+//                     relationshipsTab = sheetElement.find('.tab[data-tab="relationships"]');
+//                     console.log("Relationships Tab Rechecked:", relationshipsTab.length > 0);
+//                 }
+//             }
+
+//             // Si la tab est trouvée, chercher la div "Group Synergy"
+//             if (relationshipsTab.length) {
+//                 const synergyDiv = relationshipsTab.find('.synergy-resources .group-synergy .resource-value');
+//                 console.log("Synergy Div Found:", synergyDiv.length > 0);
+
+//                 if (synergyDiv.length) {
+//                     synergyDiv.text(`${this.data.currentSynergy}/${this.data.maxSynergy}`);
+//                     console.log("Group Synergy updated successfully:", this.data.currentSynergy, "/", this.data.maxSynergy);
+//                 } else {
+//                     console.warn("Synergy div not found in the Relationships tab.");
+//                 }
+//             } else {
+//                 console.warn("Relationships tab not found or not active.");
+//             }
+//         }
+//     });
+// }
+
+
+async updateGroupSynergyUI() {
+  // Les données à transmettre
+  const updateData = {
+      currentSynergy: this.data.currentSynergy,
+      maxSynergy: this.data.maxSynergy,
+      characters: this.data.characters,
+  };
+
+  // Émettre l'événement de mise à jour
+  Hooks.callAll('updateCurrentSynergy', updateData);
+
+  // Ne mettre à jour que les fiches actuellement ouvertes
+  Object.values(ui.windows)
+      .filter(window => window instanceof ActorSheet && this.data.characters.includes(window.actor.name))
+      .forEach(sheet => sheet.render(false));
+}
   _onEyeToggle(event) {
     event.preventDefault();
     const characterName = event.currentTarget.dataset.character;
@@ -107,7 +157,7 @@ export class SynergyTracker extends Application {
     event.preventDefault();
     if (this.data.currentSynergy < this.data.maxSynergy) {
         this.data.currentSynergy++;
-        this.updateCharacterSheets();
+         this.updateGroupSynergyUI();
         this.render(false);
     } else {
         ui.notifications.warn("Current Synergy is already at maximum.");
@@ -118,7 +168,7 @@ _onDecreaseCurrentSynergy(event) {
     event.preventDefault();
     if (this.data.currentSynergy > 0) {
         this.data.currentSynergy--;
-        this.updateCharacterSheets();
+         this.updateGroupSynergyUI();
         this.render(false);
     } else {
         ui.notifications.warn("Current Synergy is already at minimum.");
@@ -128,7 +178,7 @@ _onDecreaseCurrentSynergy(event) {
 _onIncreaseMaxSynergy(event) {
     event.preventDefault();
     this.data.maxSynergy++;
-    this.updateCharacterSheets();
+     this.updateGroupSynergyUI();
     this.render(false);
 }
 
@@ -137,7 +187,7 @@ _onDecreaseMaxSynergy(event) {
     if (this.data.maxSynergy > 0) {
         this.data.maxSynergy--;
         this.data.currentSynergy = Math.min(this.data.currentSynergy, this.data.maxSynergy);
-        this.updateCharacterSheets();
+         this.updateGroupSynergyUI();
         this.render(false);
     } else {
         ui.notifications.warn("Max Synergy is already at minimum.");
@@ -147,21 +197,21 @@ _onDecreaseMaxSynergy(event) {
 _onEmptyPool(event) {
   event.preventDefault();
   this.data.currentSynergy = 0;
-  this.updateCharacterSheets();
+   this.updateGroupSynergyUI();
   this.render(false); // Redessine le tracker
 }
 
 _onFillPool(event) {
   event.preventDefault();
   this.data.currentSynergy = this.data.maxSynergy;
-  this.updateCharacterSheets();
+   this.updateGroupSynergyUI();
   this.render(false); // Redessine le tracker
 }
 _onResetMaxValue(event) {
   event.preventDefault();
   this.data.maxSynergy = this.calculateMaxSynergy();
   this.data.currentSynergy = Math.min(this.data.currentSynergy, this.data.maxSynergy);
-  this.updateCharacterSheets();
+   this.updateGroupSynergyUI();
   this.render(false); // Redessine le tracker
 }
   _onManageMembers(event) {
@@ -193,30 +243,36 @@ _onResetMaxValue(event) {
 }
 
   
-  _onRemoveMember(event) {
-    event.preventDefault();
-    const characterName = event.currentTarget.dataset.character;
+// Dans synergy-tracker.js
 
-    const index = this.data.characters.indexOf(characterName);
-    if (index > -1) {
-        this.data.characters.splice(index, 1);
-    }
+async removeCharacterFromGroup(characterName) {
+  // 1. Supprimer le personnage du groupe
+  const index = this.data.characters.indexOf(characterName);
+  if (index > -1) {
+      this.data.characters.splice(index, 1);
+  }
 
-    const selectedIndex = this.data.selectedCharacters.indexOf(characterName);
-    if (selectedIndex > -1) {
-        this.data.selectedCharacters.splice(selectedIndex, 1);
-    }
+  // 2. Nettoyer les sélections
+  const selectedIndex = this.data.selectedCharacters.indexOf(characterName);
+  if (selectedIndex > -1) {
+      this.data.selectedCharacters.splice(selectedIndex, 1);
+  }
 
-    SynergyTracker.assignedMembers.delete(characterName);
+  // 3. Recalculer la synergie
+  this.data.maxSynergy = this.calculateMaxSynergy();
+  this.data.currentSynergy = Math.min(this.data.currentSynergy, this.data.maxSynergy);
 
-    this.data.maxSynergy = this.calculateMaxSynergy();
-    this.data.currentSynergy = Math.min(this.data.currentSynergy, this.data.maxSynergy);
-
-    this.updateCharacterSheets();
-    this.render(false); // Redessine le tracker
-   
+  // 4. Même pattern que addSelectedMembers
+  this.updateGroupSynergyUI();
+  this.render(false);
+  Hooks.callAll('updateSynergyTracker', this);
 }
 
+_onRemoveMember(event) {
+  event.preventDefault();
+  const characterName = event.currentTarget.dataset.character;
+  this.removeCharacterFromGroup(characterName);
+}
 
   _onApplySynergyCost(event) {
     event.preventDefault();
@@ -281,7 +337,7 @@ _onResetMaxValue(event) {
   
             this.data.maxSynergy = this.calculateMaxSynergy();
             this.data.currentSynergy = Math.min(this.data.currentSynergy, this.data.maxSynergy);
-            this.updateCharacterSheets();
+             this.updateGroupSynergyUI();
             this.render(false);
           }
         },
@@ -310,7 +366,7 @@ _onResetMaxValue(event) {
     this.data.maxSynergy = this.calculateMaxSynergy();
     this.data.currentSynergy = Math.min(this.data.currentSynergy, this.data.maxSynergy);
 
-    this.updateCharacterSheets();
+     this.updateGroupSynergyUI();
     this.render(false); // Redessine le tracker
     Hooks.callAll('updateSynergyTracker', this);
 }
@@ -426,7 +482,7 @@ updateSynergyBasedOnRelationships(updatedActor) {
       this.data.maxSynergy = this.calculateMaxSynergy();
       this.data.currentSynergy = Math.min(this.data.currentSynergy, this.data.maxSynergy);
       
-      this.updateCharacterSheets(); // Met à jour les fiches de personnage
+       this.updateGroupSynergyUI(); // Met à jour les fiches de personnage
   }
 }
 

@@ -1,0 +1,439 @@
+/* Tab Relationships - Largeur spécifique */
+.tab[data-tab="relationships"] {
+    width: px; /* Augmentation de la largeur pour cette tab spécifique */
+    margin: 0 auto;
+    padding: 20px;
+  }
+  
+
+
+/* Section Synergy - Layout horizontal */
+.synergy-section {
+    display: flex;
+    gap: 20px;
+    background: rgba(255, 255, 255, 0.7);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 30px;
+  }
+  
+
+  .synergy-section h2 {
+    color: #4a2810;
+    font-size: 1.4em;
+    margin-bottom: 20px;
+    text-align: center;
+  }
+  
+
+/* Resources container */
+.synergy-resources {
+  flex: 1;
+  display: flex;
+  gap: 20px;
+  justify-content: flex-start;
+}
+
+
+/* Group Members section */
+.group-members-section {
+    flex: 1;
+    padding-left: 20px;
+    border-left: 2px solid rgba(74, 40, 16, 0.1);
+  }
+  
+  .group-members-section h3 {
+    margin-top: 0;
+    margin-bottom: 15px;
+    color: #4a2810;
+  }
+  
+  /* Individual resource cards */
+  .synergy-card {
+    width: 200px;
+    height: 150px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 15px;
+    border-radius: 8px;
+  }
+  
+  /* Specific colors for each card */
+  .synergy-card.group-synergy {
+    background: rgba(200, 230, 255, 0.3); /* Bleu très pâle */
+  }
+  
+  .synergy-card.maneuver-cost {
+    background: rgba(255, 200, 200, 0.3); /* Rouge très pâle */
+  }
+  
+  .synergy-card label {
+    font-size: 1.2em;
+    font-weight: 600;
+    color: #4a2810;
+    margin-bottom: 15px;
+  }
+  
+  .synergy-card .resource-value {
+    font-size: 1.3em;
+    font-style: italic;
+    color: #666;
+  }
+
+
+  .relationships-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr); /* Deux colonnes */
+    gap: 10px; /* Espacement entre les cartes */
+    width: 100%;
+    justify-items: center; /* Centrer les cartes horizontalement */
+  }
+   
+  
+/* Relationship Values Matrix */
+
+
+.relationship-value {
+  font-size: 2em; /* Taille augmentée */
+  font-weight: bold;
+  color: #4a2810; /* Rouge pour attirer l'attention */
+  text-align: center;
+}
+
+
+/* Affinity column (left) */
+.affinity-column {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding-right: 1rem;
+}
+
+.affinity-column label {
+  display: flex;
+  align-items: center;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: rgba(100, 149, 237, 0.1);  /* Teinte bleue */
+}
+
+.affinity-column label:hover {
+  background: rgba(100, 149, 237, 0.2);
+}
+
+.affinity-column label.selected {
+  background: rgba(100, 149, 237, 0.3);
+  color: #1e4584;
+  font-weight: bold;
+}
+
+/* Relationship Value (center) */
+.relationship-values {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #f5f5dc;
+  border-radius: 4px;
+  height: auto;
+  box-shadow: 0 3px 4px rgba(0, 0, 0, 0.1);
+
+  padding: 4px;
+}
+
+/* Dynamic column (right) */
+.dynamic-column {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding-left: 1rem;
+}
+
+.dynamic-column label {
+  display: flex;
+  align-items: center;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: #f5a29b; 
+  width: 126.6px;
+}
+
+.dynamic-column label:hover {
+  background: #ee9a93
+}
+
+.dynamic-column label.selected {
+  background: #e77a70;
+  color: #29100e;
+  font-weight: bold;
+}
+
+/* Hide radio inputs */
+.affinity-column input[type="radio"],
+.dynamic-column input[type="radio"] {
+  display: none;
+}
+
+/* Ajustements pour la carte entière */
+.relationship-card {
+  height: 400px; /* Hauteur fixe */
+  width: 500px; /* Largeur fixe */
+  display: flex;
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.card-avatar {
+  flex: 0 0 150px;  /* Largeur réduite */
+  position: relative;
+  overflow: hidden;
+}
+
+.relationship-card-content {
+  flex: 1;
+  padding: 4px;
+  padding-bottom: 0px;
+  display: flex;
+  flex-direction: column;
+ 
+}
+
+.card-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1rem;
+}
+
+.character-info {
+  flex: 1;
+}
+
+.character-name {
+  font-size: 1.2em;
+  font-weight: bold;
+  margin: 0;
+}
+
+.player-name {
+  font-style: italic;
+  color: #666;
+  font-size: 0.9em;
+  margin-top: 0.2rem;
+}
+
+/* Support section */
+.relationship-support {
+  margin-top: auto;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.support-action {
+  padding: 0.5rem 1rem;
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.support-action:hover {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.dice-display {
+  min-width: 60px;
+  height: 30px;
+  background: rgba(0, 0, 0, 0.03);
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+
+/* Conteneur général */
+.relationship-notes {
+  margin-top: 10px;
+  margin-bottom: 10px;
+  position: relative;
+}
+
+/* Mode affichage (lecture) */
+.notes-display {
+  width: 100%;
+  max-width: 100%;
+  padding: 8px;
+  font-size: 0.9rem;
+  font-family: inherit;
+  cursor: pointer;
+  word-wrap: break-word;
+}
+
+/* Mode édition */
+.notes-edit {
+  width: 95%;
+  max-width: 380px;
+  height: 50px;
+  max-height: 100px;
+  padding: 8px;
+  border: 1px solid rgba(0, 0, 0, 0.4);
+  border-radius: 5px;
+  font-size: 0.9rem;
+  font-family: inherit;
+  background-color: rgba(255, 255, 255, 0.9); /* Fond blanc */
+  resize: none;
+  overflow-y: auto;
+}
+
+/* Masquer les éléments avec la classe hidden */
+.hidden {
+  display: none;
+}
+
+.relationship-card-controls {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  border-top: 1px solid #eee;
+  /* margin-top: 0; */
+  border-bottom: 1px solid rgba(0, 0, 0, 0.2);
+  /* margin-bottom: 5px; */
+  margin: 0;
+  font-size: 1.1em;
+  text-transform: capitalize;
+  padding-bottom: 6px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.2)
+}
+
+.relationship-card-controls .card-control-icon {
+  cursor: pointer;
+  color: #333; /* Couleur par défaut */
+  transition: color 0.3s ease, transform 0.3s ease; /* Transition fluide pour la couleur et l'agrandissement */
+}
+
+.relationship-card-controls .card-control-icon:hover {
+  color: #666; /* Couleur au survol */
+}
+
+/* Style de base pour le bouton */
+.add-relationship.custom-button {
+  background-color: #007BFF; /* Couleur de fond (bleu) */
+  color: white; /* Couleur du texte */
+  font-family: 'Quicksand', sans-serif; /* Police harmonisée */
+  border: none; /* Pas de bordure */
+  border-radius: 8px; /* Bords arrondis */
+  padding: 10px 20px; /* Espace intérieur */
+  cursor: pointer; /* Curseur clic */
+  font-size: 14px; /* Taille du texte */
+  display: flex; /* Alignement avec icône */
+  align-items: center; /* Centrage vertical */
+  gap: 10px; /* Espacement entre l'icône et le texte */
+  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1); /* Ombre légère */
+  transition: background-color 0.3s ease, transform 0.2s ease; /* Transition fluide */
+}
+
+/* Hover pour l'effet au survol */
+.add-relationship.custom-button:hover {
+  background-color: #0056b3; /* Couleur plus foncée */
+  transform: translateY(-2px); /* Légère élévation */
+  box-shadow: 0px 6px 8px rgba(0, 0, 0, 0.2); /* Accentuation de l'ombre */
+}
+
+/* Active pour l'effet lors du clic */
+.add-relationship.custom-button:active {
+  transform: translateY(0); /* Annulation de l'élévation */
+  box-shadow: 0px 3px 4px rgba(0, 0, 0, 0.15); /* Réduction de l'ombre */
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Animation de fermeture */
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+}
+
+/* Style pour l'intégralité de la modale */
+body.game .window-app.relationship-dialog {
+  background-color: #f5f5f5 !important; /* Fond clair */
+  border-radius: 12px; /* Coins arrondis */
+  box-shadow: 0px 8px 20px rgba(0, 0, 0, 0.2); /* Ombre subtile */
+  padding: 20px !important; /* Espacement interne */
+  font-family: 'Quicksand', sans-serif !important; /* Harmonisation des polices */
+  color: #333;
+}
+
+/* Champs de formulaire */
+body.game .window-app.relationship-dialog select {
+  width: 100% !important;
+  padding: 10px !important;
+  font-family: 'Quicksand', sans-serif !important;
+  font-size: 14px !important;
+  border: 1px solid #ddd !important;
+  border-radius: 8px !important;
+  color: #333;
+  background-color: #fff !important;
+  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.05);
+}
+
+body.game .window-app.relationship-dialog select:hover {
+  border-color: #aaa !important;
+}
+
+/* Boutons dans la modale */
+body.game .window-app.relationship-dialog .dialog-buttons .button {
+  background-color: #d4e7f2 !important;
+  color: #333 !important;
+  font-family: 'Quicksand', sans-serif !important;
+  border: none !important;
+  border-radius: 8px !important;
+  padding: 10px 15px !important;
+  font-size: 14px !important;
+  cursor: pointer !important;
+  transition: background-color 0.3s ease, transform 0.2s ease !important;
+  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1) !important;
+}
+
+body.game .window-app.relationship-dialog .dialog-buttons .button:hover {
+  background-color: #b8d8e8 !important;
+  transform: translateY(-2px) !important;
+}
+
+body.game .window-app.relationship-dialog .dialog-buttons .button:active {
+  transform: translateY(0) !important;
+  background-color: #a5c8dc !important;
+}

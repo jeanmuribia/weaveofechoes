@@ -1,0 +1,442 @@
+.biography-entries {
+  column-count: 2; /* Nombre de colonnes */
+  column-gap: 15px; /* Espacement entre les colonnes */
+}
+
+.entryContainer {
+  break-inside: avoid; /* Empêche les cartes de se casser sur plusieurs colonnes */
+  margin-bottom: 15px; /* Espacement vertical entre les cartes */
+  background-color: #f5f5dc;
+  border: 1px solid var(--color-border-primary);
+  border-radius: 5px;
+  padding: 15px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+
+/* Titre de l'entrée */
+.entryTitle {
+  font-weight: bold;
+  font-size: 1.2em;
+  margin-bottom: 10px;
+  cursor: text;
+  padding: 5px;
+  border-radius: 5px;
+}
+
+.entryTitle:focus {
+  outline: none;
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* Réduire les marges et paddings inutiles */
+h4.entryTitle {
+  margin: 0 0 10px 0;
+  font-size: 1.25em;
+}
+
+/* Espacement cohérent pour tous les éléments */
+.preview-pane,
+.editor-wrapper {
+  margin-bottom: 10px;
+}
+
+/* Contenu */
+
+.content-wrapper {
+  overflow: hidden;
+  transition: max-height 0.3s ease-in-out, opacity 0.3s ease-in-out;
+}
+
+.editor-wrapper.hidden {
+  max-height: 0;
+  opacity: 0;
+  visibility: hidden;
+}
+
+.editor-wrapper.active {
+  max-height: 300px; /* Ajuster la hauteur max si nécessaire */
+  opacity: 1;
+  visibility: visible;
+}
+
+/* Preview Pane */
+.preview-pane {
+  cursor: pointer;
+  padding: 10px;
+  border: 1px solid rgba(74, 40, 16, 0.3); /* Bordure marron claire */
+  border-radius: 5px;
+  background: none;
+  box-shadow: 0 2px 8px rgba(74, 40, 16, 0.2); /* Ombre légère */
+  font-size: 14px;
+  line-height: 1.5;
+  color: #333;
+  transition: all 0.2s ease-in-out;
+}
+
+.preview-pane.empty {
+  font-style: italic;
+  color: #aaa;
+}
+
+
+.editor-wrapper {
+  display: none;
+}
+
+.editor-wrapper.active {
+  display: block;
+  margin-top: 10px;
+}
+
+/* Toolbar réduite */
+.markdown-toolbar {
+  display: flex;
+  gap: 5px; /* Réduction de l'écart entre les boutons */
+  margin-bottom: 5px;
+  padding: 5px;
+}
+
+.md-button {
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 1px solid #aaa;
+  background: #fff;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.md-button:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.md-button i {
+  font-size: 12px;
+}
+/* Editeur de Markdown */
+.markdown-editor {
+  width: 100%;
+  min-height: 50px;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 14px;
+  line-height: 1.5;
+  resize: vertical;
+}
+
+/* Boutons de contrôle */
+.entryControls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 10px;
+}
+
+.entry-buttons {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.save-entry {
+  color: #8b4513;
+  font-size: 1.2em;
+  cursor: pointer;
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.save-entry.enabled {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.delete-entry {
+  color: #8b4513;
+  font-size: 1.2em;
+  cursor: pointer;
+}
+
+.delete-entry:hover,
+.save-entry.enabled:hover {
+  color: #a0522d;
+}
+
+
+.selected-avatars {
+  display: flex;
+  gap: 5px;
+}
+
+.pj-avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 1px solid #ccc;
+  transition: transform 0.2s ease;
+}
+
+.pj-avatar:hover {
+  transform: scale(1.1);
+}
+
+/* Zone d'édition Markdown */
+.editor-wrapper {
+  display: none;
+}
+
+.editor-wrapper.active {
+  display: block;
+}
+
+/* Toolbar réduite */
+.markdown-toolbar {
+  display: flex;
+  gap: 5px; /* Réduction de l'écart entre les boutons */
+  margin-bottom: 5px;
+}
+
+.md-button {
+  width: 24px; /* Réduction de la taille des boutons */
+  height: 24px;
+  padding: 0;
+  border: 1px solid #aaa;
+  background: #fff;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.md-button:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.md-button i {
+  font-size: 12px;
+}
+
+/* Editeur de Markdown */
+.markdown-editor {
+  width: 100%;
+  min-height: 50px;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 14px;
+  line-height: 1.5;
+  resize: vertical;
+}
+
+/* Boutons de contrôle */
+.entry-buttons {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-start;
+}
+
+.entry-buttons > div {
+  cursor: pointer;
+  color: #8b4513;
+  font-size: 1.2em;
+  transition: color 0.2s ease;
+}
+
+.entry-buttons > div:hover {
+  color: #a0522d;
+}
+
+.entry-buttons > .edit-entry i,
+.entry-buttons > .delete-entry i {
+  font-size: 1.2em;
+}
+
+
+
+/* Bouton d'ajout d'entrée */
+#add-entry {
+  background: #f5f5dc;
+  padding: 10px 15px;
+  border-radius: 8px;
+  color: #4a2810;
+  font-size: 1.1em;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 1px solid rgba(74, 40, 16, 0.2);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+#add-entry:hover {
+  background: #ebe5c7;
+  transform: translateY(-1px);
+}
+
+
+/* Grid layout pour les entrées */
+.biography-entries.two-columns {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 15px;
+}
+
+/* Conteneur modal pour la sélection des PJ */
+.select-pj {
+  padding: 15px;
+}
+
+.select-all-buttons {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+.select-pj ul {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  list-style: none;
+  padding: 0;
+}
+
+.select-pj li {
+  background: rgba(255, 255, 255, 0.5);
+  padding: 8px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 1px solid transparent;
+}
+
+.select-pj li:hover {
+  background: rgba(255, 255, 255, 0.7);
+}
+
+.select-pj li.selected {
+  background: rgba(129, 201, 149, 0.3);
+  border-color: rgba(74, 40, 16, 0.2);
+}
+
+.select-pj li img {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+}
+
+#add-entry {
+  background: #f5f5dc;
+  padding: 10px 15px;
+  border-radius: 8px;
+  color: #4a2810;
+  font-size: 1.1em;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 1px solid rgba(74, 40, 16, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center; /* Centre le bouton */
+  margin-bottom: 15px; /* Ajustement pour bien aligner avec les colonnes */
+  margin-left: 0;
+}
+
+/* Style des titres générés avec le bouton Heading */
+h4.markdown-title {
+  font-size: 1.2em;
+  font-weight: bold;
+  color: #4a2810; /* Marron pour correspondre à l'esthétique globale */
+  margin: 10px 0;
+  padding-bottom: 2px;
+  border-bottom: 1px solid rgba(74, 40, 16, 0.3); /* Ligne élégante en bas */
+}
+
+div.select-pj {
+  font-family:  'Quicksand', sans-serif;
+}
+
+
+/* resticted mode */
+.view-only-mode {
+  position: relative;
+}
+
+.view-only-mode::after {
+  content: 'View Only';
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: rgba(0, 0, 0, 0.1);
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.8em;
+  color: #666;
+}
+
+.restricted-title {
+  color: #d9534f !important;
+  font-style: italic;
+}
+
+.restricted-content {
+  text-align: center;
+  padding: 15px;
+  background-color: rgba(0, 0, 0, 0.05);
+  border: 1px dashed rgba(0, 0, 0, 0.2);
+  border-radius: 5px;
+  margin: 10px 0;
+  color: #666;
+  font-style: italic;
+}
+
+.restricted-title {
+  color: #999 !important;
+  font-style: italic;
+}
+
+.no-interaction {
+  opacity: 0.85;
+  pointer-events: none;
+}
+
+.read-only {
+  pointer-events: none !important;
+}
+
+.read-only .preview-pane {
+  cursor: default !important;
+  user-select: text !important; /* Permet de sélectionner le texte pour le copier */
+  -webkit-user-select: text !important;
+  background-color: rgba(0, 0, 0, 0.03); /* Légère indication visuelle du mode lecture */
+}
+
+.read-only .entryTitle {
+  pointer-events: none;
+  user-select: text !important;
+  -webkit-user-select: text !important;
+}
+
+/* Cache tous les contrôles en mode lecture seule */
+.read-only .entry-buttons,
+.read-only .visibility-entry,
+.read-only .editor-wrapper,
+.read-only .markdown-toolbar {
+  display: none !important;
+}
+
+.no-interaction .entry-buttons,
+.no-interaction .visibility-entry {
+  display: none;
+}

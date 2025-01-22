@@ -9,7 +9,16 @@
         "element": {
           "value": "none"
         },
-       "tempers": {
+        "stamina": {
+          "max": 4,
+          "current": 4
+        },
+        "focusPoints": {
+          "base": 0,
+          "current": 0,
+          "isVisible": false
+        },
+        "tempers": {
           "passion": {
             "baseValue": "neutral",
             "currentValue": "neutral",
@@ -33,82 +42,96 @@
         },
         "attributes": {
           "body": {
-            "baseValue": "neutral",  
-            "currentValue": "neutral",  
-            "injury":false,
+            "baseValue": "neutral",
+            "currentValue": "neutral",
+            "injury": false,
+            "order": 1,
             "tag1": "",
-    "tag2": "",
-    "tag3": ""
-            
+            "tag2": "",
+            "tag3": ""
+          },
+          "martial": {
+            "baseValue": "neutral",
+            "currentValue": "neutral",
+            "injury": false,
+            "order": 2,
+            "tag1": "",
+            "tag2": "",
+            "tag3": ""
           },
           "soul": {
             "baseValue": "neutral",
             "currentValue": "neutral",
-            "injury":false,
+            "injury": false,
+            "order": 3,
             "tag1": "",
-    "tag2": "",
-    "tag3": ""
-            
+            "tag2": "",
+            "tag3": ""
+          },
+          "elementary": {
+            "baseValue": "neutral",
+            "currentValue": "neutral",
+            "injury": false,
+            "order": 4,
+            "tag1": "",
+            "tag2": "",
+            "tag3": ""
           },
           "mind": {
             "baseValue": "neutral",
             "currentValue": "neutral",
-            "injury":false,
+            "injury": false,
+            "order": 5,
             "tag1": "",
-    "tag2": "",
-    "tag3": ""
-            
-          },
-          "martial": {
-            
-            "baseValue": "neutral",
-            "currentValue": "neutral",
-            "injury":false,
-            "tag1": "",
-    "tag2": "",
-    "tag3": ""
-            
-          },
-          "elementary": {
-            
-            "baseValue": "neutral",
-            "currentValue": "neutral",
-            "injury":false,
-            "tag1": "",
-    "tag2": "",
-    "tag3": ""
-            
+            "tag2": "",
+            "tag3": ""
           },
           "rhetoric": {
-            
             "baseValue": "neutral",
             "currentValue": "neutral",
-            "injury":false,
+            "injury": false,
+            "order": 6,
             "tag1": "",
-    "tag2": "",
-    "tag3": ""
-            
+            "tag2": "",
+            "tag3": ""
           }
         },
-       "wounds": {
-  "wound1": false,
-  "wound2": false,
-  "wound3": false,
-  "knockedOut": false
-},
-
-  "masteryLevel": 0,
-  "masteryPoints": 0,
-
-
-        
-        "relationships": []
+        "wounds": {
+          "wound1": false,
+          "wound2": false,
+          "wound3": false,
+          "knockedOut": false
+        },
+        "masteryLevel": 0,
+        "masteryPoints": 0,
+        "biography": {
+          "entries": []
+        },
+        "relationships": {
+          "connections": []
+        }
       }
     },
     "character": {
-      "templates": ["base"]
+      "templates": ["base"],
+      "relationships": {
+        "connections": [
+          {
+            "characterId": "",
+            "characterName": "",
+            "affinity": {
+              "value": 2,
+              "label": "Acquaintance"
+            },
+            "dynamic": {
+              "value": 1.0,
+              "label": "Equal"
+            },
+            "relationshipValue": 2,
+            "notes": "A few words about him/her..."
+          }
+        ]
+      }
     }
-    
   }
-
 }
