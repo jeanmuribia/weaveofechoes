@@ -1,0 +1,28 @@
+async handleReturnToMyGroup(event) {
+  const sharedGroups = game.settings.get("weave_of_echoes", "sharedGroups");
+  const ownGroup = sharedGroups.groups.find(g => g.leader === this.actor.id);
+
+  if (!ownGroup) {
+    ui.notifications.error("An error occurred with your personal group.");
+    return;
+  }
+
+  // Quitter le groupe actuel si on en a un
+  const currentGroup = sharedGroups.groups.find(g => g.members.includes(this.actor.id) && g.id !== ownGroup.id);
+  if (currentGroup) {
+    currentGroup.members = currentGroup.members.filter(id => id !== this.actor.id);
+  }
+
+  // Réactiver son groupe personnel
+  ownGroup.inactive = false;
+  if (!ownGroup.members.includes(this.actor.id)) {
+    ownGroup.members.push(this.actor.id);
+  }
+
+  await game.settings.set("weave_of_echoes", "sharedGroups", { groups: sharedGroups.groups });
+
+  if (currentGroup) await this.refreshGroupMembers(currentGroup.id);
+  await this.refreshGroupMembers(ownGroup.id);
+
+  ui.notifications.info("Returned to your group.");
+}

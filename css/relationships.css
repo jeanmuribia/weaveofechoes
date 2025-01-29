@@ -106,35 +106,15 @@
 .affinity-column {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
   padding-right: 1rem;
 }
 
-.affinity-column label {
-  display: flex;
-  align-items: center;
-  padding: 0.5rem 1rem;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  background: rgba(100, 149, 237, 0.1);  /* Teinte bleue */
-}
-
-.affinity-column label:hover {
-  background: rgba(100, 149, 237, 0.2);
-}
-
-.affinity-column label.selected {
-  background: rgba(100, 149, 237, 0.3);
-  color: #1e4584;
-  font-weight: bold;
-}
 
 /* Relationship Value (center) */
 .relationship-values {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
   background: #f5f5dc;
   border-radius: 4px;
   height: auto;
@@ -147,29 +127,14 @@
 .dynamic-column {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
   padding-left: 1rem;
 }
 
-.dynamic-column label {
-  display: flex;
-  align-items: center;
-  padding: 0.5rem 1rem;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  background: #f5a29b; 
-  width: 126.6px;
-}
 
-.dynamic-column label:hover {
-  background: #ee9a93
-}
 
-.dynamic-column label.selected {
-  background: #e77a70;
-  color: #29100e;
-  font-weight: bold;
+.affinity-column,
+.dynamic-column {
+  gap: 0.5em;
 }
 
 /* Hide radio inputs */
@@ -215,7 +180,7 @@
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 1rem;
+  margin-bottom: 0;
 }
 
 .character-info {
@@ -234,6 +199,53 @@
   font-size: 0.9em;
   margin-top: 0.2rem;
 }
+
+
+/* Masquer les boutons radio natifs */
+.affinity-column input[type="radio"],
+.dynamic-column input[type="radio"] {
+ display: none;
+}
+
+.affinity-column label,
+.dynamic-column label {
+  display: block;
+  padding: 8px 12px;
+  margin: 4px 0;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  width: 100%;
+  text-align: left;
+}
+
+/* Style des labels Affinity */  
+.affinity-column label {
+  background: rgba(100, 149, 237, 0.1);
+}
+
+
+/* Style des labels Dynamic */
+.dynamic-column label {
+ background: #f5a29b;
+}
+
+.dynamic-column input[type="radio"]:checked + label {
+  background: #e77a70;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+  transform: translateY(1px);
+  font-weight: bold;
+}
+
+/* Spécifique aux labels sélectionnés par type */
+.affinity-column input[type="radio"]:checked + label {
+ background: rgba(100, 149, 237, 0.3);
+}
+
+.dynamic-column input[type="radio"]:checked + label {
+ background: #e77a70;
+}
+
 
 /* Support section */
 .relationship-support {
@@ -336,24 +348,27 @@
 
 /* Style de base pour le bouton */
 .add-relationship.custom-button {
-  background-color: #007BFF; /* Couleur de fond (bleu) */
-  color: white; /* Couleur du texte */
-  font-family: 'Quicksand', sans-serif; /* Police harmonisée */
-  border: none; /* Pas de bordure */
-  border-radius: 8px; /* Bords arrondis */
-  padding: 10px 20px; /* Espace intérieur */
-  cursor: pointer; /* Curseur clic */
-  font-size: 14px; /* Taille du texte */
-  display: flex; /* Alignement avec icône */
-  align-items: center; /* Centrage vertical */
-  gap: 10px; /* Espacement entre l'icône et le texte */
-  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1); /* Ombre légère */
-  transition: background-color 0.3s ease, transform 0.2s ease; /* Transition fluide */
+  background-color: rgb(214, 213, 158);
+  color: white;
+  font-family: 'Quicksand', sans-serif;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 20px;
+  cursor: pointer;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+  transition: background-color 0.3s ease, transform 0.2s ease;
+  margin: auto 0;
+  width: 200px;
 }
 
 /* Hover pour l'effet au survol */
 .add-relationship.custom-button:hover {
-  background-color: #0056b3; /* Couleur plus foncée */
+  background-color: rgb(199, 197, 98);
+  color: white;#0056b3; /* Couleur plus foncée */
   transform: translateY(-2px); /* Légère élévation */
   box-shadow: 0px 6px 8px rgba(0, 0, 0, 0.2); /* Accentuation de l'ombre */
 }
@@ -436,4 +451,378 @@ body.game .window-app.relationship-dialog .dialog-buttons .button:hover {
 body.game .window-app.relationship-dialog .dialog-buttons .button:active {
   transform: translateY(0) !important;
   background-color: #a5c8dc !important;
+}
+
+
+/* Group Members - Style similaire à Maneuver Cost */
+.synergy-card.group-members {
+  width: 400px;
+  background-color: #ffffff; /* Fond blanc */
+  border: 1px solid #ddd; /* Bordure légère */
+  border-radius: 8px; /* Coins arrondis */
+  padding: 1rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Ombre légère */
+  max-height: 300px; /* Hauteur maximale */
+  overflow-y: auto; /* Défilement vertical si nécessaire */
+}
+
+
+.synergy-card.group-members label {
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: #333;
+}
+
+.synergy-card.group-members .resource-value {
+  margin-top: 0.5rem;
+}
+
+
+.members-list .member {
+  font-size: 1rem;
+  padding: 0.5rem;
+  border-bottom: 1px solid #ddd; /* Séparation entre membres */
+  color: #555;
+}
+
+.members-list .member:last-child {
+  border-bottom: none; /* Pas de bordure pour le dernier élément */
+}
+
+.no-members {
+  font-size: 0.9rem;
+  color: #888;
+  font-style: italic;
+}
+
+/* Group Buttons */
+.synergy-card.group-buttons {
+  flex: 1;
+  background-color: rgba(76, 175, 80, 0.1);
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  justify-content: center;
+}
+
+.clickable-div {
+  background-color: #81c995;
+  color: #333;
+  font-size: 0.95em;
+  font-weight: bolder;
+  padding: 0.75rem 1rem;
+  text-align: center;
+  border-radius: 4px;
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: background-color 0.3s ease;
+}
+
+.clickable-div:hover:not(.disabled) {
+  background-color: #45a049;
+}
+
+.clickable-div.disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+.clickable-div:focus {
+  outline: 2px solid #45a049;
+}
+
+/* Suppression de la barre de séparation */
+.synergy-card + .synergy-card {
+  border-top: none; /* Retire la barre si une carte suit une autre */
+}
+
+.clickable-div:hover {
+  background-color: #45a049; /* Couleur légèrement plus foncée au survol */
+}
+
+.missing-ties-container {
+  max-height: 74px;
+  margin-top: -7px;
+}
+
+.missing-ties-label {
+  /* margin-bottom: 5px; */
+  text-align: center;
+  padding-top: 5px;
+  font-weight: bolder;
+  color: #f28b82;
+}
+
+.missing-ties {
+  color: #f28b82;
+  font-weight: 600;
+  max-height: 79px;
+  overflow-y: auto;
+  padding: 5px;
+  border-radius: 4px;
+  line-height: 20px;
+  font-size: inherit;
+  text-align: center;
+}
+
+
+/* Container for group members */
+.group-members-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+  align-items: center;
+  margin-top: 10px;
+}
+
+/* Individual member block */
+.group-member {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 5px;
+  width: 80px; /* Largeur maximale pour chaque bloc */
+}
+
+/* Member avatar (round images) */
+.group-member .avatar {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  border: 2px solid #ddd;
+  object-fit: cover;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Member name below the avatar */
+.group-member .member-name {
+  font-size: 0.8rem;
+  color: #333;
+  word-break: break-word; /* Permet d'éviter les dépassements */
+}
+
+/* No members text */
+.no-members {
+  font-size: 0.9rem;
+  color: #888;
+  font-style: italic;
+  text-align: center;
+  margin-top: 10px;
+}
+
+
+.synergy-resources {
+  display: flex;
+  gap: 20px;
+}
+
+.group-members-section {
+  display: flex;
+  gap: 20px;
+  align-items: flex-start;
+}
+
+.group-members-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 10px 0;
+}
+
+.group-member {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.group-member .avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.member-name {
+  margin-top: 0.5rem; /* Espace entre l'avatar et le label */
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #333;
+  text-align: center; /* Centrer le texte sous l'avatar */
+}
+
+.group-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+
+/* Conteneur principal */
+.group-members-and-buttons {
+  display: flex;
+  gap: 1rem; /* Espacement entre les cartes */
+  align-items: flex-start; /* Alignement en haut */
+}
+
+/* Titre de la section */
+.group-members label {
+  font-size: 1.2rem;
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+  display: block;
+  text-align: center;
+}
+
+/* Conteneur des membres */
+.members-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  justify-content: center;
+  padding: 0;
+  list-style: none;
+  margin: 1rem 0;
+}
+
+/* Chaque membre */
+.member {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  width: 80px;
+  margin: 0 auto;
+}
+
+/* Avatar des membres */
+.member-avatar {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  object-fit: cover; /* Remplir le cercle sans déformation */
+  border: 2px solid #ddd; /* Bordure grise */
+  transition: border-color 0.3s ease; /* Animation au survol */
+  margin-top: 20px;
+}
+
+.member-avatar:hover {
+  border-color: #888; /* Couleur au survol */
+}
+
+
+.synergy-current {
+  font-size: 3rem;
+  font-weight: bold;
+  color: var(--color-primary);
+  margin-bottom: 10px;
+}
+
+.synergy-base {
+  font-size: 1.2rem;
+  font-weight: normal;
+  color: var(--color-dark-secondary);
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-evenly;
+  align-items: flex-end;
+  margin-bottom: 15px;
+}
+
+.discord-level {
+  background-color: #f5f5dc;
+  padding: 10px 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  width: 300px;
+  height: 130px;
+}
+
+.discord-level-label {
+  font-weight: bold;
+  color: #4a2810;
+  margin-bottom: 5px;
+}
+
+.discord-level-value {
+  font-size: 2em;
+  color: #e77a70;
+  font-weight: bold;
+}
+
+.values-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.values-header h4 {
+  font-size: 1.1em;
+  color: #4a2810;
+  margin: 0;
+}
+
+.discord-value {
+  text-align: center;
+  font-size: 2em;
+  font-weight: bold;
+  color: #e77a70;
+}
+
+
+.discord-value h4 {
+  margin: 0;
+  font-size: 0.5em;
+  font-weight: bolder;
+}
+
+.value {
+  font-size: 2em;
+  font-weight: bold;
+  color: #4a2810;
+  margin-top: 40px;
+ }
+
+ .relationship-values h4:first-child,
+.relationship-values h4:last-child {
+ color: #4a2810;
+ margin: 0;
+ padding-top: 5px;
+ text-align: center;
+ font-weight: bolder;
+}
+
+.radio-container {
+  position: relative;
+  display: block;
+  cursor: pointer;
+}
+
+.radio-label {
+  display: block;
+  padding: 8px 12px;
+  margin: 4px 0;
+  border-radius: 4px;
+  background: rgba(100, 149, 237, 0.1);
+  transition: all 0.2s ease;
+}
+
+.affinity-selector:checked + .radio-label {
+  background: rgba(100, 149, 237, 0.3);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+  transform: translateY(1px);
+  font-weight: bold;
+}
+
+/* Même chose pour dynamic avec les couleurs appropriées */
+.dynamic-selector + .radio-label {
+  background: #f5a29b;
+}
+
+.dynamic-selector:checked + .radio-label {
+  background: #e77a70;
 }

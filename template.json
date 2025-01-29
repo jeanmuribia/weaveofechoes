@@ -107,31 +107,23 @@
         "biography": {
           "entries": []
         },
-        "relationships": {
-          "connections": []
-        }
+       "relationships": {
+  "connections": [ ],
+  "allConnectionsDiscordValue":0,
+  "characterGroup": {
+    "id":"",
+    "name": "",
+    "members": [],
+    "isInHisOwnGroup": true
+  },
+  "currentGroup":""
+}
+
       }
     },
     "character": {
-      "templates": ["base"],
-      "relationships": {
-        "connections": [
-          {
-            "characterId": "",
-            "characterName": "",
-            "affinity": {
-              "value": 2,
-              "label": "Acquaintance"
-            },
-            "dynamic": {
-              "value": 1.0,
-              "label": "Equal"
-            },
-            "relationshipValue": 2,
-            "notes": "A few words about him/her..."
-          }
-        ]
-      }
+      "templates": ["base"]
+     
     }
   }
 }

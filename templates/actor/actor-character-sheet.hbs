@@ -337,40 +337,79 @@
 <!-- Relationships Tab -->
 <div class="tab" data-tab="relationships">
   <!-- Section Synergy -->
-  <div class="synergy-section">
-    <div class="synergy-resources">
-      <div class="synergy-card group-synergy">
-        <label>Group Synergy</label>
-        <div class="resource-value">{{#if isNotInGroup}}Not in a group yet{{else}}{{currentSynergy}}/{{maxSynergy}}{{/if}}</div>
-      </div>
-      
-      <div class="synergy-card maneuver-cost">
-        <label>Maneuver Cost</label>
-        <div class="resource-value">{{#if maneuverCost}}{{maneuverCost}}{{else}}Select members{{/if}}</div>
-      </div>
-    </div>
-
-    <!-- Group Members -->
-    <div class="group-members-section">
-      <h3>Group Members</h3>
-      <div class="members-grid">
-        {{#each groupMembers}}
-          <div class="member-card {{#if this.isSelected}}selected{{/if}}" data-member="{{this.name}}">
-            <span class="member-name">{{this.name}}</span>
-          </div>
+ <div class="synergy-section">
+  <!-- Synergy Resources -->
+  <div class="synergy-resources">
+<div class="synergy-card group-synergy">
+  <label>Group Synergy</label>
+  {{#if groupSynergy.missingTies.length}}
+    <div class="missing-ties">
+      <h4>Missing Ties:</h4>
+      <ul>
+        {{#each groupSynergy.missingTies}}
+          <li>{{this.from}} ➡️ {{this.to}}</li>
         {{/each}}
+      </ul>
+    </div>
+  {{else}}
+    <div class="synergy-current">
+      {{groupSynergy.currentGroupSynergy}}
+    </div>
+    <div class="synergy-base">
+      Base: {{groupSynergy.baseGroupSynergy}}
+    </div>
+  {{/if}}
+</div>
+
+
+
+    
+    <div class="synergy-card maneuver-cost">
+      <label>Maneuver Cost</label>
+      <div class="resource-value">
+        {{#if maneuverCost}}
+          {{maneuverCost}}
+        {{else}}
+          Select members
+        {{/if}}
       </div>
     </div>
   </div>
 
-  <!-- Relationships Section -->
-  <div class="relationships-section">
-    <div class="section-header">
-      <h3>Relationships</h3>
-      <button class="add-relationship custom-button" type="button">
-        <i class="fas fa-plus"></i> Add Relationship
-      </button>
+<div class="group-members-and-buttons">
+  <!-- Group Members -->
+  <div class="synergy-card group-members">
+    <label>Group Members</label>
+    <div class="resource-value">
+      <ul class="members-list">
+        <!-- Les membres seront insérés ici dynamiquement -->
+      </ul>
+      <p class="no-members" style="display: none;">No members in this group yet.</p>
     </div>
+  </div>
+</div>
+
+  <!-- Group Buttons -->
+ <div class="synergy-card group-buttons">
+  <div class="clickable-div group-with" tabindex="0">
+    Group With...
+  </div>
+  <div class="clickable-div return-to-my-group {{#if isInOwnGroup}}disabled{{/if}}" tabindex="0">
+    Return to My Group
+  </div>
+</div>
+</div>
+
+
+  <div class="section-header">
+  <button class="add-relationship custom-button">
+    <i class="fas fa-plus"></i> Add Relationship
+  </button>
+  <div class="discord-level">
+  <div class="discord-level-label">Discord Level</div>
+  <div class="discord-level-value">{{system.relationships.allConnectionsDiscordValue}}</div>
+</div>
+</div>
 
     <!-- Grid des relations -->
     <div class="relationships-grid">
@@ -394,52 +433,57 @@
               <i class="fas fa-trash card-control-icon delete-relationship"></i>
             </div>
           </div>
+
 <div class="relationship-values">
-  <!-- Colonne Affinité (gauche) -->
+  <!-- Colonne Affinity (Gauche) -->
   <div class="affinity-column">
-    <label class="{{#if (eq affinity.value 1)}}selected{{/if}}" data-value="1">
-      <input type="radio" name="affinity-{{@index}}" value="1" {{checked (eq affinity.value 1)}}>
-      Enemy
-    </label>
-    <label class="{{#if (eq affinity.value 2)}}selected{{/if}}" data-value="2">
-      <input type="radio" name="affinity-{{@index}}" value="2" {{checked (eq affinity.value 2)}}>
-      Acquaintance
-    </label>
-    <label class="{{#if (eq affinity.value 3)}}selected{{/if}}" data-value="3">
-      <input type="radio" name="affinity-{{@index}}" value="3" {{checked (eq affinity.value 3)}}>
-      Friend
-    </label>
-    <label class="{{#if (eq affinity.value 4)}}selected{{/if}}" data-value="4">
-      <input type="radio" name="affinity-{{@index}}" value="4" {{checked (eq affinity.value 4)}}>
-      Soulmate
-    </label>
+    <h4>Affinity</h4>
+    <label>
+  <input type="radio" name="affinity-{{@index}}" value="4" data-index="{{@index}}" class="affinity-selector" {{checked (eq connection.affinity.value 4)}}>
+  Enemy
+</label>
+<label>
+  <input type="radio" name="affinity-{{@index}}" value="3" data-index="{{@index}}" class="affinity-selector" {{checked (eq connection.affinity.value 3)}}>
+  Acquaintance
+</label>
+<label>
+  <input type="radio" name="affinity-{{@index}}" value="2" data-index="{{@index}}" class="affinity-selector" {{checked (eq connection.affinity.value 2)}}>
+  Friend
+</label>
+<label>
+  <input type="radio" name="affinity-{{@index}}" value="1" data-index="{{@index}}" class="affinity-selector" {{checked (eq connection.affinity.value 1)}}>
+  Soulmate
+</label>
   </div>
 
-  <!-- Valeur de relation (centre) -->
-  <div class="relationship-value">
-    {{relationshipValue}}
-  </div>
+  <!-- Discord Value (Centre) -->
+ <div class="discord-value">
+  <h4>Discord Value</h4>
+  <div class="value">{{multiply this}}</div>
+</div>
 
-  <!-- Colonne Dynamic (droite) -->
+  <!-- Colonne Dynamic (Droite) -->
   <div class="dynamic-column">
-    <label class="{{#if (eq dynamic.value 0.5)}}selected{{/if}}" data-value="0.5">
-      <input type="radio" name="dynamic-{{@index}}" value="0.5" {{checked (eq dynamic.value 0.5)}}>
-      Superior
+    <h4>Dynamic</h4>
+    <label>
+      <input type="radio" name="dynamic-{{@index}}" value="0.4" data-index="{{@index}}" class="dynamic-selector" {{checked (eq connection.dynamic.value 0.4)}}>
+      Equal
     </label>
-    <label class="{{#if (eq dynamic.value 0.7)}}selected{{/if}}" data-value="0.7">
-      <input type="radio" name="dynamic-{{@index}}" value="0.7" {{checked (eq dynamic.value 0.7)}}>
-      Inferior
-    </label>
-    <label class="{{#if (eq dynamic.value 0.8)}}selected{{/if}}" data-value="0.8">
-      <input type="radio" name="dynamic-{{@index}}" value="0.8" {{checked (eq dynamic.value 0.8)}}>
+    <label>
+      <input type="radio" name="dynamic-{{@index}}" value="0.5" data-index="{{@index}}" class="dynamic-selector" {{checked (eq connection.dynamic.value 0.5)}}>
       Rival
     </label>
-    <label class="{{#if (eq dynamic.value 1.0)}}selected{{/if}}" data-value="1.0">
-      <input type="radio" name="dynamic-{{@index}}" value="1.0" {{checked (eq dynamic.value 1.0)}}>
-      Equal
+    <label>
+      <input type="radio" name="dynamic-{{@index}}" value="0.75" data-index="{{@index}}" class="dynamic-selector" {{checked (eq connection.dynamic.value 0.75)}}>
+      Inferior
+    </label>
+    <label>
+      <input type="radio" name="dynamic-{{@index}}" value="0.85" data-index="{{@index}}" class="dynamic-selector" {{checked (eq connection.dynamic.value 0.85)}}>
+      Superior
     </label>
   </div>
 </div>
+
 
 <!-- Nouveau conteneur pour les notes -->
 <div class="relationship-notes">
@@ -468,6 +512,7 @@
   </div>
 </div>
   
+
 
 <!-- Dans actor-character-sheet.hbs (section biographie) -->
 <div class="tab" data-tab="biography">

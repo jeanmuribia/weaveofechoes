@@ -94,3 +94,101 @@ a. S'assurer que le Focus Tracker fonctionne en harmonie avec le Synergy Tracker
 b. Vérifier que les mises à jour des relations affectent correctement les Focus Points.
 
 Avant de commencer l'implémentation, il serait judicieux de créer des maquettes ou des diagrammes pour visualiser l'interface utilisateur et les flux de données. Ensuite, nous pourrons procéder à l'implémentation étape par étape, en commençant par les modifications de l'Actor et de l'Actor Sheet, puis en créant le nouveau module Focus Tracker.
+
+
+
+
+
+
+  // Créer le contenu HTML pour la dialog avec une grille de groupes
+  const dialogContent = `
+    <form>
+      <div class="available-groups-grid">
+        ${availableGroups.map(group => {
+          const leader = game.actors.get(group.leader);
+          const members = group.members.map(id => game.actors.get(id)).filter(Boolean);
+          
+          return `
+            <div class="group-card" data-group-id="${group.id}">
+              <div class="group-header">
+                <h3>${group.name}</h3>
+              </div>
+              <div class="group-members-avatars">
+                ${members.map(member => `
+                  <div class="member-avatar" title="${member.name}">
+                    <img src="${member.img}" alt="${member.name}"/>
+                  </div>
+                `).join('')}
+              </div>
+              <button class="join-group-btn" type="button" data-group-id="${group.id}">
+                Join Group
+              </button>
+            </div>
+          `;
+        }).join('')}
+      </div>
+    </form>
+
+    <style>
+  .available-groups-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    padding: 1rem;
+  }
+
+  .group-card {
+    background: rgba(0, 0, 0, 0.05);
+    border-radius: 8px;
+    padding: 1rem;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    height: 180px; /* Hauteur fixe pour uniformité */
+  }
+
+  .group-header h3 {
+    margin: 0;
+    font-size: 1.2em;
+    border-bottom: none; /* Enlève la ligne sous le titre */
+  }
+
+  .group-members-avatars {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex: 1; /* Prend l'espace disponible */
+    margin: 1rem 0;
+  }
+
+  .member-avatar {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    overflow: hidden;
+    border: 2px solid #4b4b4b;
+  }
+
+  .member-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .join-group-btn {
+    background: #4b4b4b;
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.2s;
+    width: 100%; /* Le bouton prend toute la largeur */
+  }
+
+  .join-group-btn:hover {
+    background: #666;
+  }
+</style>
+  `;

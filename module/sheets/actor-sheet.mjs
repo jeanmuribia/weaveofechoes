@@ -1,6 +1,5 @@
 import { onManageActiveEffect, prepareActiveEffectCategories } from '../helpers/effects.mjs';
 import { BiographySystem } from '../biography-system.js';
-console.log("BiographySystem imported successfully");
 
 
 // Helper function to capitalize the first letter of a string
@@ -42,12 +41,6 @@ Hooks.on("preDeleteActor", async (actor, options, userId) => {
   }
 });
 
-Hooks.on("createActor", async (actor, options, userId) => {
-  // Add new character to the available list of characters for relationships
-  if (actor.type === "character") {
-      // Nothing to update here, characters are automatically part of the available pool
-  }
-});
 
 
 export class WoeActorSheet extends ActorSheet {
@@ -87,95 +80,112 @@ export class WoeActorSheet extends ActorSheet {
   }
 
   async getData() {
-    const context = await super.getData();
     
-    // S'assurer que context.actor existe
-    if (!context.actor) context.actor = {};
-    if (!context.actor.system) context.actor.system = {};
   
+    // Obtenez le contexte de base
+    const context = await super.getData();
+  
+    // Initialisez les structures de données nécessaires si elles n'existent pas
     const actorData = this.actor.toObject(false);
-    
-    // Initialiser toutes les structures de données nécessaires
-    if (!actorData.system) actorData.system = {};
+  
+    // Assurez-vous que `system` existe
+    actorData.system = actorData.system || {};
   
     // Stamina
-    if (!actorData.system.stamina) {
-      actorData.system.stamina = {
-        max: 4,
-        current: 4
-      };
-    }
+    actorData.system.stamina = actorData.system.stamina || {
+      max: 4,
+      current: 4
+    };
   
     // Focus Points
-    if (!actorData.system.focusPoints) {
-      actorData.system.focusPoints = {
-        base: 0,
-        current: 0,
-        isVisible: false
-      };
-    }
+    actorData.system.focusPoints = actorData.system.focusPoints || {
+      base: 0,
+      current: 0,
+      isVisible: false
+    };
   
     // Tempers
-    if (!actorData.system.tempers) actorData.system.tempers = {};
+    actorData.system.tempers = actorData.system.tempers || {};
     ['passion', 'empathy', 'rigor', 'independence'].forEach(temper => {
-      if (!actorData.system.tempers[temper]) {
-        actorData.system.tempers[temper] = {
-          baseValue: 'neutral',
-          currentValue: 'neutral',
-          injury: false
-        };
-      }
+      actorData.system.tempers[temper] = actorData.system.tempers[temper] || {
+        baseValue: 'neutral',
+        currentValue: 'neutral',
+        injury: false
+      };
     });
   
     // Attributes
-    if (!actorData.system.attributes) actorData.system.attributes = {};
+    actorData.system.attributes = actorData.system.attributes || {};
     ['body', 'martial', 'soul', 'elementary', 'mind', 'rhetoric'].forEach((attr, index) => {
-      if (!actorData.system.attributes[attr]) {
-        actorData.system.attributes[attr] = {
-          baseValue: 'neutral',
-          currentValue: 'neutral',
-          injury: false,
-          order: index + 1,
-          tag1: '',
-          tag2: '',
-          tag3: ''
-        };
-      }
+      actorData.system.attributes[attr] = actorData.system.attributes[attr] || {
+        baseValue: 'neutral',
+        currentValue: 'neutral',
+        injury: false,
+        order: index + 1,
+        tag1: '',
+        tag2: '',
+        tag3: ''
+      };
     });
   
     // Wounds
-    if (!actorData.system.wounds) {
-      actorData.system.wounds = {
-        wound1: false,
-        wound2: false,
-        wound3: false,
-        knockedOut: false
-      };
-    }
+    actorData.system.wounds = actorData.system.wounds || {
+      wound1: false,
+      wound2: false,
+      wound3: false,
+      knockedOut: false
+    };
   
     // Mastery
-    if (!actorData.system.masteryLevel) actorData.system.masteryLevel = 0;
-    if (!actorData.system.masteryPoints) actorData.system.masteryPoints = 0;
+    actorData.system.masteryLevel = actorData.system.masteryLevel || 0;
+    actorData.system.masteryPoints = actorData.system.masteryPoints || 0;
   
     // Relationships
-    if (!actorData.system.relationships) {
-      actorData.system.relationships = {
-        connections: []
-      };
-    }
-    if (!Array.isArray(actorData.system.relationships.connections)) {
-      actorData.system.relationships.connections = [];
-    }
+ 
+    actorData.system.relationships = actorData.system.relationships || {
+      connections: []
+    };
+    actorData.system.relationships.connections = Array.isArray(actorData.system.relationships.connections)
+      ? actorData.system.relationships.connections
+      : [];
   
+      // Goup Info
+      context.currentGroup = this.actor.system.relationships.currentGroup;
+      context.personalGroup = this.actor.system.relationships.characterGroup;
+
+      // Récupérer les informations de groupe
+  const groupInfo = await this.getGroupInfoFromCharacterId(this.actor.id);
+
+  context.groupSynergy = {
+    members: groupInfo?.members || [],
+    currentGroupSynergy: groupInfo?.currentGroupSynergy || 0,
+    missingTies: groupInfo?.missingTies || [],
+  };
+
+    //valeurs d'affinity et de dynamic au contexte
+    // Ajouter les valeurs d'affinity et de dynamic au contexte
+    context.AFFINITY_VALUES = {
+      1: "Enemy",
+      2: "Acquaintance",
+      3: "Friend",
+      4: "Soulmate",
+    };
+  
+    context.DYNAMIC_VALUES = {
+      0.4: "Equal",
+      0.5: "Rival",
+      0.75: "Inferior",
+      0.85: "Superior",
+    };
+  
+
     // Biography
-    if (!actorData.system.biography) {
-      actorData.system.biography = {
-        entries: []
-      };
-    }
-    if (!Array.isArray(actorData.system.biography.entries)) {
-      actorData.system.biography.entries = [];
-    }
+    actorData.system.biography = actorData.system.biography || {
+      entries: []
+    };
+    actorData.system.biography.entries = Array.isArray(actorData.system.biography.entries)
+      ? actorData.system.biography.entries
+      : [];
   
     // Mise à jour des relations avec les images
     actorData.system.relationships.connections = actorData.system.relationships.connections.map(conn => {
@@ -188,19 +198,20 @@ export class WoeActorSheet extends ActorSheet {
     });
   
     // Ajouter les acteurs disponibles pour de nouvelles relations
-    context.actors = game.actors.filter(actor => 
-      actor.id !== this.actor.id && 
+    context.actors = game.actors.filter(actor =>
+      actor.id !== this.actor.id &&
       actor.type === "character" &&
       !actorData.system.relationships.connections.some(conn => conn.characterId === actor.id)
     );
   
-    // Configuration finale du contexte
+    // Intégrer les données mises à jour dans le contexte
+    context.actorData = actorData; // Toutes les données complètes de l'acteur
     context.system = actorData.system;
     context.actorName = this.actor.name;
   
     return context;
   }
-
+  
   async rollDie(type) {
     if (!type) return "undefined";
 
@@ -237,7 +248,10 @@ formatResult(result) {
         default:
             return result; // Aucun changement pour "Nothing"
     }
+    
 }
+
+
 
 getColorForValue(value) {
   const colors = {
@@ -283,6 +297,8 @@ _prepareFocusPointsData(context) {
     // Stamina editing
     this.handleStaminaEditing(html);
     this.handleStaminaMaxEditing(html);
+
+
   
     // Element editing
     this.handleElementEditing(html);
@@ -332,11 +348,19 @@ _prepareFocusPointsData(context) {
         newValue * connections[index].dynamic.value
       );
       
+
+      Hooks.on('updateActor', (actor, changes, options, userId) => {
+        if (actor.id === this.actor.id && changes.system?.relationships) {
+          this.render(false);
+        }
+      });
+
       // Mettre à jour l'acteur
       await this.actor.update({
         'system.relationships.connections': connections
       });
     });
+
     
     // Gérer les changements de Dynamic
     html.find('input[name^="dynamic-"]').on('change', async (event) => {
@@ -351,11 +375,6 @@ _prepareFocusPointsData(context) {
         value: newValue,
         label: this.actor._getDynamicLabel(newValue)
       };
-      
-      // Recalculer la relationshipValue
-      connections[index].relationshipValue = Math.round(
-        connections[index].affinity.value * newValue
-      );
       
       // Mettre à jour l'acteur
       await this.actor.update({
@@ -374,6 +393,7 @@ _prepareFocusPointsData(context) {
       await this.actor.update({
         'system.relationships.connections': connections
       });
+      await this.updateDiscordLevels();
     });
     
     // Gérer la visibilité d'une relation
@@ -392,6 +412,24 @@ _prepareFocusPointsData(context) {
       $(card).toggleClass('hidden-relationship');
     });
     
+
+     // Listener pour Affinity
+  html.find('.affinity-selector').on('change', event => {
+    const targetIndex = event.currentTarget.dataset.index;
+    const newValue = parseInt(event.currentTarget.value); // Convertit la valeur en entier
+
+    this.updateAffinityValue(targetIndex, newValue);
+     this.updateDiscordLevels();
+  });
+
+  // Listener pour Dynamic
+  html.find('.dynamic-selector').on('change', event => {
+    const targetIndex = event.currentTarget.dataset.index;
+    const newValue = parseFloat(event.currentTarget.value); // Convertit la valeur en float
+
+    this.updateDynamicValue(targetIndex, newValue);
+    this.updateDiscordLevels();
+  });
 
     html.find('.notes-edit').on('blur', (event) => {
       const textarea = $(event.currentTarget);
@@ -428,8 +466,13 @@ _prepareFocusPointsData(context) {
     // Dice rolling
     this.addDiceListeners(html);
   
-    // Group members
-    html.find('.character-member-item').on('click', this._onGroupMemberClick.bind(this));
+    // Group management listeners
+    html.find('.group-with').on('click', this.handleGroupWith.bind(this));
+    html.find('.return-to-my-group').on('click', this.handleReturnToMyGroup.bind(this));
+
+    //Affichage dans le grouo 
+    const characterId = this.actor.id;
+    this.renderGroupMembers(characterId);
   
     // Maneuver
     html.find('.maneuver-container').on('click', () => { this.openManeuverWindow(); });
@@ -443,11 +486,692 @@ _prepareFocusPointsData(context) {
         event.target.blur(); // Simule la fin de l'édition si nécessaire
       }
     });
+    
 
     //Biography
     BiographySystem.setup(html, this.actor);
    
   }
+
+
+  // Gestion des groupes dans les fiches de perso 
+
+  async getGroupInfo(groupId) {
+    const actors = game.actors.contents;
+  
+    // Parcourir les acteurs pour trouver le groupe correspondant
+    for (let actor of actors) {
+      if (actor.system.relationships.characterGroup.id === groupId) {
+        const groupMembers = actor.system.relationships.characterGroup.members || [];
+  
+        // Préparer les informations des membres
+        const memberInfo = groupMembers.map(memberId => {
+          const memberActor = game.actors.get(memberId);
+  
+          // Vérifier si l'acteur existe
+          if (memberActor) {
+            return {
+              name: memberActor.name,
+              isInOwnGroup: memberActor.system.relationships.characterGroup.isInHisOwnGroup
+            };
+          }
+  
+          return null; // En cas d'ID invalide
+        }).filter(member => member !== null); // Supprimer les entrées nulles
+  
+        return {
+          id: actor.system.relationships.characterGroup.id,
+          name: actor.system.relationships.characterGroup.name,
+          members: memberInfo
+        };
+      }
+    }
+  
+    // Retourner null si aucun groupe n'est trouvé
+    return null;
+
+  }
+  
+  async getGroupInfoFromCharacterId(characterId) {
+   
+    const characterActor = game.actors.get(characterId);
+  
+    if (!characterActor) {
+      console.error(`L'acteur avec l'ID ${characterId} est introuvable.`);
+      return null;
+    }
+  
+    const currentGroupId = characterActor.system.relationships.currentGroup;
+    if (!currentGroupId) {
+      console.error(`Le personnage avec l'ID ${characterId} n'appartient à aucun groupe.`);
+      return null;
+    }
+  
+    const allActors = game.actors.contents;
+    const groupOwner = allActors.find(
+      actor => actor.system.relationships.characterGroup.id === currentGroupId
+    );
+  
+    if (!groupOwner) {
+      console.error(`Aucun groupe trouvé avec l'ID ${currentGroupId}.`);
+      return null;
+    }
+  
+    const groupMembers = groupOwner.system.relationships.characterGroup.members || [];
+    const validMembers = groupMembers
+      .map(memberId => game.actors.get(memberId))
+      .filter(memberActor => memberActor);
+  
+    // Vérifier les connexions manquantes en utilisant la méthode existante
+    const missingConnections = await this.checkRelationshipsWithinGroup(characterActor.id);
+  
+    return {
+      groupId: currentGroupId,
+      groupName: groupOwner.system.relationships.characterGroup.name,
+      members: validMembers,
+      currentGroupSynergy: groupOwner.system.relationships.currentGroupSynergy || 0,
+      baseGroupSynergy: groupOwner.system.relationships.baseGroupSynergy || 0,
+      missingTies: missingConnections || [],
+    };
+  }
+  
+  
+  renderGroupSynergy(groupData) {
+  
+    // Vérification de la validité des données
+    if (!groupData || !groupData.members) {
+      console.warn("Données de groupe invalides ou membres absents.");
+      return `
+        <div class="synergy-message">
+          No members in the group yet.
+        </div>
+      `;
+    }
+  
+    if (groupData.members.length < 3) {
+      console.warn("Le groupe contient moins de 3 membres.");
+      return `
+        <div class="synergy-message">
+          No members in the group yet.
+        </div>
+      `;
+    }
+  
+    const { currentGroupSynergy = 0, missingTies = [] } = groupData;
+  
+    // Affichage basé sur l'état du groupe
+    if (missingTies.length > 0) {
+      console.warn("Des connexions sont manquantes dans le groupe.");
+      return `
+        <div class="synergy-container">
+          <div class="missing-ties">
+            <h4>Missing Ties:</h4>
+            <ul>
+              ${missingTies.map(tie => `<li>${tie.from} ➡️ ${tie.to}</li>`).join('')}
+            </ul>
+          </div>
+        </div>
+      `;
+    } else if (currentGroupSynergy > 0) {
+      return `
+        <div class="synergy-container">
+          <div class="synergy-value">
+            Current Synergy: ${currentGroupSynergy}
+          </div>
+        </div>
+      `;
+    } else {
+      return `
+        <div class="synergy-container">
+          <div class="synergy-message">
+            Unable to calculate synergy. Check group configuration.
+          </div>
+        </div>
+      `;
+    }
+    
+  }
+  
+  
+  async renderGroupMembers(characterId) {
+    // Récupérer les informations du groupe via la fonction existante
+    const groupInfo = await this.getGroupInfoFromCharacterId(characterId);
+  
+    // Vérifier que le groupe existe
+    if (!groupInfo) {
+      console.error("Impossible de récupérer les informations du groupe.");
+      return;
+    }
+  
+    // Exclure le personnage actuel
+    const currentCharacter = game.actors.get(characterId);
+    const members = groupInfo.members.filter(member => member.name !== currentCharacter.name);
+  
+    // Sélectionner les éléments HTML nécessaires
+    const container = this.element.find(".members-list");
+    const noMembersMessage = this.element.find(".no-members");
+  
+    // Vérifier s'il y a des membres
+    if (members.length > 0) {
+      noMembersMessage.hide(); // Masquer le message "No members in this group yet."
+      container.empty(); // Nettoyer la liste des membres avant d'ajouter les nouveaux
+  
+      // Ajouter les avatars et noms des membres
+      members.forEach(member => {
+        const actor = game.actors.getName(member.name);
+        const avatar = actor?.img || "path/to/default-avatar.png";
+  
+        // Créer un élément de liste pour chaque membre
+        const memberElement = $(`
+          <li class="member">
+            <img src="${avatar}" alt="${member.name}" class="member-avatar" />
+            <span class="member-name">${member.name}</span>
+          </li>
+        `);
+  
+        container.append(memberElement);
+      });
+    } else {
+      // Si aucun membre, afficher le message par défaut
+      noMembersMessage.show();
+      container.empty(); // Nettoyer la liste des membres
+    }
+  }  
+
+  async changeGroup(newGroupId) {
+    try {
+      const currentGroupId = this.system.relationships.currentGroup;
+  
+      if (currentGroupId === newGroupId) {
+        return;
+      }
+  
+      const newGroupOwner = game.actors.find(actor =>
+        actor.system.relationships.characterGroup.id === newGroupId
+      );
+  
+      if (newGroupOwner) {
+        const newMembers = [...newGroupOwner.system.relationships.characterGroup.members];
+        if (!newMembers.includes(this.id)) {
+          newMembers.push(this.id);
+          await newGroupOwner.update({
+            'system.relationships.characterGroup.members': newMembers
+          });
+        }
+      }
+  
+      // Si on retourne dans notre propre groupe, s'assurer qu'il existe encore
+      if (newGroupId === this.system.relationships.characterGroup.id) {
+        console.log(`🔄 [RETURN] ${this.name} retourne dans son propre groupe.`);
+        
+        // Vérifier si le groupe personnel a été vidé
+        if (this.system.relationships.characterGroup.members.length <= 1) {
+          console.log(`⚠️ [WARNING] Le groupe de ${this.name} était vide. Restauration en cours...`);
+          
+          // Restaurer le ghost_member
+          this.system.relationships.characterGroup.members = [this.id, "ghost_member"];
+  
+          await this.update({
+            'system.relationships.characterGroup.members': this.system.relationships.characterGroup.members
+          });
+  
+          console.log(`✅ [FIXED] Groupe restauré pour ${this.name}.`);
+        }
+      }
+
+      // 🔄 Sauvegarde du groupe personnel AVANT de quitter
+if (this.system.relationships.characterGroup.id) {
+  console.log(`💾 [SAVE] Sauvegarde du groupe personnel de "${this.name}" avant changement.`);
+  
+  await this.update({
+      'system.relationships.characterGroup': this.system.relationships.characterGroup
+  }).then(() => {
+      console.log(`✅ [SAVED] Groupe personnel de "${this.name}" sauvegardé.`);
+  }).catch(err => {
+      console.error(`❌ [ERROR] Impossible de sauvegarder le groupe personnel de "${this.name}"`, err);
+  });
+}
+  
+      await this.update({
+        'system.relationships.currentGroup': newGroupId,
+        'system.relationships.characterGroup.isInHisOwnGroup': newGroupId === this.system.relationships.characterGroup.id
+      });
+  
+      console.log(`🔍 [DEBUG] Avant MAJ ancien groupe - ID: ${currentGroupId}`, oldGroupOwner?.system.relationships.characterGroup);
+
+      if (currentGroupId) {
+        const oldGroupOwner = game.actors.find(actor =>
+          actor.system.relationships.characterGroup.id === currentGroupId
+        );
+  
+        if (oldGroupOwner) {
+          let oldMembers = [...oldGroupOwner.system.relationships.characterGroup.members];
+          const updatedMembers = oldMembers.filter(memberId => memberId !== this.id);
+  
+          // Si le tableau est vide, ajoute une valeur par défaut
+          if (updatedMembers.length === 0) {
+            updatedMembers.push("ghost_member");
+            console.log(`👻 [GHOST] Le ghost_member a été rajouté au groupe ${oldGroupOwner.name}.`);
+          }
+  
+          await oldGroupOwner.update({
+            'system.relationships.characterGroup.members': updatedMembers
+          });
+        }
+      }
+
+  console.log(`👻 [CHECK] Groupe personnel après retour de "${this.name}"`, this.system.relationships.characterGroup);
+      this.render(false);
+  
+    } catch (error) {
+      console.error('❌ Erreur lors du changement de groupe :', error);
+      ui.notifications.error('Une erreur est survenue lors du changement de groupe');
+    }
+  }
+  
+  async checkRelationshipsWithinGroup(actorId) {
+    const actor = game.actors.get(actorId);
+    if (!actor) {
+      console.error(`L'acteur avec l'ID ${actorId} est introuvable.`);
+      return;
+    }
+  
+    const groupId = actor.system.relationships.currentGroup;
+    if (!groupId) {
+      console.error(`L'acteur ${actor.name} n'appartient à aucun groupe.`);
+      return;
+    }
+  
+    const groupInfo = await actor.sheet.getGroupInfo(groupId);
+    if (!groupInfo || groupInfo.members.length === 0) {
+      console.error(`Le groupe ${groupId} est vide ou introuvable.`);
+      return;
+    }
+  
+    const missingConnections = [];
+    for (const member of groupInfo.members) {
+      const memberActor = game.actors.getName(member.name);
+      if (!memberActor) continue;
+  
+      for (const otherMember of groupInfo.members) {
+        if (member.name === otherMember.name) continue;
+        
+        // Vérifier si la connexion existe dans les relations
+        const hasConnection = memberActor.system.relationships.connections.some(
+          conn => conn.characterName === otherMember.name // Changé de 'target' à 'characterName'
+        );
+  
+        if (!hasConnection) {
+          missingConnections.push({
+            from: member.name,
+            to: otherMember.name,
+          });
+        }
+      }
+    }
+  
+    return missingConnections; // Ajout du return pour que la fonction retourne les connexions manquantes
+  }
+
+  async calculateGroupSynergy(actorId) {
+    // Placeholder : Les valeurs seront calculées plus tard
+    return {
+      baseGroupSynergy: Math.floor(Math.random() * 100), // Valeur aléatoire
+      currentGroupSynergy: Math.floor(Math.random() * 100), // Valeur aléatoire
+    };
+  }
+
+  renderGroupSynergy(groupData) {
+    console.log("Group Data reçu :", groupData); // Debug log
+  
+    // Vérification du groupe et des membres
+    if (!groupData || !groupData.members) {
+      return `
+        <div class="synergy-message">
+          No members in the group yet.
+        </div>
+      `;
+    }
+  
+    if (groupData.members.length < 3) {
+      return `
+        <div class="synergy-message">
+          No members in the group yet.
+        </div>
+      `;
+    }
+  
+    const { currentGroupSynergy = "N/A", missingTies = [] } = groupData;
+  
+    console.log("Group Data reçu dans renderGroupSynergy:", groupData);
+    // Afficher les missing ties s'il y en a
+    const missingTiesHtml = missingTies.length > 0
+      ? `
+        <div class="missing-ties">
+          <h4>Missing Ties:</h4>
+          <ul>
+            ${missingTies.map(tie => `<li>${tie.from} ➡️ ${tie.to}</li>`).join('')}
+          </ul>
+        </div>
+      `
+      : `
+        <div class="missing-ties">
+          All group members are connected.
+        </div>
+      `;
+  
+    return `
+      <div class="synergy-container">
+        <div class="synergy-value">
+          Current Synergy: ${currentGroupSynergy}
+        </div>
+        ${missingTiesHtml}
+      </div>
+    `;
+  }
+  
+  async updateAffinityValue(index, newValue) {
+    const connections = [...this.actor.system.relationships.connections];
+    if (connections[index]) {
+      connections[index].affinity.value = newValue;
+      // Calculer immédiatement la nouvelle discordValue
+      const dynamicValue = parseFloat(connections[index].dynamic.value) || 0.4;
+      connections[index].discordValue = Math.round((newValue * dynamicValue) * 100) / 100;
+      
+      await this.actor.update({
+        "system.relationships.connections": connections,
+        'system.relationships.allConnectionsDiscordValue': totalDiscordLevel
+      });
+      
+      console.log('Updated Discord Value:', connections[index].discordValue);
+    }
+  }
+
+  async updateDynamicValue(index, newValue) {
+    const connections = [...this.actor.system.relationships.connections];
+    if (connections[index]) {
+      connections[index].dynamic.value = newValue;
+      // Calculer immédiatement la nouvelle discordValue
+      const affinityValue = parseFloat(connections[index].affinity.value) || 1;
+      connections[index].discordValue = Math.round((affinityValue * newValue) * 100) / 100;
+      
+      await this.actor.update({
+        "system.relationships.connections": connections,
+      });
+      this.calculateDiscordLevel,
+      
+      console.log('Updated Discord Value:', connections[index].discordValue);
+    }
+  }
+
+  calculateDiscordValue() {
+    const connections = this.actor.system.relationships.connections;
+    connections.forEach(connection => {
+      const affinityValue = Number(connection.affinity.value);
+      const dynamicValue = Number(connection.dynamic.value);
+      console.log('Raw values:', { affinity: connection.affinity.value, dynamic: connection.dynamic.value });
+      console.log('Parsed values:', { affinityValue, dynamicValue });
+      connection.discordValue = Math.round((affinityValue * dynamicValue) * 100) / 100;
+    });
+  }
+
+  async updateDiscordLevels() {
+  const connections = this.actor.system.relationships.connections;
+  const totalDiscord = connections.reduce((sum, connection) => {
+    // On arrondit d'abord chaque Discord Value individuelle
+    const discordValue = Math.round(connection.affinity.value * connection.dynamic.value);
+    return sum + discordValue;
+  }, 0);
+  
+  await this.actor.update({
+    "system.relationships.allConnectionsDiscordValue": totalDiscord
+  });
+}
+async calculateBaseGroupSynergy() {
+  const groupMembers = await this.getGroupMembers();
+  const memberCount = groupMembers.length;
+  const baseGroupSynergy = 10 + (memberCount * memberCount);
+  const totalDiscordLevels = groupMembers.reduce((sum, member) => 
+    sum + (member.system.relationships.allConnectionsDiscordValue || 0), 0);
+  
+  await this.actor.update({
+    "system.relationships.characterGroup.baseGroupSynergy": Math.max(0, baseGroupSynergy - totalDiscordLevels)
+  });
+ }
+ 
+
+  async handleGroupWith() {
+    // Récupérer tous les acteurs
+const actors = game.actors;
+
+// Récupérer les IDs de son propre groupe et du groupe actuel
+const ownGroupId = this.actor.system.relationships.characterGroup.id;
+const currentGroupId = this.actor.system.relationships.currentGroup;
+const isInOwnGroup = this.actor.system.relationships.characterGroup.isInHisOwnGroup;
+
+// Récupérer tous les groupes disponibles avec les filtres
+const availableGroups = [];
+for (let actor of actors) {
+    if (!actor.system.relationships.characterGroup) continue;
+
+    console.log(`📌 [GROUP CHECK] Groupes détectés :`, availableGroups);
+    const group = actor.system.relationships.characterGroup;
+
+    // 🔥 Condition ajoutée : Si le perso n'est pas dans son propre groupe, il ne peut pas rejoindre son groupe personnel
+    if (
+        group.id !== currentGroupId && 
+        group.members.length > 1 && 
+        (isInOwnGroup || group.id !== ownGroupId) // 🔥 Ajout ici
+    ) {
+        availableGroups.push({
+            id: group.id,
+            name: group.name,
+            members: group.members,
+            leader: group.members[0] // On considère le premier membre comme leader
+        });
+    }
+}
+
+// Vérifier s'il y a des groupes disponibles
+if (availableGroups.length === 0) {
+    ui.notifications.warn("No group available");
+    return;
+}
+  
+    // Créer et afficher la dialog
+    const dialog = new Dialog({
+      title: "Join a Group",
+      content: `
+      <form>
+        <div class="available-groups-grid">
+          ${availableGroups.map(group => {
+            const leader = game.actors.get(group.leader);
+            const members = group.members.map(id => game.actors.get(id)).filter(Boolean);
+  
+            return `
+              <div class="group-card" data-group-id="${group.id}">
+                <div class="group-header">
+                  <h3>${group.name}</h3>
+                </div>
+                <div class="group-members-avatars">
+                  ${members.map(member => `
+                    <div class="member-avatar" title="${member.name}">
+                      <img src="${member.img}" alt="${member.name}"/>
+                    </div>
+                  `).join('')}
+                </div>
+                <button class="join-group-btn" type="button" data-group-id="${group.id}">
+                  Join Group
+                </button>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      </form>
+  
+      <style>
+        .available-groups-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+          gap: 1rem;
+          padding: 1rem;
+        }
+  
+        .group-card {
+          background: rgba(0, 0, 0, 0.05);
+          border-radius: 8px;
+          padding: 1rem;
+          text-align: center;
+          display: flex;
+          flex-direction: column;
+          justify-content: space-between;
+          height: 180px;
+        }
+  
+        .group-header h3 {
+          margin: 0;
+          font-size: 1.2em;
+        }
+  
+        .group-members-avatars {
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          flex: 1;
+          margin: 1rem 0;
+        }
+  
+        .member-avatar {
+          width: 50px;
+          height: 50px;
+          border-radius: 50%;
+          overflow: hidden;
+          border: 2px solid #4b4b4b;
+        }
+  
+        .member-avatar img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+        }
+  
+        .join-group-btn {
+          background: #4b4b4b;
+          color: white;
+          border: none;
+          padding: 0.5rem 1rem;
+          border-radius: 4px;
+          cursor: pointer;
+          transition: background 0.2s;
+          width: 100%;
+        }
+  
+        .join-group-btn:hover {
+          background: #666;
+        }
+      </style>
+      `,
+      buttons: {
+        close: {
+          label: "Close"
+        }
+      },
+      render: (html) => {
+        html.on('click', '.join-group-btn', async (event) => {
+          const groupId = event.currentTarget.dataset.groupId;
+  
+          try {
+            // Utiliser directement this.actor qui est l'instance de WoeActor
+            await game.actors.get(this.actor.id).changeGroup(groupId);
+  
+            const targetGroupActor = game.actors.find(a =>
+              a.system.relationships.characterGroup?.id === groupId
+            );
+  
+            if (targetGroupActor) {
+              ui.notifications.info(
+                `${this.actor.name} a rejoint "${targetGroupActor.system.relationships.characterGroup.name}"`
+              );
+            }
+  
+            dialog.close();
+          } catch (error) {
+            console.error("Erreur lors du changement de groupe:", error);
+            ui.notifications.error("Impossible de rejoindre le groupe");
+          }
+        });
+      }
+    });
+  
+    dialog.render(true);
+  }
+   
+  async handleReturnToMyGroup() {
+    try {
+        console.log(`🔄 [DEBUG] ${this.actor.name} retourne dans son groupe personnel.`);
+
+        // Vérifier si `relationships` existe
+        if (!this.actor.system.relationships) {
+            console.error(`❌ [ERROR] relationships est introuvable pour "${this.actor.name}" !`);
+            return ui.notifications.error(`Erreur : Impossible de récupérer les relations du personnage.`);
+        }
+
+        const currentGroupId = this.actor.system.relationships.currentGroup;
+        const personalGroup = this.actor.system.relationships.characterGroup;
+
+        // Vérifier si le groupe personnel existe
+        if (!personalGroup || !personalGroup.id) {
+            console.error(`❌ [ERROR] "${this.actor.name}" n'a pas de groupe personnel valide.`);
+            return ui.notifications.error(`Erreur : Impossible de retourner dans le groupe personnel.`);
+        }
+
+        console.log(`📌 [DEBUG] Groupe actuel:`, currentGroupId);
+        console.log(`👥 [DEBUG] Groupe personnel:`, personalGroup);
+
+        // Retirer l'acteur de son groupe actuel s'il en a un
+        if (currentGroupId && currentGroupId !== personalGroup.id) {
+            const oldGroupOwner = game.actors.find(actor =>
+                actor.system.relationships.characterGroup.id === currentGroupId
+            );
+
+            if (oldGroupOwner) {
+                let oldMembers = [...oldGroupOwner.system.relationships.characterGroup.members];
+                oldMembers = oldMembers.filter(memberId => memberId !== this.actor.id);
+
+                if (oldMembers.length === 0) {
+                    oldMembers.push("ghost_member");
+                }
+
+                await oldGroupOwner.update({
+                    "system.relationships.characterGroup.members": oldMembers
+                });
+
+                console.log(`❌ [DEBUG] "${this.actor.name}" retiré du groupe "${currentGroupId}".`);
+            }
+        }
+
+        // Vérifier si l'acteur est bien listé dans son propre groupe
+        if (!personalGroup.members.includes(this.actor.id)) {
+            console.log(`➕ [FIX] Ajout de "${this.actor.name}" à son propre groupe.`);
+            personalGroup.members.push(this.actor.id);
+        }
+
+        // Mise à jour de l'actor
+        await this.actor.update({
+            "system.relationships.currentGroup": personalGroup.id,
+            "system.relationships.characterGroup.members": personalGroup.members,
+            "system.relationships.characterGroup.isInHisOwnGroup": true
+        });
+
+        console.log(`✅ [SUCCESS] "${this.actor.name}" est retourné dans son groupe personnel.`);
+        ui.notifications.info(`${this.actor.name} est retourné dans son groupe personnel.`);
+
+    } catch (error) {
+        console.error(`❌ [ERROR] Une erreur est survenue lors du retour au groupe personnel:`, error);
+        ui.notifications.error(`Une erreur est survenue lors du retour au groupe personnel.`);
+    }
+}
+
 
   rollTemperOrAttribute(field, type) {
     let value;
@@ -775,6 +1499,7 @@ _prepareFocusPointsData(context) {
       height: 975  // Ajuster cette valeur selon vos besoins
   }).render(true);
 }
+
 attachManeuverListeners(html) {
   // Désactiver les tempers traumatisés
   const tempers = ['passion', 'empathy', 'rigor', 'independence'];
@@ -842,13 +1567,11 @@ attachManeuverListeners(html) {
   });
 }
 
-
 checkAllSelections() {
   return this.maneuverSelections.attribute && 
          this.maneuverSelections.temper && 
          this.maneuverSelections.context;
 }
-
 
 checkAndUpdateRollButton(html) {
   const canRoll = this.checkAllSelections();
@@ -863,7 +1586,6 @@ checkAndUpdateRollButton(html) {
       rollText.text('Please answer all 3 questions');
   }
 }
-
 
 updateFocusRow(html, type, selectedItem) {
   const focusContainer = html.find(`#focus-${type}`);
@@ -957,7 +1679,6 @@ initializeFocusState(html) {
       this.disableFocusCheckboxes(html);
   }
 }
-
 
 
 handleProfileImageEditing(html) {
@@ -1333,49 +2054,6 @@ async _onSubtractFocusPoints(event) {
   }
 }
 
-updateFocusPointsFromRelationships() {
-  const groupMembers = this.getGroupMembers().map(m => m.name);
-  this.calculateBaseFocusPoints(groupMembers);
-}
-
-  /**
-   * Calcule les Focus Points de base pour l'acteur
-   * @param {Array} groupMembers - Les membres du groupe sélectionnés dans le Focus Tracker
-   */
-  calculateBaseFocusPoints(groupMembers) {
-    let baseFocus = 0;
-    const relationships = this.actor.system.relationships || [];
-
-    relationships.forEach(relation => {
-      if (groupMembers.includes(relation.characterName)) {
-        switch (relation.relationshipLevel) {
-          case -3: // Hatred
-            baseFocus += 3;
-            break;
-          case -2: // Hostility
-            baseFocus += 2;
-            break;
-          case -1: // Dislike
-            baseFocus += 1;
-            break;
-        }
-      }
-    });
-
-    this.actor.update({ 
-      'system.focusPoints.base': baseFocus,
-      'system.focusPoints.current': Math.max(baseFocus, this.actor.system.focusPoints.current)
-    });
-  }
-    /**
-   * Modifie les Focus Points actuels
-   * @param {number} amount - La quantité à ajouter (ou soustraire si négatif)
-   */
-    modifyCurrentFocusPoints(amount) {
-      const newCurrent = Math.max(0, this.actor.system.focusPoints.current + amount);
-      this.actor.update({ 'system.focusPoints.current': newCurrent });
-    }
-
 
 
     async launchManeuver() {
@@ -1394,7 +2072,6 @@ updateFocusPointsFromRelationships() {
       // Déduire les points de focus
       const currentFocus = this.actor.system.focusPoints.current;
       const remainingFocus = currentFocus - totalFocusUsed;
-      console.log("Current Focus :", currentFocus, "Remaining Focus :", remainingFocus);
   
       if (remainingFocus < 0) {
           console.warn("Focus points cannot be negative. Resetting to 0.");
@@ -1487,8 +2164,7 @@ updateFocusPointsFromRelationships() {
     `;
 }
   async syncFocusPointsWithRemaining(remainingFocus) {
-    console.log("Synchronizing focus points:", remainingFocus);
-
+ 
     if (remainingFocus < 0) {
         console.warn("Focus points cannot be negative. Resetting to 0.");
         await this.actor.update({ 'system.focusPoints.current': 0 });
@@ -2124,21 +2800,20 @@ async _onDeleteRelationship(event) {
   relationships.splice(index, 1);
 
   await this.actor.update({ 'system.relationships': relationships });
+  await this.updateDiscordLevels();
 
-  // Notifier les trackers de synergie que les relations ont changé
-  Hooks.call('updateSynergyTracker', this.actor);
+
 
   this.render();
 }
 
 async _onAddRelationship(event) {
   event.preventDefault();
-  
+
   // Garder une référence au sheet/actor pour l'utiliser dans le callback
-  const sheet = this;
   const actor = this.actor;
-  
-  // Helper functions pour les labels
+
+  // Helper functions pour obtenir les labels
   const getAffinityLabel = (value) => {
     switch (value) {
       case 1: return "Enemy";
@@ -2158,18 +2833,21 @@ async _onAddRelationship(event) {
       default: return "Equal";
     }
   };
-  
+
+  // Vérifiez les connexions existantes
+  const currentConnections = actor.system?.relationships?.connections || [];
+
   // Filtrer les acteurs disponibles
-  const currentConnections = this.actor.system.relationships.connections || [];
-  const availableActors = game.actors.filter(actor => 
-      actor.id !== this.actor.id && 
-      actor.type === "character" && 
-      !currentConnections.some(conn => conn.characterId === actor.id)
+  const availableActors = game.actors.filter(
+    (a) =>
+      a.id !== actor.id && // Exclure le personnage actuel
+      a.type === "character" && // Seulement les personnages de type 'character'
+      !currentConnections.some((conn) => conn.characterId === a.id) // Exclure les personnages déjà connectés
   );
 
   if (availableActors.length === 0) {
-      ui.notifications.warn("No available characters to add a relationship with.");
-      return;
+    ui.notifications.warn("No available characters to add a relationship with.");
+    return;
   }
 
   // Créer la boîte de dialogue
@@ -2180,9 +2858,9 @@ async _onAddRelationship(event) {
             <div class="form-group">
                 <label>Select a character:</label>
                 <select id="character-select" name="character">
-                    ${availableActors.map(actor => `
-                        <option value="${actor.id}">${actor.name}</option>
-                    `).join('')}
+                    ${availableActors
+                      .map((actor) => `<option value="${actor.id}">${actor.name}</option>`)
+                      .join("")}
                 </select>
             </div>
             <div class="form-group">
@@ -2206,181 +2884,57 @@ async _onAddRelationship(event) {
         </form>
     `,
     buttons: {
-        add: {
-            icon: '<i class="fas fa-plus"></i>',
-            label: "Add",
-            callback: async (html) => {
-                // Votre logique
-            }
+      add: {
+        icon: '<i class="fas fa-plus"></i>',
+        label: "Add",
+        callback: async (html) => {
+          const characterId = html.find('[name="character"]').val();
+          const affinityValue = Number(html.find('[name="affinity"]').val());
+          const dynamicValue = Number(html.find('[name="dynamic"]').val());
+
+          const selectedActor = game.actors.get(characterId);
+          if (!selectedActor) {
+            ui.notifications.error("Character not found!");
+            return;
+          }
+
+          // Créer une nouvelle connexion
+          const newConnection = {
+            characterId: characterId,
+            characterName: selectedActor.name,
+            affinity: {
+              value: affinityValue,
+              label: getAffinityLabel(affinityValue),
+            },
+            dynamic: {
+              value: dynamicValue,
+              label: getDynamicLabel(dynamicValue),
+            },
+            relationshipValue: Math.round(affinityValue * dynamicValue),
+            notes: "A few words about him/her...",
+          };
+
+          // Ajouter la nouvelle connexion aux relations existantes
+          const updatedConnections = [...currentConnections, newConnection];
+
+          // Mettre à jour l'acteur
+          await actor.update({
+            "system.relationships.connections": updatedConnections,
+          });
+          await this.updateDiscordLevels();
+
+          ui.notifications.info("Relationship added successfully!");
         },
-        cancel: {
-            icon: '<i class="fas fa-times"></i>',
-            label: "Cancel"
-        }
+      },
+      cancel: {
+        icon: '<i class="fas fa-times"></i>',
+        label: "Cancel",
+      },
     },
     default: "add",
-    classes: ["relationship-dialog"] // Ajout de la classe spécifique
-}).render(true);
-
+    classes: ["relationship-dialog"], // Ajout de la classe spécifique
+  }).render(true);
 }
-  getAvailableCharactersOptions(selectedCharacterName) {
-    // Initialize the selectedCharacterName in case it's undefined
-    selectedCharacterName = selectedCharacterName || '';
-  
-    const currentActorName = this.actor.name;
-    const allCharacters = game.actors.filter(actor => actor.type === "character");
-
-    // Filter characters that are already in relationships
-    const existingRelationships = this.actor.system.relationships
-        .map(rel => rel.characterName)   // Get all related character names
-        .filter(name => name);           // Exclude empty names from incomplete relationships
-
-
-    const availableCharacters = allCharacters
-        .filter(char => !existingRelationships.includes(char.name) || char.name === selectedCharacterName)
-        .filter(char => char.name !== currentActorName); // Exclude the current actor themselves
-
-
-    // Build the options HTML for the available characters dropdown
-    let options = `<option value="" disabled selected>Choose another character</option>`;
-  
-    if (availableCharacters.length === 0) {
-        options += `<option disabled>No characters available</option>`;
-    } else {
-        options += availableCharacters.map(char => 
-            `<option value="${char.name}" ${char.name === selectedCharacterName ? 'selected' : ''}>${char.name}</option>`
-        ).join('');
-    }
-
-    return options;
-}
-
-  getGroupMembers() {
-    const tracker = this.getAssociatedSynergyTracker();
-    if (tracker) {
-      return tracker.data.characters
-        .filter(char => char !== this.actor.name)
-        .map(char => ({
-          name: char,
-          isSelected: this.selectedMembers ? this.selectedMembers.includes(char) : false
-        }));
-    }
-    return [];
-  }
-
-  _onGroupMemberClick(event) {
-    const characterName = event.currentTarget.dataset.character;
-    const clickedElement = event.currentTarget;
-    
-    // Toggle la classe 'selected' sur l'élément cliqué
-    clickedElement.classList.toggle('selected');
-    
-    // Mise à jour de la liste des membres sélectionnés
-    const index = this.selectedMembers.indexOf(characterName);
-    if (index > -1) {
-      this.selectedMembers.splice(index, 1);
-    } else {
-      this.selectedMembers.push(characterName);
-    }
-  
-    this.updateManeuverCost();
-    this.render(false);  // Forcer le rendu pour mettre à jour l'interface
-  }
-
-  updateManeuverCost() {
-    this.maneuverCost = this.calculateManeuverCost();
-    this.render(false);
-  }
-
-  calculateRelationshipCost(actor1, actor2) {
-    // Implémenter la logique de calcul du coût basée sur les relations
-    // Ceci est un exemple simplifié, ajustez selon vos règles spécifiques
-    const relationship1 = actor1.system.relationships.find(r => r.characterName === actor2.name);
-    const relationship2 = actor2.system.relationships.find(r => r.characterName === actor1.name);
-    
-    if (relationship1 && relationship2) {
-      // Exemple de calcul, à ajuster selon vos besoins
-      return Math.abs(relationship1.relationshipLevel) + Math.abs(relationship2.relationshipLevel);
-    }
-    return null;
-  }
-
-  getCurrentSynergy() {
-    const tracker = this.getAssociatedSynergyTracker();
-    return tracker ? tracker.data.currentSynergy : 0;
-  }
-
-  getMaxSynergy() {
-    const tracker = this.getAssociatedSynergyTracker();
-    return tracker ? tracker.data.maxSynergy : 0;
-  }
-
-  getManeuverCost() {
-    const tracker = this.getAssociatedSynergyTracker();
-    return tracker ? tracker.calculateManeuverCost() : 0;
-  }
-
- calculateManeuverCost() {
-  
-  if (this.selectedMembers.length < 1) return null;
-
-  let synergyCost = 0;
-  const transformRelationValue = (value) => {
-    switch (value) {
-      case 3: return 1;
-      case 2: return 2;
-      case 1: return 3;
-      case 0: return 4;
-      case -1: return 5;
-      case -2: return 6;
-      case -3: return 7;
-      default: return 4;
-    }
-  };
-
-  // Inclure le personnage actuel dans les calculs
-  const allMembers = [this.actor, ...this.selectedMembers.map(name => game.actors.getName(name))];
-
-  for (let i = 0; i < allMembers.length; i++) {
-    for (let j = i + 1; j < allMembers.length; j++) {
-      const member1 = allMembers[i];
-      const member2 = allMembers[j];
-      
-      if (member1 && member2) {
-        const relationAB = transformRelationValue(member1.system.relationships.find(rel => rel.characterName === member2.name)?.relationshipLevel || 0);
-        const relationBA = transformRelationValue(member2.system.relationships.find(rel => rel.characterName === member1.name)?.relationshipLevel || 0);
-        
-        synergyCost += relationAB + relationBA;
-        
-        if (relationAB === relationBA && (relationAB <= 3)) {
-          synergyCost -= 2;
-        }
-      }
-    }
-  }
-
-  return Math.max(1, synergyCost);
-}
-
-  getAssociatedSynergyTracker() {
-    for (const trackerId in game.weaveOfEchoes.additionalTrackers) {
-      const tracker = game.weaveOfEchoes.additionalTrackers[trackerId];
-      if (tracker.data.characters.includes(this.actor.name)) {
-        return tracker;
-      }
-    }
-  
-    return null;
-  }
-
-  _onMemberSelection(event) {
-    const characterName = event.currentTarget.dataset.character;
-    const tracker = this.getAssociatedSynergyTracker();
-    if (tracker) {
-      tracker.toggleMemberSelection(characterName);
-      this.render(false);
-    }
-  }
 
 }
 
@@ -2428,3 +2982,31 @@ function formatResult(result) {
 }
 
 
+Handlebars.registerHelper("getSetting", function (module, key) {
+  return game.settings.get(module, key);
+});
+
+
+Handlebars.registerHelper('renderGroupSynergy', function(groupSynergy) {
+  const sheet = game.actors.get(this.actor.id)?.sheet;
+  return sheet ? sheet.renderGroupSynergy(groupSynergy) : "No synergy data.";
+});
+
+Handlebars.registerHelper('isNumber', function(value) {
+  return typeof value === 'number' && !isNaN(value);
+});
+
+Handlebars.registerHelper('multiply', function(a, b) {
+  return Math.round((parseFloat(a) * parseFloat(b)) * 100) / 100;
+});
+
+Handlebars.registerHelper('multiply', function(connection) {
+  if (!connection?.affinity?.value || !connection?.dynamic?.value) {
+    return 0;
+  }
+  
+  const affinityValue = parseInt(connection.affinity.value);
+  const dynamicValue = parseFloat(connection.dynamic.value);
+  
+  return Math.round(affinityValue * dynamicValue);
+});

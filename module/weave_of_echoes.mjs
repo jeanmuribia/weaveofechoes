@@ -7,8 +7,6 @@ import { WoeItemSheet } from './sheets/item-sheet.mjs';
 // Import helper/utility classes and constants.
 import { preloadHandlebarsTemplates } from './helpers/templates.mjs';
 import { WOE } from './helpers/config.mjs';
-import { SynergyTracker } from './synergy-tracker.js';
-import { FocusTracker } from './focus-tracker.mjs';
 import { InitiativeTracker } from './initiative/initiative-tracker.mjs';
 import { InitiativeDisplay } from './initiative/initiative-display.mjs';
 
@@ -17,58 +15,16 @@ import { InitiativeDisplay } from './initiative/initiative-display.mjs';
 /* -------------------------------------------- */
 
 
-Hooks.once('init', function () {
- 
+Hooks.once("init", function () {
+  console.log("Weave of Echoes | Initializing System");
 
+  // Initialisation des variables globales
   game.weaveOfEchoes = game.weaveOfEchoes || {};
   game.weaveOfEchoes.additionalTrackers = {};
   game.weaveOfEchoes.initiativeTracker = null;
 
-  console.log("Weave of Echoes | Initializing System");
 
-  // Add utility classes to the global game object so that they're more easily accessible in global contexts.
-  game.woe = {
-    WoeActor,
-    WoeItem,
-    rollItemMacro,
-  };
 
-  // Add custom constants for configuration.
-  CONFIG.WOE = WOE;
-
-  /**
-   * Set an initiative formula for the system
-   * @type {String}
-   */
-  CONFIG.Combat.initiative = {
-    formula: '1d20 + @abilities.dex.mod',
-    decimals: 2,
-  };
-
-  // Define custom Document classes
-  CONFIG.Actor.documentClass = WoeActor;
-  CONFIG.Item.documentClass = WoeItem;
-
-  // Active Effects are never copied to the Actor,
-  // but will still apply to the Actor from within the Item if the transfer property on the Active Effect is true.
-  CONFIG.ActiveEffect.legacyTransferral = false;
-
-  // Register sheet application classes
-  Actors.unregisterSheet('core', ActorSheet);
-  Actors.registerSheet('woe', WoeActorSheet, {
-    makeDefault: true,
-    label: 'WOE.SheetLabels.Actor',
-  });
-  Items.unregisterSheet('core', ItemSheet);
-  Items.registerSheet('woe', WoeItemSheet, {
-    makeDefault: true,
-    label: 'WOE.SheetLabels.Item',
-  });
-
-  // Preload Handlebars templates.
-  preloadHandlebarsTemplates();
-
-  // Register game settings for synergy
   game.settings.register("weave_of_echoes", "synergyData", {
     name: "Synergy Data",
     hint: "Stores synergy related data.",
@@ -78,75 +34,80 @@ Hooks.once('init', function () {
     type: Object,
   });
 
+
+ 
   game.settings.register("weave_of_echoes", "groupMembers", {
     name: "Group Members",
     hint: "Stores the current members of the synergy group.",
     scope: "world",
     config: false,
-    default: [],
-    type: Array,
+    default: { members: [] }, // Correction ici
+    type: Object,
   });
 
   game.settings.register("weave_of_echoes", "savedTrackers", {
     scope: "world",
     config: false,
     type: Object,
-    default: {}
+    default: {},
   });
+
+  // Ajouter des utilitaires globaux
+  game.woe = {
+    WoeActor,
+    WoeItem,
+    rollItemMacro,
+  };
+
+  // Définir des constantes personnalisées
+  CONFIG.WOE = WOE;
+
+  // Définir une formule d'initiative
+  CONFIG.Combat.initiative = {
+    formula: '1d20 + @abilities.dex.mod',
+    decimals: 2,
+  };
+
+  // Définir des classes de documents personnalisées
+  CONFIG.Actor.documentClass = WoeActor;
+  CONFIG.Item.documentClass = WoeItem;
+
+  // Désactiver la transferral legacy pour les effets actifs
+  CONFIG.ActiveEffect.legacyTransferral = false;
+
+  // Enregistrer les sheets personnalisées
+  Actors.unregisterSheet('core', ActorSheet);
+  Actors.registerSheet('woe', WoeActorSheet, {
+    makeDefault: true,
+    label: 'WOE.SheetLabels.Actor',
+  });
+
+  Items.unregisterSheet('core', ItemSheet);
+  Items.registerSheet('woe', WoeItemSheet, {
+    makeDefault: true,
+    label: 'WOE.SheetLabels.Item',
+  });
+
+  game.settings.register("weave_of_echoes", "sharedGroups", {
+    scope: "world",
+    config: true,
+    default: { groups: [] },
+    type: Object
+  });
+
+  // Vérifier que le paramètre est correctement enregistré
+  console.log("Shared Groups Setting Registered:", game.settings.get("weave_of_echoes", "sharedGroups"));
+
+
+  // Précharger les templates Handlebars
+  preloadHandlebarsTemplates();
 });
+
 
 /* -------------------------------------------- */
 /*  Ready Hook                                  */
 /* -------------------------------------------- */
-Hooks.once('ready', () => {
-  if (game.user.isGM) {
-    const colors = ['#FFB3BA', '#BAFFC9', '#BAE1FF', '#FFFFBA'];
-    
-    // Initialisation des Synergy Trackers
-    for (let i = 1; i <= 4; i++) {
-      const trackerId = `synergy-tracker-${i}`;
-      const charactersInGroup = [];
 
-      game.weaveOfEchoes.additionalTrackers[trackerId] = new SynergyTracker({
-        appId: trackerId,
-        title: `Synergy Group ${i}`,
-        data: {
-          currentSynergy: 0,
-          maxSynergy: 0,
-          characters: charactersInGroup,
-          color: colors[i - 1]
-        }
-      });
-
-      // Rendre automatiquement SynergyTracker 1 au démarrage
-      if (i === 1) {
-        game.weaveOfEchoes.additionalTrackers[trackerId].render(true);
-      }
-    }
-
-    // Initialisation du Focus Tracker
-    game.weaveOfEchoes.focusTracker = new FocusTracker({
-      data: {
-        members: []
-      }
-    });
-    game.weaveOfEchoes.focusTracker.render(true);
-
-    if (game.user.isGM) {
-      game.weaveOfEchoes.initiativeTracker = new InitiativeTracker();
-  }
-  game.weaveOfEchoes.initiativeDisplay = new InitiativeDisplay();
-  game.weaveOfEchoes.initiativeDisplay.render(true);
-  if (game.weaveOfEchoes.initiativeTracker?.isInitiativeDrawn) {
-    Hooks.callAll('updateInitiativeTracker', {
-        drawnInitiative: game.weaveOfEchoes.initiativeTracker.drawnInitiative,
-        isInitiativeDrawn: game.weaveOfEchoes.initiativeTracker.isInitiativeDrawn
-    });
-}
-  }
-
-    
-});
 
 // Ces helpers devraient être dans weave_of_echoes.mjs ou dans un fichier de helpers dédié
 
@@ -197,6 +158,22 @@ Handlebars.registerHelper('markdownToHtml', function(markdown) {
 // Helper pour get Actor
 Handlebars.registerHelper('getActor', function(actorId) {
   return game.actors.get(actorId);
+});
+
+Hooks.on("deleteActor", async (actor, options, userId) => {
+  if (actor.type === "character") {
+    const sharedGroups = game.settings.get("weave_of_echoes", "sharedGroups");
+    
+    // Filtrer pour retirer les groupes dont le leader était l'acteur supprimé
+    const updatedGroups = sharedGroups.groups.filter(g => g.leader !== actor.id);
+    
+    // Pour les autres groupes, retirer l'acteur de la liste des membres
+    updatedGroups.forEach(group => {
+      group.members = group.members.filter(memberId => memberId !== actor.id);
+    });
+
+    await game.settings.set("weave_of_echoes", "sharedGroups", { groups: updatedGroups });
+  }
 });
 
 Hooks.on('getSceneControlButtons', (controls) => {
@@ -258,7 +235,7 @@ Hooks.on('updateActor', (actor, changes, options, userId) => {
   }
 });
 Hooks.on('updateInitiativeTracker', (tracker) => {
-  console.log("updateInitiativeTracker hook triggered with:", tracker);
+
 
   if (game.weaveOfEchoes.initiativeDisplay) {
       game.weaveOfEchoes.initiativeDisplay.updateDisplay(tracker.drawnInitiative);
@@ -266,25 +243,18 @@ Hooks.on('updateInitiativeTracker', (tracker) => {
 });
 
 function selectMember(element) {
-  console.log("Before adding class:", element.classList); // Afficher les classes avant l'ajout
-
+ 
   // Supprimer la classe 'selected' des autres membres
   document.querySelectorAll('.member-item.selected').forEach(item => {
       item.classList.remove('selected');
-      console.log("Removed selected class from:", item.textContent);
+     
   });
 
   // Ajouter la classe 'selected' à l'élément cliqué
   element.classList.add('selected');
-  console.log("After adding class:", element.classList); // Afficher les classes après l'ajout
+
 }
-// Ensure this code runs after the tracker is rendered
-Hooks.on('renderSynergyTracker', (app, html) => {
-  html.find('.member-item').click(function () {
-    console.log("Click event triggered for:", this.textContent); // Log when the click event is triggered
-    selectMember(this);
-  });
-});
+
 
 Handlebars.registerHelper('includes', function(array, value, options) {
   if (array && array.includes(value)) {
@@ -383,17 +353,7 @@ Hooks.on('renderJournalDirectory', (app, html) => {
   // Ajoutez les boutons de tracker à l'interface de la barre latérale
   header.after(trackerContainer);
 
-  // Ajoutez un gestionnaire d'événements pour ouvrir le tracker correspondant lorsqu'un bouton est cliqué
-  trackerContainer.find(".tracker-button").click(ev => {
-    const trackerNumber = $(ev.currentTarget).data("tracker");
-    const trackerId = `synergy-tracker-${trackerNumber}`;
-    const tracker = game.weaveOfEchoes.additionalTrackers[trackerId];
-    if (tracker) {
-      tracker.render(true);
-    } else {
-      ui.notifications.warn(`Tracker ${trackerNumber} n'est pas disponible.`);
-    }
-  });
+ 
 
   // Créer le bouton
   const initiativeButton = $(`
@@ -468,3 +428,6 @@ Handlebars.registerHelper('markdownToHtml', function (markdown) {
     .replace(/\n/g, '<br>'); // Sauts de ligne
 });
 
+Handlebars.registerHelper("getSetting", function (module, key) {
+  return game.settings.get(module, key);
+});

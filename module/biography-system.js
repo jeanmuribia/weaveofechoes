@@ -257,7 +257,7 @@ static restrictEntry(container, actor) {
   
     // Définir un intervalle de sauvegarde toutes les 5 minutes (300000 ms)
     setInterval(async () => {
-      console.log("Auto-saving biography entries...");
+  
   
       // Parcourir chaque éditeur actif pour sauvegarder le contenu
       html.find('.entryContainer').each(async function () {
@@ -299,7 +299,6 @@ static restrictEntry(container, actor) {
       if (entries[index]) {
         entries[index].content = markdown; // Met à jour le contenu dans l'objet
         await actor.update({ "system.biography.entries": entries });
-        console.log(`Content for entry ${index} saved.`);
       }
     } catch (error) {
       console.error('Error saving content:', error);
