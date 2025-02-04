@@ -340,30 +340,32 @@
  <div class="synergy-section">
   <!-- Synergy Resources -->
   <div class="synergy-resources">
+
 <div class="synergy-card group-synergy">
   <label>Group Synergy</label>
-  {{#if groupSynergy.missingTies.length}}
-    <div class="missing-ties">
-      <h4>Missing Ties:</h4>
-      <ul>
-        {{#each groupSynergy.missingTies}}
-          <li>{{this.from}} ➡️ {{this.to}}</li>
-        {{/each}}
-      </ul>
-    </div>
-  {{else}}
-    <div class="synergy-current">
-      {{groupSynergy.currentGroupSynergy}}
-    </div>
-    <div class="synergy-base">
-      Base: {{groupSynergy.baseGroupSynergy}}
-    </div>
-  {{/if}}
+  <div class="resource-value">
+    {{log "🔍 Rendering Group Synergy, Group Size:" groupSize}}  <!-- Debug Handlebars -->
+
+    {{#if (lt groupSize 2)}}
+      <div class="center-value">Not in a group yet</div>
+    {{else if system.relationships.missingGroupTies.length}}
+      <div class="missing-ties">
+        <span class="warning">⚠️ Missing ties:</span>
+        <ul>
+          {{#each system.relationships.missingGroupTies}}
+            <li>{{this}}</li>
+          {{/each}}
+        </ul>
+      </div>
+    {{else}}
+      <div class="center-value">{{groupSynergy.current}}</div>
+      <div class="base-value">Base: {{groupSynergy.base}}</div>
+    {{/if}}
+  </div>
 </div>
 
 
 
-    
     <div class="synergy-card maneuver-cost">
       <label>Maneuver Cost</label>
       <div class="resource-value">
@@ -405,9 +407,15 @@
   <button class="add-relationship custom-button">
     <i class="fas fa-plus"></i> Add Relationship
   </button>
+  <div class="discord-levels">
   <div class="discord-level">
-  <div class="discord-level-label">Discord Level</div>
-  <div class="discord-level-value">{{system.relationships.allConnectionsDiscordValue}}</div>
+    <div class="discord-level-label">Global Discord Level</div>
+    <div class="discord-level-value">{{system.relationships.allConnectionsDiscordValue}}</div>
+  </div>
+  <div class="discord-level">
+    <div class="discord-level-label">Group Discord Level</div>
+    <div class="discord-level-value">{{system.relationships.discordValueWithinGroup}}</div>
+  </div>
 </div>
 </div>
 
@@ -433,56 +441,48 @@
               <i class="fas fa-trash card-control-icon delete-relationship"></i>
             </div>
           </div>
-
 <div class="relationship-values">
   <!-- Colonne Affinity (Gauche) -->
   <div class="affinity-column">
     <h4>Affinity</h4>
-    <label>
-  <input type="radio" name="affinity-{{@index}}" value="4" data-index="{{@index}}" class="affinity-selector" {{checked (eq connection.affinity.value 4)}}>
-  Enemy
-</label>
-<label>
-  <input type="radio" name="affinity-{{@index}}" value="3" data-index="{{@index}}" class="affinity-selector" {{checked (eq connection.affinity.value 3)}}>
-  Acquaintance
-</label>
-<label>
-  <input type="radio" name="affinity-{{@index}}" value="2" data-index="{{@index}}" class="affinity-selector" {{checked (eq connection.affinity.value 2)}}>
-  Friend
-</label>
-<label>
-  <input type="radio" name="affinity-{{@index}}" value="1" data-index="{{@index}}" class="affinity-selector" {{checked (eq connection.affinity.value 1)}}>
-  Soulmate
-</label>
+
+    <input type="radio" id="affinity-{{@index}}-4" name="affinity-{{@index}}" value="4" data-index="{{@index}}" class="affinity-selector" {{checked (eq connection.affinity.value 4)}}>
+    <label for="affinity-{{@index}}-4" class="radio-label">Enemy</label>
+
+    <input type="radio" id="affinity-{{@index}}-3" name="affinity-{{@index}}" value="3" data-index="{{@index}}" class="affinity-selector" {{checked (eq connection.affinity.value 3)}}>
+    <label for="affinity-{{@index}}-3" class="radio-label">Acquaintance</label>
+
+    <input type="radio" id="affinity-{{@index}}-2" name="affinity-{{@index}}" value="2" data-index="{{@index}}" class="affinity-selector" {{checked (eq connection.affinity.value 2)}}>
+    <label for="affinity-{{@index}}-2" class="radio-label">Friend</label>
+
+    <input type="radio" id="affinity-{{@index}}-1" name="affinity-{{@index}}" value="1" data-index="{{@index}}" class="affinity-selector" {{checked (eq connection.affinity.value 1)}}>
+    <label for="affinity-{{@index}}-1" class="radio-label">Soulmate</label>
   </div>
 
   <!-- Discord Value (Centre) -->
- <div class="discord-value">
-  <h4>Discord Value</h4>
-  <div class="value">{{multiply this}}</div>
-</div>
+  <div class="discord-value">
+    <h4>Discord Value</h4>
+    <div class="value">{{multiply this}}</div>
+  </div>
 
   <!-- Colonne Dynamic (Droite) -->
   <div class="dynamic-column">
     <h4>Dynamic</h4>
-    <label>
-      <input type="radio" name="dynamic-{{@index}}" value="0.4" data-index="{{@index}}" class="dynamic-selector" {{checked (eq connection.dynamic.value 0.4)}}>
-      Equal
-    </label>
-    <label>
-      <input type="radio" name="dynamic-{{@index}}" value="0.5" data-index="{{@index}}" class="dynamic-selector" {{checked (eq connection.dynamic.value 0.5)}}>
-      Rival
-    </label>
-    <label>
-      <input type="radio" name="dynamic-{{@index}}" value="0.75" data-index="{{@index}}" class="dynamic-selector" {{checked (eq connection.dynamic.value 0.75)}}>
-      Inferior
-    </label>
-    <label>
-      <input type="radio" name="dynamic-{{@index}}" value="0.85" data-index="{{@index}}" class="dynamic-selector" {{checked (eq connection.dynamic.value 0.85)}}>
-      Superior
-    </label>
+
+    <input type="radio" id="dynamic-{{@index}}-0.4" name="dynamic-{{@index}}" value="0.4" data-index="{{@index}}" class="dynamic-selector" {{checked (eq connection.dynamic.value 0.4)}}>
+    <label for="dynamic-{{@index}}-0.4" class="radio-label">Equal</label>
+
+    <input type="radio" id="dynamic-{{@index}}-0.5" name="dynamic-{{@index}}" value="0.5" data-index="{{@index}}" class="dynamic-selector" {{checked (eq connection.dynamic.value 0.5)}}>
+    <label for="dynamic-{{@index}}-0.5" class="radio-label">Rival</label>
+
+    <input type="radio" id="dynamic-{{@index}}-0.75" name="dynamic-{{@index}}" value="0.75" data-index="{{@index}}" class="dynamic-selector" {{checked (eq connection.dynamic.value 0.75)}}>
+    <label for="dynamic-{{@index}}-0.75" class="radio-label">Inferior</label>
+
+    <input type="radio" id="dynamic-{{@index}}-0.85" name="dynamic-{{@index}}" value="0.85" data-index="{{@index}}" class="dynamic-selector" {{checked (eq connection.dynamic.value 0.85)}}>
+    <label for="dynamic-{{@index}}-0.85" class="radio-label">Superior</label>
   </div>
 </div>
+
 
 
 <!-- Nouveau conteneur pour les notes -->

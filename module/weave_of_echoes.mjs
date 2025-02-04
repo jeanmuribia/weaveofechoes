@@ -176,6 +176,16 @@ Hooks.on("deleteActor", async (actor, options, userId) => {
   }
 });
 
+// Hooks.on("updateActor", async (actor, changes, options, userId) => {
+//   console.log(`🔄 updateActor Hook triggered for: ${actor.name}`);
+
+//   if (actor instanceof WoeActor && actor.updateDiscordValues) {
+//       actor.updateDiscordValues();
+//   } else {
+//       console.error("🚨 ERREUR : updateDiscordValues n'est pas disponible pour", actor);
+//   }
+// });
+
 Hooks.on('getSceneControlButtons', (controls) => {
   if (game.user.isGM) {
     let tokenControls = controls.find(c => c.name === "token");
@@ -226,14 +236,32 @@ Hooks.on('getSceneControlButtons', (controls) => {
   }
 });
 
-Hooks.on('updateActor', (actor, changes, options, userId) => {
-  if (changes.system?.relationships && game.user.isGM) {
-    // Pour l'instant, on se contente de rafraîchir le Focus Tracker
-    if (game.weaveOfEchoes.focusTracker) {
-      game.weaveOfEchoes.focusTracker.render();
-    }
-  }
-});
+// Hooks.on("updateActor", async (actor, changes, options, userId) => {
+ 
+//   // Vérifier si c'est une mise à jour des relations, sinon on ignore
+//   if (!changes.system?.relationships) {
+//       return;
+//   }
+
+//   // Vérifier si l'update ne cause pas une boucle infinie
+//   if (options.fromUpdateDiscordValues) {
+//       console.log(`⏳ [DEBUG] Ignoré pour éviter la boucle infinie`);
+//       return;
+//   }
+
+//   // Mise à jour des valeurs de Discord
+//   await actor.updateDiscordValues();
+// });
+
+
+
+// Hooks.on('updateActor', (actor, changes, options, userId) => {
+//   if (changes.system?.relationships) {
+//     actor.checkAndPropagateGroupTies();
+//     actor.render(false); // Assurer que les modifications apparaissent
+//   }
+// });
+
 Hooks.on('updateInitiativeTracker', (tracker) => {
 
 
@@ -430,4 +458,8 @@ Handlebars.registerHelper('markdownToHtml', function (markdown) {
 
 Handlebars.registerHelper("getSetting", function (module, key) {
   return game.settings.get(module, key);
+});
+
+Handlebars.registerHelper("subtract", function (a, b) {
+  return a - b;
 });

@@ -110,13 +110,14 @@
        "relationships": {
   "connections": [ ],
   "allConnectionsDiscordValue":0,
+  "discordValueWithinGroup": 0,
   "characterGroup": {
     "id":"",
     "name": "",
     "members": [],
     "isInHisOwnGroup": true
   },
-  "currentGroup":""
+  "currentGroupLeader": ""
 }
 
       }
