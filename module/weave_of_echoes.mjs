@@ -463,3 +463,8 @@ Handlebars.registerHelper("getSetting", function (module, key) {
 Handlebars.registerHelper("subtract", function (a, b) {
   return a - b;
 });
+
+
+Handlebars.registerHelper('sum', function(a, b) {
+  return (parseInt(a) || 0) + (parseInt(b) || 0);
+});

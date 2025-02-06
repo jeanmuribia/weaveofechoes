@@ -420,95 +420,79 @@
 </div>
 
     <!-- Grid des relations -->
-    <div class="relationships-grid">
-      {{#each system.relationships.connections}}
-      <div class="relationship-card">
-        <!-- Avatar à gauche -->
-        <div class="card-avatar">
-          <img src="{{img}}" alt="{{characterName}}">
-        </div>
-
-        <!-- Contenu principal -->
-        <div class="relationship-card-content">
-          <!-- En-tête avec nom et contrôles -->
-          <div class="card-header">
-            <div class="character-info">
-              <h3 class="character-name">{{characterName}}</h3>
-              <p class="player-name">Played by {{playerName}}</p>
-            </div>
-            <div class="relationship-card-controls">
-              <i class="fas fa-eye card-control-icon visibility-toggle"></i>
-              <i class="fas fa-trash card-control-icon delete-relationship"></i>
-            </div>
-          </div>
-<div class="relationship-values">
-  <!-- Colonne Affinity (Gauche) -->
-  <div class="affinity-column">
-    <h4>Affinity</h4>
-
-    <input type="radio" id="affinity-{{@index}}-4" name="affinity-{{@index}}" value="4" data-index="{{@index}}" class="affinity-selector" {{checked (eq connection.affinity.value 4)}}>
-    <label for="affinity-{{@index}}-4" class="radio-label">Enemy</label>
-
-    <input type="radio" id="affinity-{{@index}}-3" name="affinity-{{@index}}" value="3" data-index="{{@index}}" class="affinity-selector" {{checked (eq connection.affinity.value 3)}}>
-    <label for="affinity-{{@index}}-3" class="radio-label">Acquaintance</label>
-
-    <input type="radio" id="affinity-{{@index}}-2" name="affinity-{{@index}}" value="2" data-index="{{@index}}" class="affinity-selector" {{checked (eq connection.affinity.value 2)}}>
-    <label for="affinity-{{@index}}-2" class="radio-label">Friend</label>
-
-    <input type="radio" id="affinity-{{@index}}-1" name="affinity-{{@index}}" value="1" data-index="{{@index}}" class="affinity-selector" {{checked (eq connection.affinity.value 1)}}>
-    <label for="affinity-{{@index}}-1" class="radio-label">Soulmate</label>
-  </div>
-
-  <!-- Discord Value (Centre) -->
-  <div class="discord-value">
-    <h4>Discord Value</h4>
-    <div class="value">{{multiply this}}</div>
-  </div>
-
-  <!-- Colonne Dynamic (Droite) -->
-  <div class="dynamic-column">
-    <h4>Dynamic</h4>
-
-    <input type="radio" id="dynamic-{{@index}}-0.4" name="dynamic-{{@index}}" value="0.4" data-index="{{@index}}" class="dynamic-selector" {{checked (eq connection.dynamic.value 0.4)}}>
-    <label for="dynamic-{{@index}}-0.4" class="radio-label">Equal</label>
-
-    <input type="radio" id="dynamic-{{@index}}-0.5" name="dynamic-{{@index}}" value="0.5" data-index="{{@index}}" class="dynamic-selector" {{checked (eq connection.dynamic.value 0.5)}}>
-    <label for="dynamic-{{@index}}-0.5" class="radio-label">Rival</label>
-
-    <input type="radio" id="dynamic-{{@index}}-0.75" name="dynamic-{{@index}}" value="0.75" data-index="{{@index}}" class="dynamic-selector" {{checked (eq connection.dynamic.value 0.75)}}>
-    <label for="dynamic-{{@index}}-0.75" class="radio-label">Inferior</label>
-
-    <input type="radio" id="dynamic-{{@index}}-0.85" name="dynamic-{{@index}}" value="0.85" data-index="{{@index}}" class="dynamic-selector" {{checked (eq connection.dynamic.value 0.85)}}>
-    <label for="dynamic-{{@index}}-0.85" class="radio-label">Superior</label>
-  </div>
-</div>
-
-
-
-<!-- Nouveau conteneur pour les notes -->
-<div class="relationship-notes">
-  <!-- Mode affichage -->
-  <div class="notes-display">
-    A few words about him/her...
-  </div>
-
-  <!-- Mode édition (caché par défaut) -->
-  <textarea 
-    class="notes-edit hidden" 
-    maxlength="200"
-    placeholder="Edit your notes..."
-  ></textarea>
-</div>
-
-          <!-- Support Section -->
-          <div class="relationship-support">
-            <div class="support-action">Support</div>
-            <div class="dice-display"></div>
-          </div>
-        </div>
-      </div>
-      {{/each}}
+<div class="relationships-grid">
+  {{#each system.relationships.connections}}
+  <div class="relationship-card" data-relationship-id="{{characterId}}">
+    <!-- Avatar à gauche -->
+    <div class="card-avatar">
+      <img src="{{img}}" alt="{{characterName}}">
     </div>
+
+    <!-- Conteneur principal à droite -->
+    <div class="relationship-card-content">
+      <!-- 1️⃣ Identité -->
+      <div class="relationship-identity">
+        <div class="identity-info">
+          <h3 class="character-name">{{characterName}}</h3>
+          <p class="player-name">Played by {{playerName}}</p>
+        </div>
+        <button class="delete-relationship">
+          <i class="fas fa-trash"></i>
+        </button>
+      </div>
+
+<!-- Section Discord avec Affinity et Dynamic -->
+<div class="relationship-discord">
+  <div class="discord-header">
+    <span>Affinity</span>
+    <span>Discord</span>
+    <span>Dynamic</span>
+  </div>
+
+  <div class="discord-controls">
+   <!-- Affinity -->
+<div class="affinity-column">
+  <label><input type="radio" name="affinity-{{characterId}}" value="0" {{#if (eq affinity.value 0)}}checked{{/if}}> Soulmate</label>
+  <label><input type="radio" name="affinity-{{characterId}}" value="1" {{#if (eq affinity.value 1)}}checked{{/if}}> Friend</label>
+  <label><input type="radio" name="affinity-{{characterId}}" value="2" {{#if (eq affinity.value 2)}}checked{{/if}}> Acquaintance</label>
+  <label><input type="radio" name="affinity-{{characterId}}" value="3" {{#if (eq affinity.value 3)}}checked{{/if}}> Enemy</label>
+</div>
+
+<!-- Connection Discord -->
+<div class="discord-section">
+  <div class="discord-values-container">
+    <p class="discord-value">{{discordValue}}</p>
+    <p class="discord-modifier">{{discordModifier}}</p>
+  </div>
+</div>
+
+<!-- Dynamic -->
+<div class="dynamic-column">
+  <label><input type="radio" name="dynamic-{{characterId}}" value="0" {{#if (eq dynamic.value 0)}}checked{{/if}}> Equal</label>
+  <label><input type="radio" name="dynamic-{{characterId}}" value="1" {{#if (eq dynamic.value 1)}}checked{{/if}}> Rival</label>
+  <label><input type="radio" name="dynamic-{{characterId}}" value="2" {{#if (eq dynamic.value 2)}}checked{{/if}}> Dependent</label>
+  <label><input type="radio" name="dynamic-{{characterId}}" value="3" {{#if (eq dynamic.value 3)}}checked{{/if}}> Dominant</label>
+</div>
+  </div>
+</div>
+
+
+
+
+      <!-- 3️⃣ Biographie -->
+      <div class="relationship-bio">
+        <textarea class="bio-edit" maxlength="200" placeholder="A few words about this relationship...">{{notes}}</textarea>
+      </div>
+
+      <!-- 4️⃣ Support (À implémenter plus tard) -->
+      <div class="relationship-support">
+        <p>Support System (WIP)</p>
+      </div>
+    </div>
+  </div>
+  {{/each}}
+</div>
+
   </div>
 </div>
   

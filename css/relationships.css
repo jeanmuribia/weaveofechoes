@@ -91,198 +91,15 @@
   }
    
   
-/* Relationship Values Matrix */
-
-
-.relationship-value {
-  font-size: 2em; /* Taille augmentée */
-  font-weight: bold;
-  color: #4a2810; /* Rouge pour attirer l'attention */
-  text-align: center;
-}
-
-
-/* Affinity column (left) */
-.affinity-column {
-  display: flex;
-  flex-direction: column;
-  padding-right: 1rem;
-}
-
-
-/* Relationship Value (center) */
-.relationship-values {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  background: #f5f5dc;
-  border-radius: 4px;
-  height: auto;
-  box-shadow: 0 3px 4px rgba(0, 0, 0, 0.1);
-
-  padding: 4px;
-}
 
 
 
-
-/* Ajustements pour la carte entière */
-.relationship-card {
-  height: 400px; /* Hauteur fixe */
-  width: 500px; /* Largeur fixe */
-  display: flex;
-  background: rgba(255, 255, 255, 0.8);
-  border-radius: 8px;
-  overflow: hidden;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.card-avatar {
-  flex: 0 0 150px;  /* Largeur réduite */
-  position: relative;
-  overflow: hidden;
-}
-
-.relationship-card-content {
-  flex: 1;
-  padding: 4px;
-  padding-bottom: 0px;
-  display: flex;
-  flex-direction: column;
- 
-}
-
-.card-avatar img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-
-.card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 0;
-}
-
-.character-info {
-  flex: 1;
-}
-
-.character-name {
-  font-size: 1.2em;
-  font-weight: bold;
-  margin: 0;
-}
-
-.player-name {
-  font-style: italic;
-  color: #666;
-  font-size: 0.9em;
-  margin-top: 0.2rem;
-}
-
-
-
-/* Support section */
-.relationship-support {
-  margin-top: auto;
-  padding-top: 1rem;
-  border-top: 1px solid rgba(0, 0, 0, 0.1);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 10px;
-}
-
-.support-action {
-  padding: 0.5rem 1rem;
-  background: rgba(0, 0, 0, 0.05);
-  border-radius: 4px;
-  cursor: pointer;
-  transition: background-color 0.2s ease;
-}
-
-.support-action:hover {
-  background: rgba(0, 0, 0, 0.1);
-}
-
-.dice-display {
-  min-width: 60px;
-  height: 30px;
-  background: rgba(0, 0, 0, 0.03);
-  border-radius: 4px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-
-/* Conteneur général */
-.relationship-notes {
-  margin-top: 10px;
-  margin-bottom: 10px;
-  position: relative;
-}
-
-/* Mode affichage (lecture) */
-.notes-display {
-  width: 100%;
-  max-width: 100%;
-  padding: 8px;
-  font-size: 0.9rem;
-  font-family: inherit;
-  cursor: pointer;
-  word-wrap: break-word;
-}
-
-/* Mode édition */
-.notes-edit {
-  width: 95%;
-  max-width: 380px;
-  height: 50px;
-  max-height: 100px;
-  padding: 8px;
-  border: 1px solid rgba(0, 0, 0, 0.4);
-  border-radius: 5px;
-  font-size: 0.9rem;
-  font-family: inherit;
-  background-color: rgba(255, 255, 255, 0.9); /* Fond blanc */
-  resize: none;
-  overflow-y: auto;
-}
 
 /* Masquer les éléments avec la classe hidden */
 .hidden {
   display: none;
 }
 
-.relationship-card-controls {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 12px;
-  border-top: 1px solid #eee;
-  /* margin-top: 0; */
-  border-bottom: 1px solid rgba(0, 0, 0, 0.2);
-  /* margin-bottom: 5px; */
-  margin: 0;
-  font-size: 1.1em;
-  text-transform: capitalize;
-  padding-bottom: 6px;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.2)
-}
-
-.relationship-card-controls .card-control-icon {
-  cursor: pointer;
-  color: #333; /* Couleur par défaut */
-  transition: color 0.3s ease, transform 0.3s ease; /* Transition fluide pour la couleur et l'agrandissement */
-}
-
-.relationship-card-controls .card-control-icon:hover {
-  color: #666; /* Couleur au survol */
-}
 
 /* Style de base pour le bouton */
 .add-relationship.custom-button {
@@ -725,82 +542,218 @@ body.game .window-app.relationship-dialog .dialog-buttons .button:active {
   margin-top: 40px;
  }
 
- .relationship-values h4:first-child,
-.relationship-values h4:last-child {
- color: #4a2810;
- margin: 0;
- padding-top: 5px;
- text-align: center;
- font-weight: bolder;
-}
-
-/* ✅ Style des labels non sélectionnés */
-.affinity-column label,
-.dynamic-column label {
-  display: block;
-  padding: 8px 12px;
-  margin: 4px 0;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  width: 100%;
-  text-align: center;
-  background: rgba(200, 200, 200, 0.3); /* Gris clair */
-  color: black;
-}
-
-
-/* ✅ Masquer les radios mais les garder fonctionnels */
-.affinity-column input[type="radio"],
-.dynamic-column input[type="radio"] {
-  display: none; 
-}
-
-/* ✅ Effet de sélection (via classe JS) */
-.selected-label {
-  background: rgba(100, 149, 237, 0.8); /* Bleu pour Affinity */
-  color: white;
-  font-weight: bold;
-  border: 2px solid rgba(100, 149, 237, 1);
-}
-
-
-/* ✅ Couleurs spécifiques */
-.affinity-column .selected-label {
-  background: rgba(100, 149, 237, 0.8); /* Bleu foncé */
-  color: white;
-  font-weight: bold;
-  border: 2px solid rgba(100, 149, 237, 1);
-}
-
-.dynamic-column .selected-label {
-  background: rgba(231, 122, 112, 0.8); /* Rouge foncé */
-  color: white;
-  font-weight: bold;
-  border: 2px solid rgba(231, 122, 112, 1);
-}
-
-/* ✅ Style de la boîte contenant les relations */
-.relationship-values {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background: #f5f5dc;
-  border-radius: 4px;
-  padding: 8px;
-  box-shadow: 0 3px 4px rgba(0, 0, 0, 0.1);
-}
-
-/* ✅ Style des valeurs centrales */
-.center-value {
-  text-align: center;
-  font-size: 1.2em;
-  margin: 10px 0;
-}
 
 .base-value {
   font-size: 0.9em;
   color: #666;
   text-align: center;
   margin-top: 5px;
+}
+
+
+
+/* ✅ Ajustements pour la carte entière */
+.relationship-card {
+  height: 300px; /* Hauteur fixe ajustée */
+  width: 500px; /* Largeur fixe */
+  display: flex;
+  background: rgba(255, 255, 255, 0.9); /* Fond blanc légèrement transparent */
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* ✅ Avatar à gauche */
+.card-avatar {
+  flex: 0 0 150px; /* Largeur fixe pour l'image */
+  overflow: hidden;
+  background: #ccc; /* Fond par défaut */
+}
+
+.card-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* ✅ Contenu principal à droite */
+.relationship-card-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 10px;
+}
+
+/* ✅ 1️⃣ Section Identité */
+.relationship-identity {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 10px;
+}
+
+.character-name {
+  font-size: 1.2em;
+  font-weight: bold;
+  margin: 0;
+}
+
+.player-name {
+  font-size: 0.9em;
+  color: #666;
+}
+
+.delete-relationship {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: red;
+  font-size: 1.2em;
+}
+
+/* ✅ Structure des colonnes pour la section Discord */
+.relationship-discord {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 10px;
+}
+
+/* ✅ Row des titres */
+.discord-header {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  width: 100%;
+  text-align: center;
+  font-weight: bold;
+  margin-bottom: 5px;
+}
+
+/* ✅ Row des boutons radio et Discord Value */
+.discord-controls {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  width: 100%;
+  align-items: center;
+}
+
+/* ✅ Style des boutons radio */
+.affinity-column, .dynamic-column {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  align-items: center;
+}
+
+/* ✅ Style des labels */
+.affinity-column label,
+.dynamic-column label {
+  display: inline-block;
+  padding: 8px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+/* ✅ Couleurs des labels avant sélection */
+.affinity-column label {
+  background: rgba(100, 149, 237, 0.2); /* Bleu clair */
+}
+
+.dynamic-column label {
+  background: rgba(231, 122, 112, 0.2); /* Rouge clair */
+}
+
+/* ✅ Masquer les radios */
+.affinity-column input[type="radio"],
+.dynamic-column input[type="radio"] {
+  display: none;
+}
+
+
+
+/* ✅ 3️⃣ Section Biographie */
+.relationship-bio {
+  flex: 1;
+}
+
+.bio-edit {
+  width: 100%;
+  height: 80px;
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  resize: none;
+}
+
+/* ✅ 4️⃣ Section Support (Placeholder pour plus tard) */
+.relationship-support {
+  text-align: center;
+  font-size: 0.9em;
+  font-style: italic;
+  color: #666;
+  padding-top: 10px;
+}
+
+
+.affinity-column .checked {
+  background-color: rgba(70, 130, 180, 0.8); /* Bleu pour Affinity */
+  color: white;
+}
+
+.dynamic-column .checked {
+  background-color: rgba(220, 20, 60, 0.8); /* Rouge pour Dynamic */
+  color: white;
+}
+
+/* Mise à jour du label */
+.discord-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin-top: 5px;
+}
+
+.discord-label {
+  font-weight: bold;
+  font-size: 14px;
+  text-align: center;
+  margin-bottom: 4px;
+  color: #5a2d0c;
+}
+
+.discord-values-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: #fdf6e3;
+  padding: 8px;
+  border-radius: 6px;
+  box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Style des valeurs affichées */
+.discord-value, .discord-modifier {
+  font-size: 16px;
+  font-weight: bold;
+  text-align: center;
+  padding: 5px;
+  width: 40px;
+  background: #fff8dc;
+  border: 1px solid #d4af37;
+  border-radius: 4px;
+  margin: 2px 0;
+}
+
+
+/* Espacement entre les valeurs */
+.discord-value {
+  margin-bottom: 5px;
+}
+
+.discord-modifier {
+  font-size: 1.2em;
+  color: #4a2810;
 }

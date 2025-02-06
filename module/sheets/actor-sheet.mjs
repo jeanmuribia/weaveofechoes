@@ -112,54 +112,6 @@ html.find('.add-relationship').on('click', async (event) => {
   }).render(true);
 });
 
-
-
-html.find('input[name^="affinity-"]').on('change', async (event) => {
-  const index = event.currentTarget.name.split('-')[1];
-  const newValue = parseInt(event.currentTarget.value);
-  
-  const connections = [...this.actor.system.relationships.connections];
-  
-  connections[index].affinity = {
-    value: newValue,
-    label: this.actor._getAffinityLabel(newValue)
-  };
-  
-  connections[index].relationshipValue = Math.round(
-    newValue * connections[index].dynamic.value
-  );
-
-  await this.actor.update({
-    'system.relationships.connections': connections
-  });
-
-  // Attendre un tick avant de forcer la propagation des liens
-  await new Promise(resolve => setTimeout(resolve, 100));
-  await this.actor.checkAndPropagateGroupTies();
-});
-
-
-html.find('input[name^="dynamic-"]').on('change', async (event) => {
-  const index = event.currentTarget.name.split('-')[1];
-  const newValue = parseFloat(event.currentTarget.value);
-  
-  const connections = [...this.actor.system.relationships.connections];
-  
-  connections[index].dynamic = {
-    value: newValue,
-    label: this.actor._getDynamicLabel(newValue)
-  };
-
-  await this.actor.update({
-    'system.relationships.connections': connections
-  });
-
-  // Attendre un tick avant de recalculer les relations manquantes
-  await new Promise(resolve => setTimeout(resolve, 100));
-  await this.actor.checkAndPropagateGroupTies();
-});
-
-
 });
 
 
@@ -206,6 +158,13 @@ export class WoeActorSheet extends ActorSheet {
   
     // Initialisez les structures de données nécessaires
     const actorData = this.actor.toObject(false);
+
+
+
+    if (!Array.isArray(actorData.system.relationships?.connections)) {
+      console.warn("⚠️ [getData] - `connections` n'est pas un tableau, initialisation forcée.");
+      actorData.system.relationships.connections = [];
+  }
   
     // Assurez-vous que `system` existe
     actorData.system = actorData.system || {};
@@ -260,101 +219,113 @@ export class WoeActorSheet extends ActorSheet {
     actorData.system.masteryPoints = actorData.system.masteryPoints || 0;
   
     // Relationships
-    actorData.system.relationships = actorData.system.relationships || {
-      connections: []
-    };
+    actorData.system.relationships = actorData.system.relationships || { connections: [] };
     actorData.system.relationships.connections = Array.isArray(actorData.system.relationships.connections)
-      ? actorData.system.relationships.connections
-      : [];
-  
+        ? actorData.system.relationships.connections
+        : [];
+
+        actorData.system.relationships.connections = actorData.system.relationships.connections.map(conn => {
+          const relatedActor = game.actors.get(conn.characterId) || null;
+      
+          // Vérification des valeurs pour éviter NaN
+          const affinityValue = conn.affinity?.value ?? 2;
+          const dynamicValue = conn.dynamic?.value ?? 0;  // 🚨 Vérifie si dynamic existe
+          const discordValue = (!isNaN(affinityValue) && !isNaN(dynamicValue)) ? (affinityValue + dynamicValue) : 0;
+          const discordModifier = (!isNaN(discordValue)) ? Math.ceil(discordValue / 2) : 0;
+      
+          return {
+              ...conn,
+              affinity: conn.affinity ?? { value: 2, label: "Acquaintance" },
+              dynamic: conn.dynamic ?? { value: 0, label: "Equal" },  // 🚨 Assure que dynamic ne soit pas undefined
+              discordValue,
+              discordModifier,
+              img: relatedActor?.img || "icons/svg/mystery-man.svg",
+              playerName: relatedActor?.owner?.name || "Unknown"
+          };
+      });
+
+    // Ajout des valeurs statiques pour Handlebars
+    context.AFFINITY_VALUES = {
+        0: "Soulmate",
+        1: "Friend",
+        2: "Acquaintance",
+        3: "Enemy"
+    };
+
+    context.DYNAMIC_VALUES = {
+        0: "Equal",
+        1: "Rival",
+        2: "Dependent",
+        3: "Dominant"
+    };
+
+    // 🔥 Ajout des valeurs dans le contexte
+    context.relationships = actorData.system.relationships.connections;
+
+     const data = super.getData();
+
+
     // Group Info
     const groupLeaderId = this.actor.system.relationships.currentGroupLeader;
     const groupLeader = game.actors.get(groupLeaderId);
     
     if (groupLeader) {
-      context.currentGroup = {
-        leaderId: groupLeaderId,
-        name: groupLeader.system.relationships.characterGroup.name,
-        members: groupLeader.system.relationships.characterGroup.members || []
-      };
+        context.currentGroup = {
+            leaderId: groupLeaderId,
+            name: groupLeader.system.relationships.characterGroup.name,
+            members: groupLeader.system.relationships.characterGroup.members || []
+        };
     }
     
     context.personalGroup = this.actor.system.relationships.characterGroup;
     context.isInOwnGroup = groupLeaderId === this.actor.id;
-  
+
     // Récupérer les informations de groupe
     const groupInfo = await this.getGroupInfoFromCharacterId(this.actor.id);
-  
-  // Group synergy logic
-  const groupSize = this.actor.getGroupSize();
-  const hasEnoughMembers = groupSize >= 3;
-  const missingTies = hasEnoughMembers ? await this.checkRelationshipsWithinGroup(this.actor.id) : [];
-  
-  context.groupSynergy = {
-    display: hasEnoughMembers ? 
-      (missingTies.length ? 
-        { type: 'missing', ties: missingTies } : 
-        { type: 'value', current: this.actor.system.relationships.currentGroupSynergy || 0 }
-      ) : 
-      { type: 'none' },
-    base: this.actor.calculateBaseSynergy()
-  };
 
-    //valeurs d'affinity et de dynamic au contexte
-    context.AFFINITY_VALUES = {
-      1: "Enemy",
-      2: "Acquaintance",
-      3: "Friend",
-      4: "Soulmate",
+    // Group synergy logic
+    const groupSize = this.actor.getGroupSize();
+    const hasEnoughMembers = groupSize >= 3;
+    const missingTies = hasEnoughMembers ? await this.checkRelationshipsWithinGroup(this.actor.id) : [];
+
+    context.groupSynergy = {
+        display: hasEnoughMembers ? 
+            (missingTies.length ? 
+                { type: 'missing', ties: missingTies } : 
+                { type: 'value', current: this.actor.system.relationships.currentGroupSynergy || 0 }
+            ) : 
+            { type: 'none' },
+        base: this.actor.calculateBaseSynergy()
     };
-  
-    context.DYNAMIC_VALUES = {
-      0.4: "Equal",
-      0.5: "Rival",
-      0.75: "Inferior",
-      0.85: "Superior",
-    };
-  
+
     // Biography
-    actorData.system.biography = actorData.system.biography || {
-      entries: []
-    };
+    actorData.system.biography = actorData.system.biography || { entries: [] };
     actorData.system.biography.entries = Array.isArray(actorData.system.biography.entries)
       ? actorData.system.biography.entries
       : [];
-  
-    // Mise à jour des relations avec les images
-    actorData.system.relationships.connections = actorData.system.relationships.connections.map(conn => {
-      const relatedActor = game.actors.get(conn.characterId);
-      return {
-        ...conn,
-        img: relatedActor?.img || "icons/svg/mystery-man.svg",
-        playerName: relatedActor?.owner?.name || "Unknown"
-      };
-    });
-  
+
     // Ajouter les acteurs disponibles pour de nouvelles relations
     context.actors = game.actors.filter(actor =>
-      actor.id !== this.actor.id &&
-      actor.type === "character" &&
-      !actorData.system.relationships.connections.some(conn => conn.characterId === actor.id)
+        actor.id !== this.actor.id &&
+        actor.type === "character" &&
+        !actorData.system.relationships.connections.some(conn => conn.characterId === actor.id)
     );
-  
+
     // Intégrer les données mises à jour dans le contexte
-    context.actorData = actorData; // Toutes les données complètes de l'acteur
+    context.actorData = actorData;
     context.system = actorData.system;
     context.actorName = this.actor.name;
-  
 
     if (this.actor) {
-      context.groupSize = this.actor.getGroupSize();  // 🔥 Stocke `groupSize` dans `context`
-  } else {
-      console.warn("⚠️ Impossible de récupérer l'actor pour getData()");
-      context.groupSize = 0;  // 🔥 Empêche `undefined`
-  }
-
+        context.groupSize = this.actor.getGroupSize();  // 🔥 Stocke `groupSize` dans `context`
+    } else {
+        console.warn("⚠️ Impossible de récupérer l'actor pour getData()");
+        context.groupSize = 0;  // 🔥 Empêche `undefined`
+    }
+   
     return context;
-  }
+}
+
   async rollDie(type) {
     if (!type) return "undefined";
 
@@ -539,58 +510,44 @@ _prepareFocusPointsData(context) {
   });
     
 
-    html.find('input[name^="affinity-"]').on('change', async (event) => {
-      const index = event.currentTarget.name.split('-')[1];
-      const newValue = parseInt(event.currentTarget.value);
-      
-      // Récupérer les connections actuelles
-      const connections = [...this.actor.system.relationships.connections];
-      
-      // Mettre à jour l'affinity
-      connections[index].affinity = {
-        value: newValue,
-        label: this.actor._getAffinityLabel(newValue)
-      };
-      
-      // Recalculer la relationshipValue
-      connections[index].relationshipValue = Math.round(
-        newValue * connections[index].dynamic.value
-      );
-      
+// ✅ Listener pour Affinity (avec sauvegarde)
+html.find('.affinity-column input[type="radio"]').on('change', (event) => {
+  const card = $(event.currentTarget).closest('.relationship-card');
+  const affinityValue = parseInt($(event.currentTarget).val()) || 0;
+  
+  // 🔄 Sauvegarde dans l'actor
+  const relationshipId = card.data('relationship-id');
+ 
 
-      Hooks.on('updateActor', (actor, changes, options, userId) => {
-        if (actor.id === this.actor.id && changes.system?.relationships) {
-          this.render(false);
-        }
-      });
+  this.actor.update({ [`data.relationships.${relationshipId}.affinity`]: affinityValue })
 
-      // Mettre à jour l'acteur
-      await this.actor.update({
-        'system.relationships.connections': connections
-      });
-    });
+  this.updateDiscordValue(event);
+});
 
-    
-    // Gérer les changements de Dynamic
-    html.find('input[name^="dynamic-"]').on('change', async (event) => {
-      const index = event.currentTarget.name.split('-')[1];
-      const newValue = parseFloat(event.currentTarget.value);
-      
-      // Récupérer les connections actuelles
-      const connections = [...this.actor.system.relationships.connections];
-      
-      // Mettre à jour le dynamic
-      connections[index].dynamic = {
-        value: newValue,
-        label: this.actor._getDynamicLabel(newValue)
-      };
-      
-      // Mettre à jour l'acteur
-      await this.actor.update({
-        'system.relationships.connections': connections
-      });
-    });
-    
+// ✅ Listener pour Dynamic (avec sauvegarde)
+html.find('.dynamic-column input[type="radio"]').on('change', (event) => {
+  const card = $(event.currentTarget).closest('.relationship-card');
+  const dynamicValue = parseInt($(event.currentTarget).val()) || 0;
+
+  // 🔄 Sauvegarde dans l'actor
+  const relationshipId = card.data('relationship-id');
+
+
+  this.actor.update({ [`data.relationships.${relationshipId}.dynamic`]: dynamicValue })
+
+  this.updateDiscordValue(event);
+});
+
+
+// Vérifier et appliquer la classe `checked` au moment du rendu de la page
+html.find('.affinity-column input[type="radio"]:checked').each(function() {
+  $(this).closest('label').addClass('checked');
+});
+
+html.find('.dynamic-column input[type="radio"]:checked').each(function() {
+  $(this).closest('label').addClass('checked dynamic-checked'); // Assurer la bonne couleur
+});
+
     // Gérer la suppression d'une relation
     html.find('.delete-relationship').on('click', async (event) => {
       const card = event.currentTarget.closest('.relationship-card');
@@ -621,25 +578,6 @@ _prepareFocusPointsData(context) {
       $(card).toggleClass('hidden-relationship');
     });
     
-
-     // Listener pour Affinity
-  html.find('.affinity-selector').on('change', event => {
-    const targetIndex = event.currentTarget.dataset.index;
-    const newValue = parseInt(event.currentTarget.value); // Convertit la valeur en entier
-
-    this.updateAffinityValue(targetIndex, newValue);
-     this.updateDiscordLevels();
-  });
-
-  // Listener pour Dynamic
-  html.find('.dynamic-selector').on('change', event => {
-    const targetIndex = event.currentTarget.dataset.index;
-    const newValue = parseFloat(event.currentTarget.value); // Convertit la valeur en float
-
-    this.updateDynamicValue(targetIndex, newValue);
-    this.updateDiscordLevels();
-  });
-
     html.find('.notes-edit').on('blur', (event) => {
       const textarea = $(event.currentTarget);
       const newValue = textarea.val(); // Récupérer la valeur du champ
@@ -994,43 +932,32 @@ if (this.system.relationships.characterGroup.id) {
   }
 
 
-  
   async updateAffinityValue(index, newValue) {
     const connections = [...this.actor.system.relationships.connections];
     if (connections[index]) {
       connections[index].affinity.value = newValue;
-      // Calculer immédiatement la nouvelle discordValue
-      const dynamicValue = parseFloat(connections[index].dynamic.value) || 0.4;
-      connections[index].discordValue = Math.round((newValue * dynamicValue) * 100) / 100;
-      
-      await this.actor.update({
-        "system.relationships.connections": connections,
-      });
-      
- 
+  
+      // Recalculer immédiatement la nouvelle discordValue
+      const dynamicValue = parseInt(connections[index].dynamic.value) || 0;
+      connections[index].discordValue = newValue + dynamicValue;  // 🔥 Plus clair
+  
+      await this.actor.update({ "system.relationships.connections": connections });
     }
   }
-
+  
   async updateDynamicValue(index, newValue) {
     const connections = [...this.actor.system.relationships.connections];
     if (connections[index]) {
       connections[index].dynamic.value = newValue;
-      // Calculer immédiatement la nouvelle discordValue
-      const affinityValue = parseFloat(connections[index].affinity.value) || 1;
-      connections[index].discordValue = Math.round((affinityValue * newValue) * 100) / 100;
-      
-      await this.actor.update({
-        "system.relationships.connections": connections,
-      });
-      this.calculateDiscordLevel,
-
-        // Attendre un tick pour laisser le temps à la mise à jour de se propager
-  await new Promise(resolve => setTimeout(resolve, 100));
-      await this.actor.checkAndPropagateGroupTies();
-      
-      
+  
+      // Recalculer immédiatement la nouvelle discordValue
+      const affinityValue = parseInt(connections[index].affinity.value) || 0;
+      connections[index].discordValue = affinityValue + newValue;  // 🔥 Plus clair
+  
+      await this.actor.update({ "system.relationships.connections": connections });
     }
   }
+  
 
   calculateDiscordValue() {
     const connections = this.actor.system.relationships.connections;
@@ -1361,6 +1288,47 @@ async handleReturnToMyGroup() {
     });
   }
   
+  updateDiscordValue(event) {
+    const element = $(event.currentTarget).closest('.relationship-card');
+
+   
+
+    // ✅ Mettre à jour l'affichage des labels
+    element.find('.affinity-column label').removeClass('checked');
+    element.find('.affinity-column input[type="radio"]:checked').closest('label').addClass('checked');
+
+    element.find('.dynamic-column label').removeClass('checked');
+    element.find('.dynamic-column input[type="radio"]:checked').closest('label').addClass('checked');
+
+    // ✅ Récupère les valeurs sélectionnées
+    const affinity = parseInt(element.find('.affinity-column input[type="radio"]:checked').val()) || 0;
+    const dynamic = parseInt(element.find('.dynamic-column input[type="radio"]:checked').val()) || 0;
+    const discordValue = affinity + dynamic;
+    const discordModifier = Math.ceil(discordValue / 2);
+
+    // 🔄 Mise à jour de l'affichage
+    element.find('.discord-value p:first-child').text(discordValue);
+    element.find('.discord-value .discord-modifier').text(`Modifier: ${discordModifier}`);
+
+
+
+    const relationshipId = element.data('relationship-id');
+const updatedConnections = JSON.parse(JSON.stringify(this.actor.system.relationships.connections));
+const relationshipIndex = updatedConnections.findIndex(c => c.characterId === relationshipId);
+
+if (relationshipIndex !== -1) {
+    updatedConnections[relationshipIndex].affinity.value = affinity;
+    updatedConnections[relationshipIndex].dynamic.value = dynamic;
+    updatedConnections[relationshipIndex].discordValue = discordValue;
+}
+
+this.actor.update({ "system.relationships.connections": updatedConnections });
+    // 🔥 Ajout d'un `this.render()` pour forcer la mise à jour du DOM
+    this.render(false);
+
+}
+
+
 
   _setupWoundListeners(html) {
     ['1', '2', '3', 'knockedOut'].forEach(number => {
@@ -3000,48 +2968,24 @@ Handlebars.registerHelper('multiply', function(connection) {
   return Math.round(affinityValue * dynamicValue);
 });
 
-function setupRadioSelectionListeners() {
-  console.log("🎯 Initialisation des écouteurs sur les radios...");
 
-  document.querySelectorAll('.affinity-column input[type="radio"], .dynamic-column input[type="radio"]').forEach(input => {
-      console.log(`🔍 Détection input radio: ${input.name} (ID: ${input.id})`);
 
-      input.addEventListener('change', function () {
-          console.log(`🔄 Changement détecté : ${this.name} → valeur sélectionnée : ${this.value}`);
+if (!Handlebars.helpers.math) {
+  Handlebars.registerHelper("math", function(lvalue, operator, rvalue, options) {
+      lvalue = parseFloat(lvalue);
+      rvalue = parseFloat(rvalue);
 
-          // 🔍 Identifier le groupe et son container
-          const groupName = this.name;
-          const container = this.closest('.affinity-column') || this.closest('.dynamic-column');
+      if (isNaN(lvalue) || isNaN(rvalue)) return 0; // ✅ Vérification anti-NaN
 
-          console.log(`📌 Groupe détecté : ${groupName}`);
-          console.log(`🛠️ Container détecté :`, container);
-
-          if (container) {
-              // ❌ Supprimer la classe 'selected-label' des anciens labels dans le même groupe
-              container.querySelectorAll('label.selected-label').forEach(label => {
-                  console.log(`❌ Suppression de la classe sur : ${label.innerText}`);
-                  label.classList.remove('selected-label');
-              });
-
-              // ✅ Ajouter la classe 'selected-label' au label correspondant
-              const selectedLabel = container.querySelector(`label[for="${this.id}"]`);
-              if (selectedLabel) {
-                  selectedLabel.classList.add('selected-label');
-                  console.log(`✅ Ajout de la classe 'selected-label' sur : ${selectedLabel.innerText}`);
-              } else {
-                  console.warn(`⚠️ Aucun label trouvé pour l'ID : ${this.id}`);
-              }
-          } else {
-              console.warn(`⚠️ Aucun container trouvé pour ${this.name}`);
-          }
-      });
+      switch (operator) {
+          case "+": return lvalue + rvalue;
+          case "-": return lvalue - rvalue;
+          case "*": return lvalue * rvalue;
+          case "/": return rvalue !== 0 ? lvalue / rvalue : 0; // ✅ Évite la division par zéro
+          case "%": return lvalue % rvalue;
+          case "ceil": return Math.ceil(lvalue / rvalue);
+          case "floor": return Math.floor(lvalue / rvalue);
+          default: return 0;
+      }
   });
-
-  console.log("✅ Tous les écouteurs ont été attachés !");
 }
-
-// 🔄 Attendre le rendu de la fiche pour exécuter la fonction
-Hooks.on("renderWoeActorSheet", (app, html, data) => {
-  console.log("📄 Fiche de personnage rendue, exécution du setupRadioSelectionListeners...");
-  setupRadioSelectionListeners();
-});

@@ -4,6 +4,14 @@ export class WoeActor extends Actor {
     super.prepareData();
     const systemData = this.system || {};
 
+
+
+    // ✅ Vérifier que `connections` est bien un tableau
+if (!Array.isArray(systemData.relationships?.connections)) {
+  console.warn("⚠️ [prepareData] - `connections` n'est pas un tableau, initialisation forcée.");
+  systemData.relationships.connections = [];
+}
+
     if (systemData._initialized) return;
     systemData._initialized = true;
 
@@ -43,6 +51,20 @@ export class WoeActor extends Actor {
       }
     };
 
+
+    for (let connection of systemData.relationships.connections) {
+       
+        connection.affinity ??= { value: 2, label: "Acquaintance" };
+        connection.dynamic ??= { value: 0, label: "Equal" };
+        connection.discordValue = connection.affinity.value + connection.dynamic.value;
+
+    }
+
+
+this.update({
+    "system.relationships.connections": systemData.relationships.connections
+});
+
     if (!systemData.relationships.currentGroupLeader) {
       systemData.relationships.currentGroupLeader = this.id;
       systemData.relationships.characterGroup.name = `${this.name}'s Group`;
@@ -65,6 +87,17 @@ export class WoeActor extends Actor {
     this.synchronizeBaseGroupSynergy();
 
     this.getGroupSize();
+
+
+  systemData.relationships.connections = systemData.relationships.connections.map(connection => {
+      connection.affinity ??= { value: 2, label: "Acquaintance" };
+      connection.dynamic ??= { value: 0, label: "Equal" };
+      connection.discordValue ??= connection.affinity.value + connection.dynamic.value;
+
+      return connection;
+  });
+
+
   }
 
   getGroupLeader() {
@@ -162,22 +195,7 @@ this.render(false);  // Assure-toi que la fiche est bien mise à jour
     });
   }
 
-  async updateDiscordValues() {
-    const connections = this.system.relationships.connections;
-    
-    // Mise à jour des valeurs Discord pour chaque connexion
-    const updatedConnections = connections.map(conn => ({
-      ...conn,
-      discordValue: Math.round(conn.affinity.value * conn.dynamic.value)
-    }));
-  
-    await this.update({
-      'system.relationships.connections': updatedConnections
-    });
-  
-    // Recalculer les totaux
-    await this.updateBaseGroupSynergy();
-  }
+
   getGroupSize() {
     const currentLeaderId = this.system.relationships.currentGroupLeader;
     if (!currentLeaderId) {
@@ -277,33 +295,35 @@ calculateBaseSynergy() {
   async updateBaseGroupSynergy() {
     const connections = this.system.relationships.connections;
     if (!connections) return;
-  
+
+    // Calcul du Discord Level global avec somme (et non multiplication)
     const totalDiscordLevel = connections.reduce((sum, connection) => {
-      const discordValue = Math.round(connection.affinity.value * connection.dynamic.value);
-      return sum + discordValue;
+        const discordValue = connection.affinity.value + connection.dynamic.value;
+        return sum + discordValue;
     }, 0);
-  
+
+    // Calcul du Discord Level du groupe
     const currentLeader = game.actors.get(this.system.relationships.currentGroupLeader);
     if (!currentLeader) return;
-  
+
     const groupMembers = currentLeader.system.relationships.characterGroup.members;
     const groupDiscordLevel = connections.reduce((sum, connection) => {
-      if (groupMembers.includes(connection.characterId)) {
-        const discordValue = Math.round(connection.affinity.value * connection.dynamic.value);
-        return sum + discordValue;
-      }
-      return sum;
+        if (groupMembers.includes(connection.characterId)) {
+            const discordValue = connection.affinity.value + connection.dynamic.value;
+            return sum + discordValue;
+        }
+        return sum;
     }, 0);
-  
+
     await this.update({
-      'system.relationships.allConnectionsDiscordValue': totalDiscordLevel,
-      'system.relationships.discordValueWithinGroup': groupDiscordLevel
+        'system.relationships.allConnectionsDiscordValue': totalDiscordLevel,
+        'system.relationships.discordValueWithinGroup': groupDiscordLevel
     });
-  
+
     await this.checkAndPropagateGroupTies();
-    this.render(false); // <- Forcer un rafraîchissement
-  }
-  
+    this.render(false); // 🔄 Mise à jour de la fiche
+}
+
 
   synchronizeBaseGroupSynergy() {
     const groupLeader = game.actors.get(this.system.relationships.currentGroupLeader);
@@ -318,20 +338,20 @@ calculateBaseSynergy() {
 
   _getAffinityLabel(value) {
     switch (value) {
-      case 1: return "Enemy";
+      case 0: return "Soulmate";
+      case 1: return "Friend";
       case 2: return "Acquaintance";
-      case 3: return "Friend";
-      case 4: return "Soulmate";
+      case 3: return "Enemy";
       default: return "Unknown";
     }
   }
-
+  
   _getDynamicLabel(value) {
     switch (value) {
-      case 1: return "Superior";
-      case 2: return "Inferior";
-      case 3: return "Equal";
-      case 4: return "Rival";
+      case 0: return "Equal";
+      case 1: return "Rival";
+      case 2: return "Dependent";
+      case 3: return "Dominant";
       default: return "Unknown";
     }
   }
