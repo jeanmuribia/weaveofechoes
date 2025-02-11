@@ -1,0 +1,65 @@
+<div class="groups-tracker">
+  <h2>GROUPS TRACKER</h2>
+
+  {{#each groups}}
+    <div class="group-card">
+      <div class="group-header">
+        <div>
+            <h3 class="group-name">{{this.name}}</h3>
+             <button class="rest-group-button" data-group="{{this.id}}">Rest Group</button>
+        </div>
+        <div class="synergy-container">
+          <div class="synergy-title">Current Synergy</div>
+          <div class="synergy-value" id="current-synergy-{{this.id}}">0</div>
+          <div class="synergy-buttons">
+            <button class="synergy-button" data-group-id="{{this.id}}" data-action="increase">+</button>
+            <button class="synergy-button" data-group-id="{{this.id}}" data-action="decrease">-</button>
+            <button class="synergy-button" data-group-id="{{this.id}}" data-action="fill">Fill</button>
+            <button class="synergy-button" data-group-id="{{this.id}}" data-action="empty">Empty</button>
+          </div>
+          <div class="synergy-title">Base Synergy: {{this.baseSynergy}}</div>
+        </div>
+      </div>
+
+      <div class="member-list">
+        {{#each this.members}}
+          <div class="member-card">
+            <div class="member-info-rest-button">
+                <div class="avatar-info-container">
+                    <img class="member-avatar" src="{{this.img}}" alt="{{this.name}}">
+                    <div class="member-info">{{this.name}}</div>
+                </div>
+                <div class="rest-member-button">Rest</div>
+            </div>
+            <div class="stat-cards">
+              <div class="stat-card focus">
+                <div class="stat-title">Focus</div>
+                <div class="stat-value" id="focus-{{this.id}}">{{this.focus}}</div>
+                <div class="stat-buttons">
+                  <button class="stat-button" data-stat="focus" data-id="{{this.id}}" data-action="increase">+</button>
+                  <button class="stat-button" data-stat="focus" data-id="{{this.id}}" data-action="decrease">-</button>
+                </div>
+              </div>
+              <div class="stat-card stamina">
+                <div class="stat-title">Stamina</div>
+                <div class="stat-value" id="stamina-{{this.id}}">{{this.stamina}}</div>
+                <div class="stat-buttons">
+                  <button class="stat-button" data-stat="stamina" data-id="{{this.id}}" data-action="increase">+</button>
+                  <button class="stat-button" data-stat="stamina" data-id="{{this.id}}" data-action="decrease">-</button>
+                </div>
+              </div>
+              <div class="stat-card wounds">
+                <div class="stat-title">Wounds</div>
+                <div class="stat-value" id="wounds-{{this.id}}">{{this.wounds}}</div>
+                <div class="stat-buttons">
+                  <button class="stat-button" data-stat="wounds" data-id="{{this.id}}" data-action="increase">+</button>
+                  <button class="stat-button" data-stat="wounds" data-id="{{this.id}}" data-action="decrease">-</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        {{/each}}
+      </div>
+    </div>
+  {{/each}}
+</div>

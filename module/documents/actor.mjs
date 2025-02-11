@@ -12,12 +12,6 @@ if (!Array.isArray(systemData.relationships?.connections)) {
   systemData.relationships.connections = [];
 }
 
-    if (systemData._initialized) return;
-    systemData._initialized = true;
-
-    systemData.focusPoints ??= { base: 0, current: 0, isVisible: false };
-    systemData.stamina ??= { max: 4, current: 4 };
-
     const attributes = ["body", "martial", "soul", "elementary", "mind", "rhetoric"];
     systemData.attributes ??= {};
     attributes.forEach((attr, index) => {
@@ -60,6 +54,11 @@ if (!Array.isArray(systemData.relationships?.connections)) {
 
     }
 
+    systemData.relationships.connections = systemData.relationships.connections.map(connection => {
+      connection.bio ??= "";
+      return connection;
+    });
+
 
 this.update({
     "system.relationships.connections": systemData.relationships.connections
@@ -89,13 +88,34 @@ this.update({
     this.getGroupSize();
 
 
-  systemData.relationships.connections = systemData.relationships.connections.map(connection => {
+    systemData.relationships.connections = systemData.relationships.connections.map(connection => {
       connection.affinity ??= { value: 2, label: "Acquaintance" };
       connection.dynamic ??= { value: 0, label: "Equal" };
-      connection.discordValue ??= connection.affinity.value + connection.dynamic.value;
-
+      connection.discordValue = connection.affinity.value + connection.dynamic.value;
+      connection.discordModifier = Math.ceil(connection.discordValue / 2); // 🔥 Nouveau calcul ici
+  
       return connection;
+    
   });
+ 
+   // 2️⃣ Calcul des Focus Points en fonction des relations
+   let baseFocus = 0;
+
+   for (const relation of systemData.relationships.connections || []) {
+       if (relation.discordModifier === 3) {
+           baseFocus += 2;  // +2 points pour une relation avec un modificateur de 3
+       } else if (relation.discordModifier === 2) {
+           baseFocus += 1;  // +1 point pour une relation avec un modificateur de 1
+       }
+   }
+
+   systemData.focusPoints.base = baseFocus;
+
+    // Initialiser currentSynergy à 0 si elle n'existe pas encore
+    if (systemData.relationships.groupSynergy.current === undefined) {
+      systemData.relationships.groupSynergy.current = 0;
+      console.log(`🔄 Initialisation de currentSynergy à 0 pour ${this.name}`);
+  }
 
 
   }
@@ -166,35 +186,6 @@ this.render(false);  // Assure-toi que la fiche est bien mise à jour
     }
   }
 
-  async updateBaseGroupSynergy() {
-    const connections = this.system.relationships.connections;
-    if (!connections) return;
-  
-    // Calcul du Discord Level global avec valeurs arrondies
-    const totalDiscordLevel = connections.reduce((sum, connection) => {
-      const discordValue = Math.round(connection.affinity.value * connection.dynamic.value);
-      return sum + discordValue;
-    }, 0);
-  
-    // Calcul du Discord Level du groupe avec valeurs arrondies
-    const currentLeader = game.actors.get(this.system.relationships.currentGroupLeader);
-    if (!currentLeader) return;
-  
-    const groupMembers = currentLeader.system.relationships.characterGroup.members;
-    const groupDiscordLevel = connections.reduce((sum, connection) => {
-      if (groupMembers.includes(connection.characterId)) {
-        const discordValue = Math.round(connection.affinity.value * connection.dynamic.value);
-        return sum + discordValue;
-      }
-      return sum;
-    }, 0);
-  
-    await this.update({
-      'system.relationships.allConnectionsDiscordValue': totalDiscordLevel,
-      'system.relationships.discordValueWithinGroup': groupDiscordLevel
-    });
-  }
-
 
   getGroupSize() {
     const currentLeaderId = this.system.relationships.currentGroupLeader;
@@ -216,17 +207,14 @@ this.render(false);  // Assure-toi que la fiche est bien mise à jour
 }
 
   
-
 calculateBaseSynergy() {
   const groupSize = this.getGroupSize();
 
-  // 🔥 Modifier la condition : Au lieu de "si < 3 alors 0", on met "si < 2 alors 0"
   if (groupSize < 2) return 0;
 
-  // 🔥 Base synergy dès 2 membres : 10 + (nombre de membres au carré)
-  const baseSynergy = 10 + (groupSize * groupSize);
+  let baseSynergy = 4 + (groupSize * 2);
 
-  // 🔥 Récupérer le groupe via le Leader (et non ce personnage)
+
   const currentLeader = game.actors.get(this.system.relationships.currentGroupLeader);
   if (!currentLeader) {
       console.error(`⛔ Erreur : Impossible de récupérer le leader pour calculer la synergie.`);
@@ -234,16 +222,49 @@ calculateBaseSynergy() {
   }
 
   const groupMembers = currentLeader.system.relationships.characterGroup.members;
+  let countedPairs = new Set();
 
-  // 🔥 Soustraire les discord within group de chaque membre
-  const totalGroupDiscord = groupMembers.reduce((sum, memberId) => {
-      if (memberId === "ghost_member") return sum;
-      const member = game.actors.get(memberId);
-      return sum + (member?.system.relationships.discordValueWithinGroup || 0);
-  }, 0);
+  for (const memberId of groupMembers) {
+    if (memberId === "ghost_member") continue;
 
-  return baseSynergy - totalGroupDiscord;
+    const member = game.actors.get(memberId);
+    if (!member) continue;
+
+    for (const connection of member.system.relationships.connections) {
+      const otherId = connection.characterId;
+      if (!groupMembers.includes(otherId) || countedPairs.has(`${otherId}-${memberId}`)) continue;
+      countedPairs.add(`${memberId}-${otherId}`);
+
+      // 🔍 Récupérer le `discordModifier` de l’acteur vers la cible
+      const actorDiscordModifier = Math.ceil((connection.affinity.value + connection.dynamic.value) / 2);
+
+      // 🔍 Trouver la connexion dans l’autre sens (cible -> acteur)
+      const otherMember = game.actors.get(otherId);
+      if (!otherMember) continue;
+
+      const reverseConnection = otherMember.system.relationships.connections.find(conn => conn.characterId === memberId);
+      const targetDiscordModifier = reverseConnection
+        ? Math.ceil((reverseConnection.affinity.value + reverseConnection.dynamic.value) / 2)
+        : actorDiscordModifier; // Si pas de relation inverse, on garde la valeur actuelle
+
+      // 🔥 Calculer la moyenne arrondie au supérieur
+      const synergyValue = Math.ceil((actorDiscordModifier + targetDiscordModifier) / 2);
+  
+
+      // 🔄 Appliquer la valeur dans le calcul
+      switch (synergyValue) {
+        case 0: baseSynergy += 2; break;
+        case 1: baseSynergy += 1; break;
+        case 2: baseSynergy -= 1; break;
+        case 3: baseSynergy -= 2; break;
+      }
+    }
+  }
+
+
+  return baseSynergy;
 }
+
 
   async checkAndPropagateGroupTies() {
     const currentLeader = game.actors.get(this.system.relationships.currentGroupLeader);
@@ -293,37 +314,14 @@ calculateBaseSynergy() {
   }
 
   async updateBaseGroupSynergy() {
-    const connections = this.system.relationships.connections;
-    if (!connections) return;
-
-    // Calcul du Discord Level global avec somme (et non multiplication)
-    const totalDiscordLevel = connections.reduce((sum, connection) => {
-        const discordValue = connection.affinity.value + connection.dynamic.value;
-        return sum + discordValue;
-    }, 0);
-
-    // Calcul du Discord Level du groupe
-    const currentLeader = game.actors.get(this.system.relationships.currentGroupLeader);
-    if (!currentLeader) return;
-
-    const groupMembers = currentLeader.system.relationships.characterGroup.members;
-    const groupDiscordLevel = connections.reduce((sum, connection) => {
-        if (groupMembers.includes(connection.characterId)) {
-            const discordValue = connection.affinity.value + connection.dynamic.value;
-            return sum + discordValue;
-        }
-        return sum;
-    }, 0);
-
+    const newSynergy = this.calculateBaseSynergy();
+    
     await this.update({
-        'system.relationships.allConnectionsDiscordValue': totalDiscordLevel,
-        'system.relationships.discordValueWithinGroup': groupDiscordLevel
+      "system.relationships.groupSynergy.base": newSynergy
     });
-
-    await this.checkAndPropagateGroupTies();
-    this.render(false); // 🔄 Mise à jour de la fiche
-}
-
+  
+    this.render(false); // 🔄 Rafraîchir la fiche si elle est ouverte
+  }
 
   synchronizeBaseGroupSynergy() {
     const groupLeader = game.actors.get(this.system.relationships.currentGroupLeader);

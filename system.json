@@ -30,7 +30,8 @@
     "verified": "11.315"
   },
   "esmodules": [
-    "module/weave_of_echoes.mjs"
+    "module/weave_of_echoes.mjs",
+    "module/trackers/groupsTracker.mjs"
   ],
   "styles": ["css/weave_of_echoes.css",
             "css/initiative-tracker.css"

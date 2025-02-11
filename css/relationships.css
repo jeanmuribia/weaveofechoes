@@ -2,10 +2,13 @@
 .tab[data-tab="relationships"] {
     width: px; /* Augmentation de la largeur pour cette tab spécifique */
     margin: 0 auto;
-    padding: 20px;
+    padding: 0px;
   }
   
-
+  .tab-content {
+    position: relative;
+padding: 0px;
+}
 
 /* Section Synergy - Layout horizontal */
 .synergy-section {
@@ -14,7 +17,7 @@
     background: rgba(255, 255, 255, 0.7);
     border-radius: 12px;
     padding: 20px;
-    margin-bottom: 30px;
+    margin-bottom: 10px;
   }
   
 
@@ -554,7 +557,7 @@ body.game .window-app.relationship-dialog .dialog-buttons .button:active {
 
 /* ✅ Ajustements pour la carte entière */
 .relationship-card {
-  height: 300px; /* Hauteur fixe ajustée */
+  height: 450px; /* Hauteur fixe ajustée */
   width: 500px; /* Largeur fixe */
   display: flex;
   background: rgba(255, 255, 255, 0.9); /* Fond blanc légèrement transparent */
@@ -589,7 +592,6 @@ body.game .window-app.relationship-dialog .dialog-buttons .button:active {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding-bottom: 10px;
 }
 
 .character-name {
@@ -646,9 +648,10 @@ body.game .window-app.relationship-dialog .dialog-buttons .button:active {
 }
 
 /* ✅ Style des labels */
-.affinity-column label,
-.dynamic-column label {
+.affinity-column label, .dynamic-column label {
   display: inline-block;
+  width: 116px;
+  text-align: center;
   padding: 8px 12px;
   border-radius: 4px;
   cursor: pointer;
@@ -756,4 +759,183 @@ body.game .window-app.relationship-dialog .dialog-buttons .button:active {
 .discord-modifier {
   font-size: 1.2em;
   color: #4a2810;
+}
+
+.relationship-values {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  margin-top: 10px;
+}
+
+.relationship-values.column-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  width: 100%;
+  padding: 0;
+  border-radius: 8px;
+}
+
+.relationship-value-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  padding: 5px 0;
+  border-radius: 5px;
+}
+
+.relationship-label {
+  font-size: 11px; /* Labels plus petits */
+  font-weight: bold;
+  color: #4a2810;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.relationship-value {
+  font-size: 2rem; /* Grosse taille pour les chiffres */
+  font-weight: bold;
+  color: #e77a70;
+  line-height: 1;
+}
+
+
+/* === Support Dice Zone === */
+.support-zone {
+  display: block;
+  align-items: center;
+  gap: 10px;
+  /* Optionnel : vous pouvez fixer une largeur maximale pour l'ensemble */
+  max-width: 330px;
+}
+
+.support-label {
+  font-family: 'Quicksand', sans-serif;
+  font-size: 1em;       /* Taille du label (ajustable) */
+  font-weight: bold;
+  color: #333;
+  white-space: nowrap;
+}
+
+/* Conteneur pour les dés de support */
+.support-dice-container {
+  display: flex;
+  gap: 10px;
+  height: 50px;
+  width: 300px;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Style de base pour chaque dé */
+.support-die {
+  width: 50px;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Quicksand', sans-serif !important;
+  color: #333;
+  font-size: 1.2em;
+  font-weight: bold;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  transition: filter 0.3s ease;
+}
+
+.support-die:hover {
+  filter: brightness(0.9);
+  box-shadow: none;
+}
+
+/* Dés inactifs (disabled) */
+.support-die.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Dés actifs (cliquables) */
+.support-die:not(.disabled) {
+  cursor: pointer;
+}
+
+/* Couleurs spécifiques pour chaque type de dé */
+.support-die.malus {
+  background-color: #aecbfa;
+}
+
+.support-die.neutral {
+  background-color: #fef49c;
+}
+
+.support-die.bonus {
+  background-color: #81c995;
+}
+
+.support-die.critical {
+  background-color: #f28b82;
+}
+
+/* === Zone Bio Connection === */
+.connection-bio-container {
+  position: relative;
+  background-color: #fdfdfd;
+  max-width: 330px;  /* Largeur maximale du conteneur */
+  padding: 2px 8px 8px 8px; /* Réduit le padding en haut à 2px */
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  /* Réduction légère de la police pour l'ensemble */
+  font-size: 0.9em;
+}
+
+/* Zone d'affichage de la bio */
+.connection-bio-display {
+  max-height: 80px;      /* Hauteur maximale pour l'affichage */
+  overflow-y: auto;      /* Barre de défilement verticale si nécessaire */
+  white-space: pre-wrap;
+  position: relative;
+  padding-right: 5px;    /* Pour éviter que le texte ne soit masqué par la barre de défilement */
+  max-width: 330px;      /* Largeur maximale pour l'affichage */
+}
+
+/* Icône de modification positionnée en haut à droite */
+.connection-bio-edit-icon {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  cursor: pointer;
+  color: #888;
+}
+
+/* Zone d'édition (textarea) */
+.connection-bio-edit {
+  width: 100%;
+  max-height: 80px;      /* Hauteur maximale pour le textarea */
+  height: auto;
+  font-family: inherit;
+  font-size: inherit;
+  padding: 5px;
+  box-sizing: border-box;
+  overflow-y: auto;      /* Barre de défilement verticale */
+  max-width: 330px;      /* Largeur maximale pour le textarea */
+}
+
+.connection-bio-display p:first-child,
+.connection-bio-display em {
+  margin-top: 0;
+}
+
+/* Classe pour masquer les éléments */
+.hidden {
+  display: none;
+}
+
+.support-dice-icon {
+
+  max-width: 100%; /* S'assurer que l'image reste dans sa taille */;
+  border: none;
 }

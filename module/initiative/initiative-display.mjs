@@ -32,7 +32,7 @@ export class InitiativeDisplay extends Application {
 
 
     async _onUpdate(data) {
-        console.log("🎲 Receiving update:", data);
+
     
         if (data.opportunities) {
             this.currentOpportunities = data.opportunities;
@@ -59,7 +59,7 @@ export class InitiativeDisplay extends Application {
     }
     
     async _handleUpdate(data) {
-        console.log("🎲 Receiving update:", data);
+
 
         if (data.opportunities) {
             this.currentOpportunities = data.opportunities;

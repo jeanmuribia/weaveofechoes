@@ -72,28 +72,42 @@
     <button id="focus-minus" class="resource-btn">-</button>
     <button id="focus-plus" class="resource-btn">+</button>
   </div>
-  <div class="focus-toggle-container">
+  <div class="synergy-base-value">
     <label>
-      <input type="checkbox" id="focus-toggle" {{checked system.focusPoints.isVisible}} /> Show
+     Base {{system.focusPoints.base}}
     </label>
   </div>
 </div>
 
-    <div class="resource synergy">
-      <label class="resource-label">Synergy</label>
-      <div class="resource-value {{#if isNotInGroup}}not-in-group{{/if}}">
-        {{#if isNotInGroup}}
-          Not in a group yet
-        {{else}}
-          {{currentSynergy}}
-        {{/if}}
+   <div class="resource synergy">
+  <label class="resource-label">Synergy</label>
+
+   
+
+    {{#if (lt groupSize 2)}}
+      <div class="center-value not-in-group-text">Not in a group yet</div>
+    {{else if system.relationships.missingGroupTies.length}}
+      <div class="missing-ties">
+        <span class="warning">⚠️ Missing ties:</span>
+        <ul>
+          {{#each system.relationships.missingGroupTies}}
+            <li>{{this}}</li>
+          {{/each}}
+        </ul>
       </div>
-      {{#unless isNotInGroup}}
-        <div class="resource-controls">
-          <div>Base: {{maxSynergy}}</div>
-        </div>
-      {{/unless}}
-    </div>
+    {{else}}
+     
+        <div class="resource-value">{{groupSynergy.current}}</div>
+          <div class="resource-controls synergy">
+    <button id="focus-minus" class="resource-btn">-</button>
+    <button id="focus-plus" class="resource-btn">+</button>
+  </div>
+        <div class="synergy-base-value">Base: {{groupSynergy.base}}</div>
+      
+    {{/if}}
+  
+</div>
+
   </div>
 
 
@@ -344,7 +358,7 @@
 <div class="synergy-card group-synergy">
   <label>Group Synergy</label>
   <div class="resource-value">
-    {{log "🔍 Rendering Group Synergy, Group Size:" groupSize}}  <!-- Debug Handlebars -->
+   <!-- Debug Handlebars -->
 
     {{#if (lt groupSize 2)}}
       <div class="center-value">Not in a group yet</div>
@@ -407,16 +421,6 @@
   <button class="add-relationship custom-button">
     <i class="fas fa-plus"></i> Add Relationship
   </button>
-  <div class="discord-levels">
-  <div class="discord-level">
-    <div class="discord-level-label">Global Discord Level</div>
-    <div class="discord-level-value">{{system.relationships.allConnectionsDiscordValue}}</div>
-  </div>
-  <div class="discord-level">
-    <div class="discord-level-label">Group Discord Level</div>
-    <div class="discord-level-value">{{system.relationships.discordValueWithinGroup}}</div>
-  </div>
-</div>
 </div>
 
     <!-- Grid des relations -->
@@ -458,13 +462,21 @@
   <label><input type="radio" name="affinity-{{characterId}}" value="3" {{#if (eq affinity.value 3)}}checked{{/if}}> Enemy</label>
 </div>
 
-<!-- Connection Discord -->
-<div class="discord-section">
-  <div class="discord-values-container">
-    <p class="discord-value">{{discordValue}}</p>
-    <p class="discord-modifier">{{discordModifier}}</p>
+<div class="relationship-values column-layout">
+  <div class="relationship-value-box">
+    <span class="relationship-label">Discord</span>
+    <span class="relationship-value">{{discordValue}}</span>
+  </div>
+  <div class="relationship-value-box">
+    <span class="relationship-label">Modifier</span>
+    <span class="relationship-value">{{discordModifier}}</span>
+  </div>
+  <div class="relationship-value-box">
+    <span class="relationship-label">Synergy</span>
+    <span class="relationship-value">{{connectionSynergyValue}}</span>
   </div>
 </div>
+
 
 <!-- Dynamic -->
 <div class="dynamic-column">
@@ -480,14 +492,32 @@
 
 
       <!-- 3️⃣ Biographie -->
-      <div class="relationship-bio">
-        <textarea class="bio-edit" maxlength="200" placeholder="A few words about this relationship...">{{notes}}</textarea>
-      </div>
+<div class="relationship-bio">
+  <div class="connection-bio-container">
+    <div class="connection-bio-display">
+      {{#if bio}}
+        {{{bio}}}
+      {{else}}
+        <em>A few words about us ...</em>
+      {{/if}}
+      <i class="fas fa-pencil-alt connection-bio-edit-icon" title="Edit Bio"></i>
+    </div>
+    <textarea class="connection-bio-edit hidden">{{bio}}</textarea>
+  </div>
+</div>
 
-      <!-- 4️⃣ Support (À implémenter plus tard) -->
-      <div class="relationship-support">
-        <p>Support System (WIP)</p>
-      </div>
+<div class="support-zone">
+  <label class="support-label">Support</label>
+  <div class="support-dice-container">
+    {{#unless (eq discordModifier null)}}
+     <div class="support-die {{getDieType discordModifier}}" data-target="{{characterId}}" data-type="{{getDieType discordModifier}}">
+  {{getDieSymbol discordModifier}}
+</div>
+    {{/unless}}
+  </div>
+</div>
+
+
     </div>
   </div>
   {{/each}}

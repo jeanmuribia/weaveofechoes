@@ -3,6 +3,7 @@
 @import url('maneuver-modal.css');
 @import url('biography-system.css');
 @import url('relationships.css');
+@import url('groupsTracker.css');
 
 #interface {
   width: 100vw;
@@ -491,4 +492,14 @@ button:hover {
   pointer-events: auto; /* La navbar reste interactive */
   opacity: 1; /* Pleine opacité pour les onglets de la navbar */
   cursor: pointer; /* Curseur par défaut pour la navbar */
+}
+
+.Gain {
+  color: green;
+  font-weight: bold;
+}
+
+.Setback {
+  color: red;
+  font-weight: bold;
 }

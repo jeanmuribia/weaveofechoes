@@ -68,7 +68,6 @@ export class InitiativeTracker extends Application {
         initial: "initiative",
         callback: (event, html, tab) => {
             // Callback optionnel lors du changement d'onglet
-            console.log(`Tab changed to: ${tab}`);
         }
     });
     tabs.bind(html[0]);

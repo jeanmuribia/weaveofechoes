@@ -9,6 +9,7 @@ import { preloadHandlebarsTemplates } from './helpers/templates.mjs';
 import { WOE } from './helpers/config.mjs';
 import { InitiativeTracker } from './initiative/initiative-tracker.mjs';
 import { InitiativeDisplay } from './initiative/initiative-display.mjs';
+import { GroupsTracker } from './groupsTracker.mjs';
 
 /* -------------------------------------------- */
 /*  Init Hook                                   */
@@ -24,6 +25,13 @@ Hooks.once("init", function () {
   game.weaveOfEchoes.initiativeTracker = null;
 
 
+   // Enregistrement du paramètre global pour le suivi des groupes
+   game.settings.register("weave_of_echoes", "groupsTracker", {
+    scope: "world",
+    config: false,
+    type: Object,
+    default: {}
+});
 
   game.settings.register("weave_of_echoes", "synergyData", {
     name: "Synergy Data",
@@ -95,12 +103,53 @@ Hooks.once("init", function () {
     type: Object
   });
 
-  // Vérifier que le paramètre est correctement enregistré
-  console.log("Shared Groups Setting Registered:", game.settings.get("weave_of_echoes", "sharedGroups"));
 
 
   // Précharger les templates Handlebars
   preloadHandlebarsTemplates();
+});
+
+Hooks.once("ready", function () {
+
+
+  // Initialisation du tracker après chargement complet de Foundry
+  game.weaveOfEchoes.groupsTracker = new GroupsTracker();
+
+});
+
+Hooks.on("renderActorDirectory", (app, html) => {
+  if (!game.user.isGM) return;
+
+  const button = $(`
+      <button class="groups-tracker-btn">
+          <i class="fas fa-users"></i> Groups Tracker
+      </button>
+  `);
+
+  button.on("click", () => {
+      game.weaveOfEchoes.groupsTracker.render(true);
+  });
+
+  html.find(".directory-header").append(button);
+});
+
+Hooks.on("updateActor", async (actor, changes, options, userId) => {
+  if (!game.weaveOfEchoes.groupsTracker) return;
+
+
+  // Recharger les données du tracker
+  game.weaveOfEchoes.groupsTracker.groups = game.weaveOfEchoes.groupsTracker.getValidGroups();
+  
+  // Rafraîchir l'affichage du tracker
+  game.weaveOfEchoes.groupsTracker.render(false); 
+});
+
+
+Hooks.on("updateToken", async (token, changes, options, userId) => {
+  if (!game.weaveOfEchoes.groupsTracker) return;
+
+  game.weaveOfEchoes.groupsTracker.groups = game.weaveOfEchoes.groupsTracker.getValidGroups();
+  game.weaveOfEchoes.groupsTracker.render(false);
 });
 
 
@@ -176,16 +225,6 @@ Hooks.on("deleteActor", async (actor, options, userId) => {
   }
 });
 
-// Hooks.on("updateActor", async (actor, changes, options, userId) => {
-//   console.log(`🔄 updateActor Hook triggered for: ${actor.name}`);
-
-//   if (actor instanceof WoeActor && actor.updateDiscordValues) {
-//       actor.updateDiscordValues();
-//   } else {
-//       console.error("🚨 ERREUR : updateDiscordValues n'est pas disponible pour", actor);
-//   }
-// });
-
 Hooks.on('getSceneControlButtons', (controls) => {
   if (game.user.isGM) {
     let tokenControls = controls.find(c => c.name === "token");
@@ -236,31 +275,6 @@ Hooks.on('getSceneControlButtons', (controls) => {
   }
 });
 
-// Hooks.on("updateActor", async (actor, changes, options, userId) => {
- 
-//   // Vérifier si c'est une mise à jour des relations, sinon on ignore
-//   if (!changes.system?.relationships) {
-//       return;
-//   }
-
-//   // Vérifier si l'update ne cause pas une boucle infinie
-//   if (options.fromUpdateDiscordValues) {
-//       console.log(`⏳ [DEBUG] Ignoré pour éviter la boucle infinie`);
-//       return;
-//   }
-
-//   // Mise à jour des valeurs de Discord
-//   await actor.updateDiscordValues();
-// });
-
-
-
-// Hooks.on('updateActor', (actor, changes, options, userId) => {
-//   if (changes.system?.relationships) {
-//     actor.checkAndPropagateGroupTies();
-//     actor.render(false); // Assurer que les modifications apparaissent
-//   }
-// });
 
 Hooks.on('updateInitiativeTracker', (tracker) => {
 
@@ -360,7 +374,19 @@ function rollItemMacro(itemUuid) {
   
 }
 
+Hooks.on("updateActor", async (actor, changes, options, userId) => {
+  if (!actor.system.relationships) return;
 
+  // Vérifier si les relations ou la composition du groupe ont changé
+  const hasGroupChanged = changes["system.relationships.characterGroup.members"];
+  const hasRelationshipsChanged = changes["system.relationships.connections"];
+
+  if (hasGroupChanged || hasRelationshipsChanged) {
+
+    await actor.updateBaseGroupSynergy();
+    actor.render(false); // Rafraîchit la fiche si elle est ouverte
+  }
+});
 
 
 // Ajout d'un bouton personnalisé dans la barre latérale de Foundry VTT pour ouvrir les trackers
@@ -427,9 +453,7 @@ Hooks.on('renderJournalDirectory', (app, html) => {
 });
 
 Handlebars.registerHelper('getActor', function(actorId) {
-  console.log("getActor helper called with id:", actorId);
   const actor = game.actors.get(actorId);
-  console.log("Found actor:", actor);
   return actor;
 });
 
@@ -467,4 +491,37 @@ Handlebars.registerHelper("subtract", function (a, b) {
 
 Handlebars.registerHelper('sum', function(a, b) {
   return (parseInt(a) || 0) + (parseInt(b) || 0);
+});
+
+Handlebars.registerHelper("getDieType", function(modifier) {
+  modifier = Number(modifier);
+  return (modifier === 0) ? "critical" :
+         (modifier === 1) ? "bonus" :
+         (modifier === 2) ? "neutral" :
+         (modifier === 3) ? "malus" :
+         "";
+});
+
+// Helper qui retourne le symbole du dé (par exemple la première lettre du type)
+Handlebars.registerHelper("getDieSymbol", function(modifier) {
+  modifier = Number(modifier); // Conversion en nombre
+
+  if (isNaN(modifier)) {
+    console.warn(`⚠️ getDieSymbol received NaN: ${modifier}`);
+    return "?";
+  }
+
+  switch (modifier) {
+    case 0:
+      return "C"; // Critical
+    case 1:
+      return "B"; // Bonus
+    case 2:
+      return "N"; // Neutral
+    case 3:
+      return "M"; // Malus
+    default:
+      console.warn(`⚠️ getDieSymbol received unexpected value: ${modifier}`);
+      return "?";
+  }
 });

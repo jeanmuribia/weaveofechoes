@@ -8,6 +8,17 @@ function toUpperCaseValue(value) {
   return value.charAt(0).toUpperCase() + value.slice(1);
 }
 
+Handlebars.registerHelper("getResultIcon", function(result) {
+  const icons = {
+      Gain: '<i class="fas fa-check-circle" style="color: #81c995;"></i>',
+      Stalemate: '<i class="fas fa-minus-circle" style="color: #fef49c;"></i>',
+      Setback: '<i class="fas fa-times-circle" style="color: #f28b82;"></i>'
+  };
+
+  return new Handlebars.SafeString(icons[result] || result); // Sécurise l'affichage HTML
+});
+
+
 // Register Handlebars helper for uppercase transformation
 Handlebars.registerHelper('toUpperCaseValue', function(value) {
   if (typeof value === "string") {
@@ -227,22 +238,35 @@ export class WoeActorSheet extends ActorSheet {
         actorData.system.relationships.connections = actorData.system.relationships.connections.map(conn => {
           const relatedActor = game.actors.get(conn.characterId) || null;
       
-          // Vérification des valeurs pour éviter NaN
           const affinityValue = conn.affinity?.value ?? 2;
-          const dynamicValue = conn.dynamic?.value ?? 0;  // 🚨 Vérifie si dynamic existe
+          const dynamicValue = conn.dynamic?.value ?? 0;
           const discordValue = (!isNaN(affinityValue) && !isNaN(dynamicValue)) ? (affinityValue + dynamicValue) : 0;
-          const discordModifier = (!isNaN(discordValue)) ? Math.ceil(discordValue / 2) : 0;
+          const discordModifier = (!isNaN(discordValue) && discordValue > 0) ? Math.round(discordValue / 2) : 0;
+
+
+          
+          let relatedModifier = 0;
+          if (relatedActor) {
+              const relatedConnection = relatedActor.system.relationships.connections.find(r => r.characterId === actorData._id);
+              if (relatedConnection) {
+                  relatedModifier = Math.ceil((relatedConnection.affinity.value + relatedConnection.dynamic.value) / 2);
+              }
+          }
+      
+          const connectionSynergyValue = Math.ceil((discordModifier + relatedModifier) / 2);
       
           return {
               ...conn,
               affinity: conn.affinity ?? { value: 2, label: "Acquaintance" },
-              dynamic: conn.dynamic ?? { value: 0, label: "Equal" },  // 🚨 Assure que dynamic ne soit pas undefined
+              dynamic: conn.dynamic ?? { value: 0, label: "Equal" },
               discordValue,
               discordModifier,
+              connectionSynergyValue,
               img: relatedActor?.img || "icons/svg/mystery-man.svg",
               playerName: relatedActor?.owner?.name || "Unknown"
           };
       });
+      
 
     // Ajout des valeurs statiques pour Handlebars
     context.AFFINITY_VALUES = {
@@ -258,6 +282,7 @@ export class WoeActorSheet extends ActorSheet {
         2: "Dependent",
         3: "Dominant"
     };
+
 
     // 🔥 Ajout des valeurs dans le contexte
     context.relationships = actorData.system.relationships.connections;
@@ -295,7 +320,8 @@ export class WoeActorSheet extends ActorSheet {
                 { type: 'value', current: this.actor.system.relationships.currentGroupSynergy || 0 }
             ) : 
             { type: 'none' },
-        base: this.actor.calculateBaseSynergy()
+        base: this.actor.calculateBaseSynergy(),
+        current: actorData.system.relationships.groupSynergy.current
     };
 
     // Biography
@@ -365,39 +391,6 @@ formatResult(result) {
     
 }
 
-
-
-getColorForValue(value) {
-  const colors = {
-      critical: "gold",
-      bonus: "green",
-      neutral: "blue",
-      malus: "red"
-  };
-  return colors[value] || "gray";
-}
-  
-
-_prepareFocusPointsData(context) {
-  // S'assurer que context.system existe
-  if (!context.system) {
-    context.system = {};
-  }
-
-  // S'assurer que focusPoints existe avec des valeurs par défaut
-  if (!context.system.focusPoints) {
-    context.system.focusPoints = {
-      base: 0,
-      current: 0,
-      isVisible: false
-    };
-  }
-
-  // Rendre les données disponibles dans le contexte
-  context.focusPoints = context.system.focusPoints;
-
-  return context;
-}
   // Activate Listeners for sheet interactions
   activateListeners(html) {
     super.activateListeners(html);
@@ -548,6 +541,40 @@ html.find('.dynamic-column input[type="radio"]:checked').each(function() {
   $(this).closest('label').addClass('checked dynamic-checked'); // Assurer la bonne couleur
 });
 
+
+
+html.on('click', '.support-die', async (event) => {
+
+
+  const targetId = event.currentTarget.dataset.target;
+  const dieType = event.currentTarget.getAttribute("data-type");
+
+  const targetActor = game.actors.get(targetId);
+  const targetName = targetActor ? targetActor.name : "Unknown Target";
+
+  if (!dieType) {
+    console.warn("DEBUG: Pas de dieType trouvé sur l'élément cliqué.");
+    return;
+  }
+
+  const rollResult = await rollDie(dieType);
+  const cleanResult = rollResult.replace(/<[^>]+>/g, "").trim().toLowerCase();
+  const formattedResult = this.getIconWithResult(cleanResult, dieType);
+  
+  const message = `
+  <div>
+    <strong>${this.actor.name}</strong> supports <strong>${targetName}</strong> :
+    ${formattedResult} 
+  </div>
+`;
+
+ChatMessage.create({
+  content: message, // Utilisation du message structuré
+  speaker: ChatMessage.getSpeaker()
+});
+});
+
+
     // Gérer la suppression d'une relation
     html.find('.delete-relationship').on('click', async (event) => {
       const card = event.currentTarget.closest('.relationship-card');
@@ -577,6 +604,61 @@ html.find('.dynamic-column input[type="radio"]:checked').each(function() {
       // Toggle la classe pour l'affichage visuel
       $(card).toggleClass('hidden-relationship');
     });
+
+     // Gestion du clic sur l'icône de modification dans chaque carte de relation
+  html.find('.connection-bio-edit-icon').on('click', (event) => {
+    const $container = $(event.currentTarget).closest('.connection-bio-container');
+    // Masquer l'affichage en lecture seule et afficher le textarea
+    $container.find('.connection-bio-display').addClass('hidden');
+    const $textarea = $container.find('.connection-bio-edit');
+    $textarea.removeClass('hidden').focus();
+  });
+  
+  // Lorsque le textarea perd le focus, enregistrer et repasser en mode affichage
+  html.find('.connection-bio-edit').on('blur', async (event) => {
+    const $textarea = $(event.currentTarget);
+    const newBio = $textarea.val();
+    const $container = $textarea.closest('.connection-bio-container');
+    const $display = $container.find('.connection-bio-display');
+    
+    // Récupérer l'ID de la connection ou son index dans la liste (ici, on suppose que le parent de la carte a data-relationship-id)
+    const $card = $(event.currentTarget).closest('.relationship-card');
+    const connectionId = $card.data('relationship-id');
+    
+    // Récupérer les connections actuelles depuis l'acteur
+    const connections = duplicate(this.actor.system.relationships.connections);
+    // Trouver la connection à modifier (par exemple, en se basant sur connectionId)
+    const connectionIndex = connections.findIndex(conn => conn.characterId === connectionId);
+    if (connectionIndex === -1) {
+      ui.notifications.error("Connection introuvable pour mise à jour de la bio");
+      return;
+    }
+    // Mettre à jour la propriété 'bio'
+    connections[connectionIndex].bio = newBio;
+    
+    // Sauvegarder la modification dans l'acteur
+    await this.actor.update({ "system.relationships.connections": connections });
+    
+    // Mettre à jour l'affichage
+    $display.html(newBio + '<i class="fas fa-pencil-alt connection-bio-edit-icon" title="Edit Bio"></i>');
+    $textarea.addClass('hidden');
+    $display.removeClass('hidden');
+    
+    // Réattacher le listener sur la nouvelle icône
+    $display.find('.connection-bio-edit-icon').on('click', (e) => {
+      const $cont = $(e.currentTarget).closest('.connection-bio-container');
+      $cont.find('.connection-bio-display').addClass('hidden');
+      $cont.find('.connection-bio-edit').removeClass('hidden').focus();
+    });
+  });
+  
+  // Optionnel : sauvegarder avec Ctrl+Enter dans le textarea
+  html.find('.connection-bio-edit').on('keydown', (event) => {
+    if (event.key === "Enter" && event.ctrlKey) {
+      event.preventDefault();
+      $(event.currentTarget).blur();
+    }
+  });
     
     html.find('.notes-edit').on('blur', (event) => {
       const textarea = $(event.currentTarget);
@@ -634,7 +716,6 @@ html.find('.dynamic-column input[type="radio"]:checked').each(function() {
       }
     });
     
-
     //Biography
     BiographySystem.setup(html, this.actor);
    
@@ -883,6 +964,7 @@ if (this.system.relationships.characterGroup.id) {
         }
       }
 
+      
       this.render(false);
   
     } catch (error) {
@@ -923,13 +1005,6 @@ if (this.system.relationships.characterGroup.id) {
     return missingConnections;
   }
 
-  async calculateGroupSynergy(actorId) {
-    // Placeholder : Les valeurs seront calculées plus tard
-    return {
-      baseGroupSynergy: Math.floor(Math.random() * 100), // Valeur aléatoire
-      currentGroupSynergy: Math.floor(Math.random() * 100), // Valeur aléatoire
-    };
-  }
 
 
   async updateAffinityValue(index, newValue) {
@@ -1240,13 +1315,7 @@ async handleReturnToMyGroup() {
     this.displayRollResultsInChat(capitalizedType, result);
   }
 
-  // Display the roll result in the chat
-  displayRollResultsInChat(capitalizedType, result) {
-    ChatMessage.create({
-      content: `${capitalizedType} rolled: ${result}`,
-      speaker: ChatMessage.getSpeaker(),
-    });
-  }
+
 
   // Function to set up attribute listeners for injuries
   async _setupAttributeListeners(html) {
@@ -1291,16 +1360,14 @@ async handleReturnToMyGroup() {
   updateDiscordValue(event) {
     const element = $(event.currentTarget).closest('.relationship-card');
 
-   
-
-    // ✅ Mettre à jour l'affichage des labels
+    // ✅ Mise à jour des labels d'affinité et de dynamique
     element.find('.affinity-column label').removeClass('checked');
     element.find('.affinity-column input[type="radio"]:checked').closest('label').addClass('checked');
 
     element.find('.dynamic-column label').removeClass('checked');
     element.find('.dynamic-column input[type="radio"]:checked').closest('label').addClass('checked');
 
-    // ✅ Récupère les valeurs sélectionnées
+    // ✅ Récupération des valeurs sélectionnées
     const affinity = parseInt(element.find('.affinity-column input[type="radio"]:checked').val()) || 0;
     const dynamic = parseInt(element.find('.dynamic-column input[type="radio"]:checked').val()) || 0;
     const discordValue = affinity + dynamic;
@@ -1310,25 +1377,29 @@ async handleReturnToMyGroup() {
     element.find('.discord-value p:first-child').text(discordValue);
     element.find('.discord-value .discord-modifier').text(`Modifier: ${discordModifier}`);
 
-
-
+    // ✅ Récupération de l'ID de la relation
     const relationshipId = element.data('relationship-id');
-const updatedConnections = JSON.parse(JSON.stringify(this.actor.system.relationships.connections));
-const relationshipIndex = updatedConnections.findIndex(c => c.characterId === relationshipId);
+   
 
-if (relationshipIndex !== -1) {
-    updatedConnections[relationshipIndex].affinity.value = affinity;
-    updatedConnections[relationshipIndex].dynamic.value = dynamic;
-    updatedConnections[relationshipIndex].discordValue = discordValue;
-}
+    const updatedConnections = JSON.parse(JSON.stringify(this.actor.system.relationships.connections));
+    const relationshipIndex = updatedConnections.findIndex(c => c.characterId === relationshipId);
 
-this.actor.update({ "system.relationships.connections": updatedConnections });
-    // 🔥 Ajout d'un `this.render()` pour forcer la mise à jour du DOM
+    if (relationshipIndex !== -1) {
+        updatedConnections[relationshipIndex].affinity.value = affinity;
+        updatedConnections[relationshipIndex].dynamic.value = dynamic;
+        updatedConnections[relationshipIndex].discordValue = discordValue;
+        updatedConnections[relationshipIndex].discordModifier = discordModifier; // ✅ Mise à jour du modifier
+    }
+
+    // ✅ Mise à jour des données de l'actor
+    this.actor.update({
+        "system.relationships.connections": updatedConnections,
+        "system.relationships.discordModifier": discordModifier // ✅ Sauvegarde correcte du modifier
+    });
+
+    this.updateSupportDiceWithModifier(relationshipId, discordModifier);
     this.render(false);
-
 }
-
-
 
   _setupWoundListeners(html) {
     ['1', '2', '3', 'knockedOut'].forEach(number => {
@@ -1339,6 +1410,8 @@ this.actor.update({ "system.relationships.connections": updatedConnections });
         woundBox.on('click', () => this._handleWoundClick(number));
       }
     });
+
+    
   }
   
   async _handleKnockedOut() {
@@ -1349,6 +1422,48 @@ this.actor.update({ "system.relationships.connections": updatedConnections });
     });
   }
   
+  updateSupportDiceWithModifier(targetId, modifier) {
+
+    // Ne pas relire depuis this.actor.system.relationships.connections
+    // Convertir si nécessaire
+    modifier = Number(modifier);
+    let activeType;
+    switch (modifier) {
+      case 0:
+        activeType = "critical";
+        break;
+      case 1:
+        activeType = "bonus";
+        break;
+      case 2:
+        activeType = "neutral";
+        break;
+      case 3:
+        activeType = "malus";
+        break;
+      default:
+        activeType = null;
+    }
+
+    if (!activeType) return;
+    
+    const $card = this.element.find(`.relationship-card[data-relationship-id="${targetId}"]`);
+    if (!$card.length) {
+      console.warn(`DEBUG: Carte non trouvée pour ${targetId}`);
+      return;
+    }
+    const $container = $card.find('.support-dice-container');
+    $container.empty();
+    
+    const $die = $(`<div class="support-die ${activeType}" data-target="${targetId}" data-type="${activeType}" style="cursor: pointer;">${activeType.charAt(0).toUpperCase()}</div>`);
+    $die.on("click", async () => {
+      const result = await rollDie(activeType);
+      this.displaySupportMessage(activeType, result, targetId);
+    });
+    $container.append($die);
+  }
+  
+
   _handleWoundClick(number) {
     const wounds = this.actor.system.wounds;
     const attributes = this.actor.system.attributes;
@@ -1510,6 +1625,110 @@ this.actor.update({ "system.relationships.connections": updatedConnections });
       [`system.attributes.${attribute}.tag${tagNumber}`]: newValue
     });
   }
+
+  updateSupportDice(targetId) {
+  
+    const $card = this.element.find(`.relationship-card[data-relationship-id="${targetId}"]`);
+    if (!$card.length) {
+      console.warn(`DEBUG: Carte de relation avec l'ID ${targetId} introuvable !`);
+      return;
+    }
+  
+    const $container = $card.find('.support-dice-container');
+    if (!$container.length) {
+      console.warn("DEBUG: Conteneur .support-dice-container introuvable dans cette carte !");
+      return;
+    }
+  
+    $container.empty();
+  
+    // Récupérer le modificateur depuis les données de l'acteur
+    let modifier = this.actor.system.relationships.connections.find(c => c.characterId === targetId)?.discordModifier;
+    modifier = Number(modifier);
+  
+    let activeType;
+    switch (modifier) {
+      case 0:
+        activeType = "critical";
+        break;
+      case 1:
+        activeType = "bonus";
+        break;
+      case 2:
+        activeType = "neutral";
+        break;
+      case 3:
+        activeType = "malus";
+        break;
+      default:
+        activeType = null;
+    }
+  
+    if (activeType) {
+      const $die = $(`<div class="support-die ${activeType}" data-target="${targetId}">${activeType.charAt(0).toUpperCase()}</div>`);
+      $die.css("cursor", "pointer");
+      $die.on("click", async () => {
+        const result = await rollDie(activeType);
+        this.displaySupportMessage(activeType, result, targetId);
+      });
+      $container.append($die);
+    } else {
+      console.log(`DEBUG: Aucun dé ajouté pour ${targetId} avec modifier: ${modifier}`);
+    }
+  }
+  
+  
+  /**
+   * Renvoie la couleur associée au type de dé.
+   * @param {string} dieType - Le type de dé ("malus", "neutral", "bonus", "critical").
+   * @returns {string} La couleur associée.
+   */
+  getDieColor(dieType) {
+    switch (dieType.toLowerCase()) {
+      case "malus":
+        return "#aecbfa"; // Exemple : rouge
+      case "neutral":
+        return "#fef49c"; // Exemple : jaune clair
+      case "bonus":
+        return "#81c995"; // Exemple : vert
+      case "critical":
+        return "#f28b82"; // Exemple : rose/rouge clair
+      default:
+        return "#000";    // Noir par défaut
+    }
+  }
+  
+  /**
+   * Renvoie le chemin de l'icône associé au résultat du dé.
+   * @param {string} result - Le résultat obtenu ("Gain", "Nothing", "Setback").
+   * @returns {string} Le chemin de l'icône.
+   */
+  getIconPathForResult(result) {
+    const iconMap = {
+      "Nothing": "systems/weave_of_echoes/assets/icons/nothingIcon.svg",
+      "Gain": "systems/weave_of_echoes/assets/icons/gainIcon.svg",
+      "Setback": "systems/weave_of_echoes/assets/icons/setbackIcon.svg"
+    };
+  
+    if (!iconMap[result]) {
+      console.error(`⚠️ Erreur: Aucun chemin d'icône défini pour "${result}"`);
+    }
+  
+    return iconMap[result] || "systems/weave_of_echoes/module/icons/defaultIcon.svg";
+  }
+  
+  /**
+   * Affiche dans le chat un message formaté indiquant que l'acteur soutient une cible.
+   * Le message sera du type :
+   *    ActorName supports TargetActorName : [Icon] Result
+   *
+   * @param {string} dieType - Le type de dé utilisé ("malus", "neutral", "bonus", "critical").
+   * @param {string} result - Le résultat obtenu ("Gain", "Nothing", "Setback").
+   * @param {string} targetId - L'id de l'acteur cible (récupéré depuis data-relationship-id).
+   */
+ 
+
+  
 
   openManeuverWindow() {
     this.maneuverSelections = {
@@ -2222,32 +2441,38 @@ async _onSubtractFocusPoints(event) {
   getIconWithResult(result, type) {
     let color = '';
     let iconPath = '';
-    switch (result.toLowerCase()) {
+
+    switch (result.toLowerCase()) { 
         case 'setback':
             color = '#e63946'; // Rouge pour setback
-            iconPath = 'systems/weave_of_echoes/module/icons/setbackIcon.svg';
+            iconPath = 'systems/weave_of_echoes/assets/icons/setbackIcon.svg';
             break;
         case 'gain':
-            color = '#2a9d8f'; // Vert pour gain
-            iconPath = 'systems/weave_of_echoes/module/icons/gainIcon.svg';
+            color = '#2a9d8f'; 
+            iconPath = 'systems/weave_of_echoes/assets/icons/gainIcon.svg';
             break;
         case 'nothing':
         case 'neutral':
-            color = '#8f8f8f'; // Gris pour nothing/neutral
-            iconPath = 'systems/weave_of_echoes/module/icons/nothingIcon.svg';
+            color = '#8f8f8f';
+            iconPath = 'systems/weave_of_echoes/assets/icons/nothingIcon.svg';
             break;
         default:
-            color = '#f4a261'; // Couleur par défaut (orange clair)
-            iconPath = 'systems/weave_of_echoes/module/icons/defaultIcon.svg'; // Par exemple, une icône générique
+            console.error(`Icône non trouvée pour '${result}', utilisation de l'icône par défaut`);
+            color = '#f4a261';
+            iconPath = 'systems/weave_of_echoes/assets/icons/defaultIcon.svg';
     }
 
+    // Retourne directement un élément HTML <img> plutôt que juste le chemin
     return `
-        <span style="color: ${color};">
-            <img src="${iconPath}" style="width: 24px; height: 24px; vertical-align: middle; border: none;" />
-            ${result.charAt(0).toUpperCase() + result.slice(1)} <!-- Affiche le texte du résultat -->
-        </span>
+      <img src="${iconPath}" 
+           alt="${result}" 
+           class="support-dice-icon"
+           style="width:24px;height:24px;vertical-align:middle;"/> 
+      <span class="result-${result}">${result.charAt(0).toUpperCase() + result.slice(1)}</span>
     `;
 }
+
+
   async syncFocusPointsWithRemaining(remainingFocus) {
  
     if (remainingFocus < 0) {
@@ -2300,17 +2525,6 @@ async _onSubtractFocusPoints(event) {
     const currentIndex = dieValues.indexOf(baseValue);
     return dieValues[Math.min(currentIndex + focusPoints, dieValues.length - 1)];
 }
-
-    getResultIcon(result) {
-      const icons = {
-        Gain: '<i class="fas fa-check-circle" style="color: #81c995;"></i>',
-        Stalemate: '<i class="fas fa-minus-circle" style="color: #fef49c;"></i>',
-        Setback: '<i class="fas fa-times-circle" style="color: #f28b82;"></i>'
-      };
-    
-      return icons[result] || result; // Retourne l'icône si elle existe, sinon le texte brut
-    }
-    
   
     closeManeuverModal() {
       const modalElement = document.querySelector('.maneuver-modal');
@@ -2861,6 +3075,10 @@ _recalculateMasteryPoints() {
     });
   }
 
+  getTargetName() {
+    return "Target Actor"; // À remplacer par la logique réelle pour récupérer le bon nom
+}
+
   updateSelectedDice(container, selectedDice) {
     container.empty(); // Vide tous les slots
     selectedDice.forEach((dieType, index) => {
@@ -2925,6 +3143,8 @@ async function rollDie(type) {
   return formatResult(result);
 }
 
+
+
 // Function to format Gain and Setback with distinct styles
 function formatResult(result) {
   switch (result) {
@@ -2938,6 +3158,15 @@ function formatResult(result) {
   }
 }
 
+function getDieTypeFromModifier(modifier) {
+  switch (modifier) {
+    case 0: return "critical";
+    case 1: return "bonus";
+    case 2: return "neutral";
+    case 3: return "malus";
+    default: return "";
+  }
+}
 
 Handlebars.registerHelper("getSetting", function (module, key) {
   return game.settings.get(module, key);

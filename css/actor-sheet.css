@@ -154,7 +154,6 @@
 
 
 .focus-toggle-container label {
-  font-size: 0.85em; /* Taille du texte */
   display: inline-flex;
   align-items: center;
   gap: 0.5em; /* Espace entre le texte "Show" et la case */
@@ -270,23 +269,36 @@
 
 .resource.synergy .resource-label {
   color: #2d572c; /* Couleur spécifique pour le label Synergy */
-  font-size: 1em;
-  margin-bottom: 8px;
 }
 
+.synergy-values {
+  display: flex;
+  flex-direction: column;
+}
 
-
-.resource-value.not-in-group {
+.center-value.not-in-group-text {
   font-style: italic;
-  font-size: 0.9em; /* Taille légèrement réduite */
-  color: #6c757d; /* Couleur grise subtile */
-  text-align: center; /* Centrer le texte */
-  word-wrap: break-word; /* Forcer le retour à la ligne */
-  max-width: 100%; /* Contraindre la largeur */
-  white-space: normal; /* Permettre les retours à la ligne */
+  font-size: 0.7em;
+  color: #6c757dba;
+  text-align: center;
+  word-wrap: break-word;
+  max-width: 100%;
+  white-space: normal;
+  margin-top: 50px;
 }
 
+.synergy-base-value{
+  color: #666;
+  text-align: center;
+}
+
+.resource-controls.synergy {
+  visibility: hidden;
+}
   
+.synergy-center-value {
+
+}
   /* Identity section */
   .identity-section {
     background: #f5f5dc;
@@ -909,6 +921,7 @@ label {
   opacity: 0.7;
   cursor: not-allowed;
   background: #d3d3d3;
+  pointer-events: none;
 }
 
 
@@ -923,6 +936,7 @@ label {
   background: #d3d3d3;
   cursor: not-allowed;
   opacity: 0.7;
+  pointer-events: none;
 }
 
 .wound-label {
@@ -1059,7 +1073,7 @@ label {
   display: flex;
   justify-content: flex-start;
   align-items: start;
-  gap: 50px;
+  gap: 20px;
   margin-bottom: 15px;
 }
 
