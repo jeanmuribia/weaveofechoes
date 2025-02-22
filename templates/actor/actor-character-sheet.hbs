@@ -9,7 +9,6 @@
       <a class="item" data-tab="profile">Profile</a>
       <a class="item" data-tab="relationships">Relationships</a>
       <a class="item" data-tab="biography">Biography</a>
-      <a class="item" data-tab="private-notes">Private Notes</a>
     </nav>
 
     <!-- Tab contents -->
@@ -79,33 +78,28 @@
   </div>
 </div>
 
-   <div class="resource synergy">
+   <div class="resource synergy" data-group-id="{{system.relationships.currentGroupLeader}}">
   <label class="resource-label">Synergy</label>
 
-   
-
-    {{#if (lt groupSize 2)}}
-      <div class="center-value not-in-group-text">Not in a group yet</div>
-    {{else if system.relationships.missingGroupTies.length}}
-      <div class="missing-ties">
-        <span class="warning">⚠️ Missing ties:</span>
-        <ul>
-          {{#each system.relationships.missingGroupTies}}
-            <li>{{this}}</li>
-          {{/each}}
-        </ul>
-      </div>
-    {{else}}
-     
-        <div class="resource-value">{{groupSynergy.current}}</div>
-          <div class="resource-controls synergy">
-    <button id="focus-minus" class="resource-btn">-</button>
-    <button id="focus-plus" class="resource-btn">+</button>
-  </div>
-        <div class="synergy-base-value">Base: {{groupSynergy.base}}</div>
-      
-    {{/if}}
-  
+  {{#if (lt groupSize 2)}}
+    <div class="center-value not-in-group-text">Not in a group yet</div>
+  {{else if system.relationships.missingGroupTies.length}}
+    <div class="missing-ties">
+      <span class="warning">⚠️ Missing ties:</span>
+      <ul>
+        {{#each system.relationships.missingGroupTies}}
+          <li>{{this}}</li>
+        {{/each}}
+      </ul>
+    </div>
+  {{else}}
+    <div class="resource-value synergy-value">{{system.relationships.groupSynergy.current}}</div>
+    <div class="resource-controls synergy">
+      <button class="synergy-btn" data-action="decrease">-</button>
+      <button class="synergy-btn" data-action="increase">+</button>
+    </div>
+    <div class="synergy-base-value">Base: <span>{{system.relationships.groupSynergy.base}}</span></div>
+  {{/if}}
 </div>
 
   </div>
@@ -312,30 +306,31 @@
   </div>
 
 <!-- Global Wounds Section -->
+<!-- Global Wounds Section pour la fiche de perso -->
 {{#if system.wounds}}
   <div class="wounds-section">
     <h3>Wounds</h3>
     <div class="wounds-row">
-  <div class="wound-box {{#if system.wounds.wound1}}ticked{{/if}} {{#if system.wounds.wound2}}locked{{/if}}" data-wound="1">
-    <span class="wound-label">Wound 1</span>
-    <div class="wound-mark"></div>
-  </div>
-  <div class="wound-box {{#if system.wounds.wound2}}ticked{{/if}} {{#unless system.wounds.wound1}}disabled{{/unless}} {{#if system.wounds.wound3}}locked{{/if}}" data-wound="2">
-    <span class="wound-label">Wound 2</span>
-    <div class="wound-mark"></div>
-  </div>
-  <div class="wound-box {{#if system.wounds.wound3}}ticked{{/if}} {{#unless system.wounds.wound2}}disabled{{/unless}}" data-wound="3">
-    <span class="wound-label">Wound 3</span>
-    <div class="wound-mark"></div>
-  </div>
-  <div class="wound-box knocked {{#if system.wounds.knockedOut}}ticked{{/if}}" data-wound="knockedOut">
-    <span class="wound-label">Knocked Out</span>
-    <div class="wound-mark"></div>
-  </div>
-</div>
-
+      <div class="wound-box {{#if system.wounds.wound1}}ticked{{/if}} {{#if system.wounds.wound2}}locked{{/if}}" data-wound="1">
+        <span class="wound-label">Wound 1</span>
+        <div class="wound-mark"></div>
+      </div>
+      <div class="wound-box {{#if system.wounds.wound2}}ticked{{/if}} {{#unless system.wounds.wound1}}disabled{{/unless}} {{#if system.wounds.wound3}}locked{{/if}}" data-wound="2">
+        <span class="wound-label">Wound 2</span>
+        <div class="wound-mark"></div>
+      </div>
+      <div class="wound-box {{#if system.wounds.wound3}}ticked{{/if}} {{#unless system.wounds.wound2}}disabled{{/unless}}" data-wound="3">
+        <span class="wound-label">Wound 3</span>
+        <div class="wound-mark"></div>
+      </div>
+      <div class="wound-box knocked {{#if system.wounds.knockedOut}}ticked{{/if}}" data-wound="knockedOut">
+        <span class="wound-label">Knocked Out</span>
+        <div class="wound-mark"></div>
+      </div>
+    </div>
   </div>
 {{/if}}
+
 
 
 </section>
@@ -372,8 +367,10 @@
         </ul>
       </div>
     {{else}}
-      <div class="center-value">{{groupSynergy.current}}</div>
-      <div class="base-value">Base: {{groupSynergy.base}}</div>
+      <div class="relationships-synergy-values">
+        <div class="current-value">Current: {{system.relationships.groupSynergy.current}}</div>
+        <div class="base-value">Base: {{system.relationships.groupSynergy.base}}</div>
+      </div>
     {{/if}}
   </div>
 </div>
@@ -524,7 +521,6 @@
 </div>
 
   </div>
-</div>
   
 
 
@@ -613,14 +609,6 @@
     </div>
   </div>
 </script>
-
-
-
-        <!-- Private Notes Tab -->
-      <div class="tab" data-tab="private-notes">
-        <h2>Private Notes</h2>
-        <textarea id="private-notes" name="private-notes">{{system.privateNotes}}</textarea>
-      </div>
 
     </div>
     

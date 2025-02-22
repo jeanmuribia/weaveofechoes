@@ -170,8 +170,6 @@ export class WoeActorSheet extends ActorSheet {
     // Initialisez les structures de données nécessaires
     const actorData = this.actor.toObject(false);
 
-
-
     if (!Array.isArray(actorData.system.relationships?.connections)) {
       console.warn("⚠️ [getData] - `connections` n'est pas un tableau, initialisation forcée.");
       actorData.system.relationships.connections = [];
@@ -287,8 +285,6 @@ export class WoeActorSheet extends ActorSheet {
     // 🔥 Ajout des valeurs dans le contexte
     context.relationships = actorData.system.relationships.connections;
 
-     const data = super.getData();
-
 
     // Group Info
     const groupLeaderId = this.actor.system.relationships.currentGroupLeader;
@@ -308,22 +304,31 @@ export class WoeActorSheet extends ActorSheet {
     // Récupérer les informations de groupe
     const groupInfo = await this.getGroupInfoFromCharacterId(this.actor.id);
 
-    // Group synergy logic
-    const groupSize = this.actor.getGroupSize();
-    const hasEnoughMembers = groupSize >= 3;
-    const missingTies = hasEnoughMembers ? await this.checkRelationshipsWithinGroup(this.actor.id) : [];
+   
+// Group synergy logic recalculé à la volée dans getData()
+const groupSize = this.actor.getGroupSize();
+const hasEnoughMembers = groupSize >= 3;
+const missingTies = hasEnoughMembers ? await this.checkRelationshipsWithinGroup(this.actor.id) : [];
 
-    context.groupSynergy = {
-        display: hasEnoughMembers ? 
-            (missingTies.length ? 
-                { type: 'missing', ties: missingTies } : 
-                { type: 'value', current: this.actor.system.relationships.currentGroupSynergy || 0 }
-            ) : 
-            { type: 'none' },
-        base: this.actor.calculateBaseSynergy(),
-        current: actorData.system.relationships.groupSynergy.current
-    };
+// Si l'acteur est le leader, utilisez son calcul ; sinon, récupérez le calcul du leader
+let recalculatedSynergy;
+if (this.actor.system.relationships.currentGroupLeader === this.actor.id) {
+  recalculatedSynergy = this.actor.calculateBaseSynergy();
+} else {
+  const leader = game.actors.get(this.actor.system.relationships.currentGroupLeader);
+  recalculatedSynergy = leader ? leader.calculateBaseSynergy() : 0;
+}
 
+context.groupSynergy = {
+  display: hasEnoughMembers ?
+             (missingTies.length ?
+               { type: 'missing', ties: missingTies } :
+               { type: 'value', current: recalculatedSynergy }
+             ) :
+             { type: 'none' },
+  base: recalculatedSynergy,
+  current: recalculatedSynergy
+};
     // Biography
     actorData.system.biography = actorData.system.biography || { entries: [] };
     actorData.system.biography.entries = Array.isArray(actorData.system.biography.entries)
@@ -348,7 +353,7 @@ export class WoeActorSheet extends ActorSheet {
         console.warn("⚠️ Impossible de récupérer l'actor pour getData()");
         context.groupSize = 0;  // 🔥 Empêche `undefined`
     }
-   
+    console.log("Biographie récupérée :", this.actor.system.biography);
     return context;
 }
 
@@ -1401,19 +1406,70 @@ async handleReturnToMyGroup() {
     this.render(false);
 }
 
-  _setupWoundListeners(html) {
-    ['1', '2', '3', 'knockedOut'].forEach(number => {
-      const woundBox = html.find(`.wound-box[data-wound="${number}"]`);
-      if (number === 'knockedOut') {
-        woundBox.on('click', () => this._handleKnockedOut());
-      } else {
-        woundBox.on('click', () => this._handleWoundClick(number));
-      }
-    });
 
-    
+updateSupportDiceWithModifier(targetId, modifier) {
+
+  // Ne pas relire depuis this.actor.system.relationships.connections
+  // Convertir si nécessaire
+  modifier = Number(modifier);
+  let activeType;
+  switch (modifier) {
+    case 0:
+      activeType = "critical";
+      break;
+    case 1:
+      activeType = "bonus";
+      break;
+    case 2:
+      activeType = "neutral";
+      break;
+    case 3:
+      activeType = "malus";
+      break;
+    default:
+      activeType = null;
   }
+
+  if (!activeType) return;
   
+  const $card = this.element.find(`.relationship-card[data-relationship-id="${targetId}"]`);
+  if (!$card.length) {
+    console.warn(`DEBUG: Carte non trouvée pour ${targetId}`);
+    return;
+  }
+  const $container = $card.find('.support-dice-container');
+  $container.empty();
+  
+  const $die = $(`<div class="support-die ${activeType}" data-target="${targetId}" data-type="${activeType}" style="cursor: pointer;">${activeType.charAt(0).toUpperCase()}</div>`);
+  $die.on("click", async () => {
+    const result = await rollDie(activeType);
+    this.displaySupportMessage(activeType, result, targetId);
+  });
+  $container.append($die);
+}
+
+
+_setupWoundListeners(html) {
+  ['1', '2', '3', 'knockedOut'].forEach(number => {
+    const woundBox = html.find(`.wound-box[data-wound="${number}"]`);
+    if (number === 'knockedOut') {
+      woundBox.on('click', () => this._handleKnockedOut());
+    } else {
+      woundBox.on('click', (event) => {
+        // Récupérer le numéro de wound cliqué (converti en entier)
+        const woundNumber = parseInt($(event.currentTarget).data("wound"), 10);
+
+        // Récupérer l'état actuel des wounds de l'acteur
+        const currentWounds = this.actor.system.wounds;
+        // Si la wound cliquée est déjà active, on considère que l'utilisateur souhaite la désactiver
+        const newCount = currentWounds[`wound${woundNumber}`] ? (woundNumber - 1) : woundNumber;
+        // Appelle la méthode qui met à jour les wounds de façon séquentielle
+        this._handleWoundClick(newCount);
+      });
+    }
+  });
+}
+
   async _handleKnockedOut() {
     // Toggle le knockedOut
     const isKnockedOut = this.actor.system.wounds.knockedOut;
@@ -1422,95 +1478,53 @@ async handleReturnToMyGroup() {
     });
   }
   
-  updateSupportDiceWithModifier(targetId, modifier) {
-
-    // Ne pas relire depuis this.actor.system.relationships.connections
-    // Convertir si nécessaire
-    modifier = Number(modifier);
-    let activeType;
-    switch (modifier) {
-      case 0:
-        activeType = "critical";
-        break;
-      case 1:
-        activeType = "bonus";
-        break;
-      case 2:
-        activeType = "neutral";
-        break;
-      case 3:
-        activeType = "malus";
-        break;
-      default:
-        activeType = null;
-    }
-
-    if (!activeType) return;
-    
-    const $card = this.element.find(`.relationship-card[data-relationship-id="${targetId}"]`);
-    if (!$card.length) {
-      console.warn(`DEBUG: Carte non trouvée pour ${targetId}`);
-      return;
-    }
-    const $container = $card.find('.support-dice-container');
-    $container.empty();
-    
-    const $die = $(`<div class="support-die ${activeType}" data-target="${targetId}" data-type="${activeType}" style="cursor: pointer;">${activeType.charAt(0).toUpperCase()}</div>`);
-    $die.on("click", async () => {
-      const result = await rollDie(activeType);
-      this.displaySupportMessage(activeType, result, targetId);
-    });
-    $container.append($die);
-  }
+ 
   
 
-  _handleWoundClick(number) {
-    const wounds = this.actor.system.wounds;
-    const attributes = this.actor.system.attributes;
-    const isActivating = !wounds[`wound${number}`]; // true si on active la wound
+  _handleWoundClick(newCount) {
+    newCount = Math.max(0, Math.min(3, newCount));
     
-    const updates = {
-      [`system.wounds.wound${number}`]: isActivating
+    // Calculer l'état attendu
+    const expectedWounds = {
+      "wound1": newCount >= 1,
+      "wound2": newCount >= 2,
+      "wound3": newCount >= 3
     };
   
-    // Pour chaque attribut, mettre à jour la current value SI PAS INJURED
-    Object.entries(attributes).forEach(([key, attr]) => {
-      if (!attr.injury) {  
-        let newValue = attr.baseValue;
-        let activeWounds = 0;
-        
-        // Compter les wounds actives en incluant celle qu'on est en train de modifier
-        Object.entries(wounds).forEach(([woundKey, isActive]) => {
-          if (woundKey.startsWith('wound') && (woundKey === `wound${number}` ? isActivating : isActive)) {
-            activeWounds++;
-          }
-        });
+    // Vérifier si l'état actuel est déjà conforme
+    const currentWounds = this.actor.system.wounds;
+    let isDifferent = false;
+    for (let i = 1; i <= 3; i++) {
+      if (currentWounds[`wound${i}`] !== expectedWounds[`wound${i}`]) {
+        isDifferent = true;
+        break;
+      }
+    }
+    if (!isDifferent) return Promise.resolve();
   
-        // Dégrader la valeur en fonction du nombre de wounds actives
-        for(let i = 0; i < activeWounds; i++) {
+    // Préparer les updates pour les wounds
+    const updates = {
+      "system.wounds.wound1": expectedWounds.wound1,
+      "system.wounds.wound2": expectedWounds.wound2,
+      "system.wounds.wound3": expectedWounds.wound3
+    };
+  
+    // Mise à jour des attributs
+    const attributes = this.actor.system.attributes;
+    Object.entries(attributes).forEach(([key, attr]) => {
+      if (!attr.injury) {
+        let newValue = attr.baseValue;
+        for (let i = 0; i < newCount; i++) {
           newValue = this._degradeValue(newValue);
         }
-        
         updates[`system.attributes.${key}.currentValue`] = newValue;
       }
     });
-  
-    this.actor.update(updates);
-  }
-  _canInteractWithWound(number, wounds) {
-    if (wounds[`wound${number}`]) {
-      // Pour untick
-      return (number === '3' || 
-             (number === '2' && !wounds.wound3) || 
-             (number === '1' && !wounds.wound2));
-    } else {
-      // Pour tick
-      return (number === '1' || 
-             (number === '2' && wounds.wound1) || 
-             (number === '3' && wounds.wound2));
-    }
+    
+    return this.actor.update(updates);
   }
   
+
 
   
   _degradeValue(value) {
@@ -1528,72 +1542,8 @@ async handleReturnToMyGroup() {
     const targetIndex = Math.max(currentIndex - 1, 0);
     return values[Math.min(targetIndex, baseIndex)];
   }
+
   
-  _canToggleWound(number) {
-    const wounds = this.actor.system.wounds;
-    const attributes = this.actor.system.attributes;
-    
-    // Pour tick
-    if (!wounds[`wound${number}`]) {
-      if (number === '1') return true;
-      if (number === '2') return wounds.wound1;
-      if (number === '3') return wounds.wound2;
-      return false;
-    }
-    
-    // Pour untick (ordre inverse obligatoire)
-    if (number === '3') return true;
-    if (number === '2') return !wounds.wound3;
-    if (number === '1') return !wounds.wound2;
-    return false;
-  }
-  
-  async _tickWound(number) {
-    // D'abord, on tick la wound
-    await this.actor.update({[`system.wounds.wound${number}`]: true});
-    
-    // Ensuite, on dégrade tous les attributs non-malus d'un niveau
-    const updates = {};
-    Object.entries(this.actor.system.attributes).forEach(([key, attr]) => {
-      if (attr.currentValue !== 'malus') {
-        updates[`system.attributes.${key}.currentValue`] = this._degradeValue(attr.currentValue);
-      }
-    });
-    
-    if (Object.keys(updates).length > 0) {
-      await this.actor.update(updates);
-    }
-  }
-  
-  async _untickWound(number) {
-    // D'abord, on untick la wound
-    await this.actor.update({[`system.wounds.wound${number}`]: false});
-    
-    // Ensuite, on améliore tous les attributs dont la baseValue n'est pas malus
-    const updates = {};
-    Object.entries(this.actor.system.attributes).forEach(([key, attr]) => {
-      if (attr.baseValue !== 'malus') {
-        updates[`system.attributes.${key}.currentValue`] = this._improveValue(attr.currentValue, attr.baseValue);
-      }
-    });
-    
-    if (Object.keys(updates).length > 0) {
-      await this.actor.update(updates);
-    }
-  }
-  
-  _degradeValue(value) {
-    const values = ['critical', 'bonus', 'neutral', 'malus'];
-    const currentIndex = values.indexOf(value);
-    return values[Math.min(currentIndex + 1, values.length - 1)];
-  }
-  
-  _improveValue(currentValue, baseValue) {
-    const values = ['critical', 'bonus', 'neutral', 'malus'];
-    const targetIndex = values.indexOf(baseValue);
-    const currentIndex = values.indexOf(currentValue);
-    return values[Math.max(currentIndex - 1, targetIndex)];
-  }
 
   manageTemperTrauma(html) {
     ['passion', 'empathy', 'rigor', 'independence'].forEach(temper => {
@@ -1798,12 +1748,15 @@ async handleReturnToMyGroup() {
         title: "Maneuver",
         content: content,
         buttons: {},
-        render: (html) => this.attachManeuverListeners(html)
+        render: (html) => { this.attachManeuverListeners(html);
+        this.initializeFocusCheckboxes(html);
+        }
     },{
       width: 800,  // Ajuster cette valeur selon vos besoins
       height: 975  // Ajuster cette valeur selon vos besoins
   }).render(true);
 }
+
 
 attachManeuverListeners(html) {
   // Désactiver les tempers traumatisés
@@ -1897,22 +1850,22 @@ updateFocusRow(html, type, selectedItem) {
   const previousFocusPoints = this.focusPointsByRow[type];
 
   // Rétablir les points focus précédents au compteur remaining
-  const remainingFocus = parseInt(html.find('#maneuver-focus-number').text());
-  const newRemaining = remainingFocus + previousFocusPoints;
+  let remainingFocus = parseInt(html.find('#maneuver-focus-number').text());
+  let newRemaining = remainingFocus + previousFocusPoints;
   html.find('#maneuver-focus-number').text(newRemaining);
-  
+
   // Réinitialiser les points de focus pour cette ligne
   this.focusPointsByRow[type] = 0;
-  
+
   // Vider le conteneur existant
   focusContainer.empty();
-  
+
   if (type === 'context') return;
-  
+
   const baseValue = type === 'attributes' 
       ? this.actor.system.attributes[selectedItem]?.currentValue
       : this.actor.system.tempers[selectedItem]?.currentValue;
-  
+
   let numCheckboxes = 0;
   switch(baseValue) {
       case 'malus': numCheckboxes = 3; break;
@@ -1920,59 +1873,85 @@ updateFocusRow(html, type, selectedItem) {
       case 'bonus': numCheckboxes = 1; break;
       case 'critical': numCheckboxes = 0; break;
   }
-  
+
   for (let i = 0; i < numCheckboxes; i++) {
       const checkbox = $(`<input type="checkbox" class="focus-checkbox" data-type="${type}" />`);
       focusContainer.append(checkbox);
-      
+
+      // Restaurer les valeurs précédemment cochées si elles existent
+      if (i < previousFocusPoints) {
+          checkbox.prop('checked', true);
+      }
+
       checkbox.on('change', (event) => {
-          const currentRemaining = parseInt(html.find('#maneuver-focus-number').text());
-          
+          let currentRemaining = parseInt(html.find('#maneuver-focus-number').text());
+
           if (event.target.checked) {
+              // Vérifier qu'on a du focus dispo
               if (currentRemaining > 0) {
                   this.focusPointsByRow[type]++;
-                  // Mettre à jour l'affichage des points restants
                   html.find('#maneuver-focus-number').text(currentRemaining - 1);
               } else {
-                  event.preventDefault();
+                  event.preventDefault(); // Empêcher de cocher si plus de focus dispo
                   return;
               }
           } else {
+              // 🔥 Permettre la désélection même après un changement de row
               this.focusPointsByRow[type]--;
-              // Rendre le point au compteur remaining
               html.find('#maneuver-focus-number').text(currentRemaining + 1);
           }
-          
+
+          // Mettre à jour le type de dé en fonction du nombre de focus cochés
           const newDieType = this.calculateDieTypeWithFocus(baseValue, this.focusPointsByRow[type]);
           this.updateDieDisplay(html, type, selectedItem, newDieType);
+
+          // 🔥 Réactiver les cases décochables et désactiver les autres si focus = 0
+          this.updateFocusPointsDisplay(html, parseInt(html.find('#maneuver-focus-number').text()));
       });
   }
-  
+
   this.updateDieDisplay(html, type, selectedItem, baseValue);
+
+  // 🔥 Réactiver les checkboxes décochables après un changement de row
+  this.reactivatePreviousRowCheckboxes(html);
 }
+
 updateFocusPointsDisplay(html, remainingFocus) {
   const focusDisplay = html.find('#maneuver-focus-number');
   focusDisplay.text(remainingFocus);
 
-  // Si le focus restant est 0, désactivez les checkbox
+  const focusCheckboxes = html.find('.focus-checkbox');
+
+  focusCheckboxes.each(function() {
+      if (!$(this).prop('checked')) {
+          // 🔥 Désactiver seulement les cases NON cochées si focus = 0
+          $(this).prop('disabled', remainingFocus <= 0);
+      }
+  });
+}
+
+reactivatePreviousRowCheckboxes(html) {
+  const focusCheckboxes = html.find('.focus-checkbox');
+
+  focusCheckboxes.each(function() {
+      if (!$(this).prop('checked')) {
+          $(this).prop('disabled', false);
+      }
+  });
+}
+
+
+initializeFocusCheckboxes(html) {
+  const remainingFocus = parseInt(html.find('#maneuver-focus-number').text().trim(), 10) || 0;
+  const focusCheckboxes = html.find('.focus-checkbox');
+
   if (remainingFocus <= 0) {
-      html.find('.focus-checkbox:not(:checked)').prop('disabled', true);
+      focusCheckboxes.prop('disabled', true);
   } else {
-      html.find('.focus-checkbox').prop('disabled', false);
+      focusCheckboxes.prop('disabled', false);
   }
 }
 
-updateFocusPointsDisplay(html, remainingFocus) {
-    const focusDisplay = html.find('#maneuver-focus-number');
-    focusDisplay.text(remainingFocus);
-
-    // Si le focus restant est 0, désactivez les checkbox
-    if (remainingFocus <= 0) {
-        html.find('.focus-checkbox:not(:checked)').prop('disabled', true);
-    } else {
-        html.find('.focus-checkbox').prop('disabled', false);
-    }
-}
 
 disableFocusCheckboxes(html) {
   html.find('.focus-checkbox').prop('disabled', true);
@@ -1980,11 +1959,8 @@ disableFocusCheckboxes(html) {
 
 initializeFocusState(html) {
   const currentFocus = this.actor.system.focusPoints.current;
-  if (currentFocus <= 0) {
-      this.disableFocusCheckboxes(html);
-  }
+  this.updateFocusPointsDisplay(html, currentFocus);  // On force la mise à jour immédiate
 }
-
 
 handleProfileImageEditing(html) {
   html.find('.profile-image').on('click', async () => {

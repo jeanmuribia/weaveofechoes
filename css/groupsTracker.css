@@ -2,7 +2,6 @@
 
 .groups-tracker {
   font-family: 'Quicksand', sans-serif;
-  background: #f4f4f4;
   padding: 8px;
   border-radius: 8px;
   max-height: 100%;
@@ -74,7 +73,7 @@
   color: #2c3e50;
 }
 
-.synergy-value {
+.tracker-synergy-value {
   font-size: 1.2em;
   font-weight: bold;
   color: #2c3e50;
@@ -164,6 +163,7 @@
   border-radius: 50%;
   margin-bottom: 0px;
   margin-top: 5px;
+  cursor: pointer;
 }
 
 .member-info {
@@ -188,7 +188,7 @@
   padding: 6px;
   border-radius: 10px;
   text-align: center;
-  width: 75px;
+  width: 80px;
   height: 100px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   margin: 2px;
@@ -207,10 +207,15 @@
   color: #2e7d32;
 }
 
+/* 🏥 Style pour la carte des wounds */
 .stat-card.wounds {
-  background: #f6e3e3;
-  border: 2px solid #a35b5b;
-  color: #c62828;
+  background: #fbe9e7;
+  border: 2px solid #d84315;
+  color: #bf360c;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 6px;
 }
 
 .stat-title {
@@ -254,4 +259,76 @@
 .stat-button:active {
  background: none;
  box-shadow: none
+}
+
+/* 🩸 Alignement horizontal des wounds */
+.wounds-tracker {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+  margin-top: 0;
+}
+
+/* 🔴 Style des cercles de wounds */
+.group-tracker-wound-box {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background-color: #ddd;
+  border: 1px solid #aaa;
+  transition: background-color 0.2s ease, opacity 0.2s ease;
+  cursor: pointer;
+}
+
+.group-tracker-wound-box:hover {
+  background-color: #ccc;
+}
+
+/* ✅ Wounds cochées */
+.group-tracker-wound-box.ticked {
+  background-color: #d84315;
+  border-color: #b71c1c;
+}
+
+/* 🎛️ Alignement des boutons Wound & Heal */
+.wound-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 0;
+  margin-top: 0;
+  position: relative;
+  top: 10px;
+}
+
+/* 🎯 Style des boutons Wound & Heal */
+.tracker-wound-btn {
+  background: transparent;
+  border: 2px solid #b71c1c;
+  color: #b71c1c;
+  padding: 0px 2px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 0.75em;
+  font-weight: bold;
+  transition: background 0.2s, color 0.2s;
+  margin: 1px;
+}
+
+.stat-title.wounds {
+  position: relative;
+  bottom: 5px;
+}
+
+/* 🎨 Hover des boutons */
+.tracker-wound-btn:hover {
+  background: #d84315;
+  color: white;
+}
+
+/* 🔽 Version plus petite des boutons */
+.tracker-wound-btn.small-btn {
+  padding: 2px 6px;
+  font-size: 0.7em;
+  border-width: 1.5px;
 }

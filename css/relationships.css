@@ -75,15 +75,33 @@ padding: 0px;
     font-size: 1.2em;
     font-weight: 600;
     color: #4a2810;
-    margin-bottom: 15px;
-  }
+    margin-bottom: 21px;
+}
   
-  .synergy-card .resource-value {
+  .synergy-card  .resource-value {
     font-size: 1.3em;
     font-style: italic;
     color: #666;
+    display: flex;
+    flex-direction: column;
   }
 
+  .synergy-card .resource-value .center-value {
+    font-size: 2em;
+    font-style: normal;
+}
+  .synergy-card .resource-value .base-value{
+    font-size: 1em;
+  }
+
+  .relationships-synergy-values {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    margin-top: 33px;
+    gap: 15px;
+}
 
   .relationships-grid {
     display: grid;

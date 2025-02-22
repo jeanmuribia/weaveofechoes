@@ -3,122 +3,95 @@ export class WoeActor extends Actor {
   prepareData() {
     super.prepareData();
     const systemData = this.system || {};
+// ✅ Vérifier que `relationships` existe
+systemData.relationships ??= {
+  connections: [],
+  currentGroupLeader: "",
+  characterGroup: {
+      name: "",
+      members: [],
+      isInHisOwnGroup: true
+  }
+};
 
-
-
-    // ✅ Vérifier que `connections` est bien un tableau
-if (!Array.isArray(systemData.relationships?.connections)) {
+// ✅ Vérifier que `connections` est bien un tableau
+if (!Array.isArray(systemData.relationships.connections)) {
   console.warn("⚠️ [prepareData] - `connections` n'est pas un tableau, initialisation forcée.");
   systemData.relationships.connections = [];
 }
 
+
+
+
+    // ✅ Initialisation des attributs
     const attributes = ["body", "martial", "soul", "elementary", "mind", "rhetoric"];
     systemData.attributes ??= {};
     attributes.forEach((attr, index) => {
-      systemData.attributes[attr] ??= {};
-      systemData.attributes[attr].baseValue ??= "neutral";
-      systemData.attributes[attr].currentValue ??= systemData.attributes[attr].baseValue;
-      systemData.attributes[attr].injury ??= false;
-      systemData.attributes[attr].order = index + 1;
+        systemData.attributes[attr] ??= {};
+        systemData.attributes[attr].baseValue ??= "neutral";
+        systemData.attributes[attr].currentValue ??= systemData.attributes[attr].baseValue;
+        systemData.attributes[attr].injury ??= false;
+        systemData.attributes[attr].order = index + 1;
     });
 
+    // ✅ Initialisation des `tempers`
     const tempers = ["passion", "empathy", "rigor", "independence"];
     systemData.tempers ??= {};
     tempers.forEach(temper => {
-      systemData.tempers[temper] ??= {};
-      systemData.tempers[temper].baseValue ??= "neutral";
-      systemData.tempers[temper].currentValue ??= systemData.tempers[temper].baseValue;
-      systemData.tempers[temper].injury ??= false;
+        systemData.tempers[temper] ??= {};
+        systemData.tempers[temper].baseValue ??= "neutral";
+        systemData.tempers[temper].currentValue ??= systemData.tempers[temper].baseValue;
+        systemData.tempers[temper].injury ??= false;
     });
 
+    // ✅ Initialisation des blessures
     systemData.wounds ??= { wound1: false, wound2: false, wound3: false, knockedOut: false };
+
+    // ✅ Initialisation des points de maîtrise
     systemData.masteryLevel ??= 0;
     systemData.masteryPoints ??= 0;
 
-    systemData.relationships ??= {
-      connections: [],
-      currentGroupLeader: "",
-      characterGroup: {
-        name: "",
-        members: [],
-        isInHisOwnGroup: true
-      }
-    };
-
-
+    // ✅ Vérification et correction des `connections`
     for (let connection of systemData.relationships.connections) {
-       
         connection.affinity ??= { value: 2, label: "Acquaintance" };
         connection.dynamic ??= { value: 0, label: "Equal" };
         connection.discordValue = connection.affinity.value + connection.dynamic.value;
-
+        connection.bio ??= "";
     }
 
-    systemData.relationships.connections = systemData.relationships.connections.map(connection => {
-      connection.bio ??= "";
-      return connection;
-    });
-
-
-this.update({
-    "system.relationships.connections": systemData.relationships.connections
-});
-
-    if (!systemData.relationships.currentGroupLeader) {
-      systemData.relationships.currentGroupLeader = this.id;
-      systemData.relationships.characterGroup.name = `${this.name}'s Group`;
-      systemData.relationships.characterGroup.members = [this.id, "ghost_member"];
-      systemData.relationships.characterGroup.isInHisOwnGroup = true;
-    }
-
-    if (!systemData.relationships.characterGroup.members.includes("ghost_member")) {
-      systemData.relationships.characterGroup.members.push("ghost_member");
-    }
-
+    // 🔄 Suppression des connexions sans `characterId`
     systemData.relationships.connections = systemData.relationships.connections.filter(conn => conn.characterId);
 
-    this.update({
-      "system.relationships.characterGroup": systemData.relationships.characterGroup,
-      "system.relationships.currentGroupLeader": systemData.relationships.currentGroupLeader
-    });
+    // ✅ Initialisation du `currentGroupLeader`
+    if (!systemData.relationships.currentGroupLeader) {
+        systemData.relationships.currentGroupLeader = this.id;
+        systemData.relationships.characterGroup.name = `${this.name}'s Group`;
+        systemData.relationships.characterGroup.members = [this.id, "ghost_member"];
+        systemData.relationships.characterGroup.isInHisOwnGroup = true;
+    }
 
-    this.updateBaseGroupSynergy();
-    this.synchronizeBaseGroupSynergy();
+    // ✅ Ajout du `ghost_member` si absent
+    if (!systemData.relationships.characterGroup.members.includes("ghost_member")) {
+        systemData.relationships.characterGroup.members.push("ghost_member");
+    }
 
-    this.getGroupSize();
+    // 🔄 Mise à jour des points de Focus
+    let baseFocus = 0;
+    for (const relation of systemData.relationships.connections || []) {
+        const modifier = Math.ceil(relation.discordValue / 2);
+        if (modifier === 3) {
+            baseFocus += 2;
+        } else if (modifier === 2) {
+            baseFocus += 1;
+        }
+    }
+    systemData.focusPoints.base = baseFocus;
 
-
-    systemData.relationships.connections = systemData.relationships.connections.map(connection => {
-      connection.affinity ??= { value: 2, label: "Acquaintance" };
-      connection.dynamic ??= { value: 0, label: "Equal" };
-      connection.discordValue = connection.affinity.value + connection.dynamic.value;
-      connection.discordModifier = Math.ceil(connection.discordValue / 2); // 🔥 Nouveau calcul ici
-  
-      return connection;
-    
-  });
- 
-   // 2️⃣ Calcul des Focus Points en fonction des relations
-   let baseFocus = 0;
-
-   for (const relation of systemData.relationships.connections || []) {
-       if (relation.discordModifier === 3) {
-           baseFocus += 2;  // +2 points pour une relation avec un modificateur de 3
-       } else if (relation.discordModifier === 2) {
-           baseFocus += 1;  // +1 point pour une relation avec un modificateur de 1
-       }
-   }
-
-   systemData.focusPoints.base = baseFocus;
-
-    // Initialiser currentSynergy à 0 si elle n'existe pas encore
+    // 🔄 Initialiser `currentSynergy` si inexistant
     if (systemData.relationships.groupSynergy.current === undefined) {
-      systemData.relationships.groupSynergy.current = 0;
-      console.log(`🔄 Initialisation de currentSynergy à 0 pour ${this.name}`);
-  }
-
-
-  }
+        systemData.relationships.groupSynergy.current = 0;
+    }
+}
 
   getGroupLeader() {
     if (!this.system.relationships.currentGroupLeader) {
@@ -209,15 +182,12 @@ this.render(false);  // Assure-toi que la fiche est bien mise à jour
   
 calculateBaseSynergy() {
   const groupSize = this.getGroupSize();
-
   if (groupSize < 2) return 0;
 
   let baseSynergy = 4 + (groupSize * 2);
-
-
   const currentLeader = game.actors.get(this.system.relationships.currentGroupLeader);
   if (!currentLeader) {
-      console.error(`⛔ Erreur : Impossible de récupérer le leader pour calculer la synergie.`);
+      console.error(`⛔ Leader introuvable pour ${this.name}`);
       return 0;
   }
 
@@ -225,43 +195,29 @@ calculateBaseSynergy() {
   let countedPairs = new Set();
 
   for (const memberId of groupMembers) {
-    if (memberId === "ghost_member") continue;
+      if (memberId === "ghost_member") continue;
+      const member = game.actors.get(memberId);
+      if (!member) continue;
 
-    const member = game.actors.get(memberId);
-    if (!member) continue;
-
-    for (const connection of member.system.relationships.connections) {
-      const otherId = connection.characterId;
-      if (!groupMembers.includes(otherId) || countedPairs.has(`${otherId}-${memberId}`)) continue;
-      countedPairs.add(`${memberId}-${otherId}`);
-
-      // 🔍 Récupérer le `discordModifier` de l’acteur vers la cible
-      const actorDiscordModifier = Math.ceil((connection.affinity.value + connection.dynamic.value) / 2);
-
-      // 🔍 Trouver la connexion dans l’autre sens (cible -> acteur)
-      const otherMember = game.actors.get(otherId);
-      if (!otherMember) continue;
-
-      const reverseConnection = otherMember.system.relationships.connections.find(conn => conn.characterId === memberId);
-      const targetDiscordModifier = reverseConnection
-        ? Math.ceil((reverseConnection.affinity.value + reverseConnection.dynamic.value) / 2)
-        : actorDiscordModifier; // Si pas de relation inverse, on garde la valeur actuelle
-
-      // 🔥 Calculer la moyenne arrondie au supérieur
-      const synergyValue = Math.ceil((actorDiscordModifier + targetDiscordModifier) / 2);
-  
-
-      // 🔄 Appliquer la valeur dans le calcul
-      switch (synergyValue) {
-        case 0: baseSynergy += 2; break;
-        case 1: baseSynergy += 1; break;
-        case 2: baseSynergy -= 1; break;
-        case 3: baseSynergy -= 2; break;
+      for (const connection of member.system.relationships.connections) {
+          const otherId = connection.characterId;
+          if (!groupMembers.includes(otherId) || countedPairs.has(`${otherId}-${memberId}`)) continue;
+          countedPairs.add(`${memberId}-${otherId}`);
+          const actorDiscordModifier = Math.ceil((connection.affinity.value + connection.dynamic.value) / 2);
+          const otherMember = game.actors.get(otherId);
+          const reverseConnection = otherMember?.system.relationships.connections.find(conn => conn.characterId === memberId);
+          const targetDiscordModifier = reverseConnection
+              ? Math.ceil((reverseConnection.affinity.value + reverseConnection.dynamic.value) / 2)
+              : actorDiscordModifier;
+          const synergyValue = Math.ceil((actorDiscordModifier + targetDiscordModifier) / 2);
+          switch (synergyValue) {
+              case 0: baseSynergy += 2; break;
+              case 1: baseSynergy += 1; break;
+              case 2: baseSynergy -= 1; break;
+              case 3: baseSynergy -= 2; break;
+          }
       }
-    }
   }
-
-
   return baseSynergy;
 }
 
@@ -306,6 +262,57 @@ calculateBaseSynergy() {
       }
     }
   }
+  async recalcAndPropagateGroupSynergy() {
+    // 1. Calculer la nouvelle valeur de base
+    const newBase = this.calculateBaseSynergy();
+    
+    // 2. Récupérer la valeur actuelle déjà stockée (si elle existe)
+    const existingGroupSynergy = this.system.relationships.groupSynergy || {};
+    const currentValue = (typeof existingGroupSynergy.current !== "undefined")
+      ? existingGroupSynergy.current
+      : newBase; // si aucun current n'existe, on le définit comme newBase
+  
+    // 3. Préparer l'objet à mettre à jour en ne modifiant que la base
+    const newGroupSynergy = {
+      base: newBase,
+      current: currentValue
+    };
+  
+    // 4. Mettre à jour l'acteur courant
+    await this.update({ "system.relationships.groupSynergy": newGroupSynergy });
+  
+    // 5. Propager uniquement la base aux membres du groupe (si tu souhaites les synchroniser)
+    const currentLeaderId = this.system.relationships.currentGroupLeader;
+    const groupLeader = game.actors.get(currentLeaderId);
+    if (groupLeader) {
+      const members = groupLeader.system.relationships.characterGroup.members.filter(
+        id => id !== "ghost_member"
+      );
+      for (const memberId of members) {
+        const member = game.actors.get(memberId);
+        if (member) {
+          // Ici, tu peux choisir de ne mettre à jour que la partie "base" chez les membres,
+          // ou alors de ne rien changer si tu souhaites que chacun garde sa propre valeur "current"
+          await member.update({
+            "system.relationships.groupSynergy.base": newBase
+          });
+          // Rerender si nécessaire
+          if (member.sheet) {
+            member.sheet.render(false);
+          }
+        }
+      }
+    }
+  
+    // 6. Rerender la fiche actuelle et le tracker de groupe, le cas échéant
+    if (this.sheet) {
+      this.sheet.render(false);
+    }
+    if (game.weaveOfEchoes.groupsTracker) {
+      game.weaveOfEchoes.groupsTracker.render();
+    }
+  }
+  
   
   displayMissingTies(missingTies) {
     let warningText = `⚠️ Relations manquantes avec : ${missingTies.join(", ")}`;
@@ -313,26 +320,6 @@ calculateBaseSynergy() {
     document.querySelector(".group-synergy-display").textContent = warningText;
   }
 
-  async updateBaseGroupSynergy() {
-    const newSynergy = this.calculateBaseSynergy();
-    
-    await this.update({
-      "system.relationships.groupSynergy.base": newSynergy
-    });
-  
-    this.render(false); // 🔄 Rafraîchir la fiche si elle est ouverte
-  }
-
-  synchronizeBaseGroupSynergy() {
-    const groupLeader = game.actors.get(this.system.relationships.currentGroupLeader);
-  
-    if (groupLeader) {
-      const baseSynergy = groupLeader.system.relationships.characterGroup.baseGroupSynergy;
-      this.update({
-        "system.relationships.characterGroup.baseGroupSynergy": baseSynergy
-      });
-    }
-  }
 
   _getAffinityLabel(value) {
     switch (value) {
@@ -353,6 +340,56 @@ calculateBaseSynergy() {
       default: return "Unknown";
     }
   }
+
+  async updateFocus(newFocus) {
+    await this.update({ "system.focusPoints.current": newFocus });
+
+    // 🔄 Mettre à jour visuellement tous les membres dans le Group Tracker
+    const leader = game.actors.get(this.system.relationships.currentGroupLeader);
+    if (!leader) return;
+
+    for (const memberId of leader.system.relationships.characterGroup.members) {
+        const member = game.actors.get(memberId);
+        if (member) {
+            await member.update({ "system.focusPoints.current": newFocus });
+        }
+    }
+}
+
+async updateStamina(newStamina) {
+  await this.update({ "system.stamina.current": newStamina });
+
+  // 🔄 Mettre à jour visuellement tous les membres dans le Group Tracker
+  const leader = game.actors.get(this.system.relationships.currentGroupLeader);
+  if (!leader) return;
+
+  for (const memberId of leader.system.relationships.characterGroup.members) {
+      const member = game.actors.get(memberId);
+      if (member) {
+          await member.update({ "system.stamina.current": newStamina });
+      }
+  }
+}
+
+
+
+async updateWounds(wounds) {
+  await this.update({ "system.wounds": wounds });
+
+  // 🔄 Mettre à jour tous les membres du groupe
+  const leader = game.actors.get(this.system.relationships.currentGroupLeader);
+  if (!leader) return;
+
+  for (const memberId of leader.system.relationships.characterGroup.members) {
+      const member = game.actors.get(memberId);
+      if (member) {
+          await member.update({ "system.wounds": wounds });
+      }
+  }
+}
+
+
+
 }
 
 // Register Handlebars helpers

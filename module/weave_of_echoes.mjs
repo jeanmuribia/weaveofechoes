@@ -42,8 +42,22 @@ Hooks.once("init", function () {
     type: Object,
   });
 
+  game.socket.on("module.weave_of_echoes", (data) => {
+    console.log("Socket event reçu:", data);
+    if (data.action === "refreshGroup" && Array.isArray(data.groupMembers)) {
+      game.apps.forEach(app => {
+        if (app instanceof ActorSheet && app.actor) {
+          if (data.groupMembers.includes(app.actor.id)) {
+            console.log("Forçage du re-render pour :", app.actor.id, app.actor.name);
+            app.render(true);
+          } else {
+            console.log("ActorSheet ignoré :", app.actor.id, app.actor.name);
+          }
+        }
+      });
+    }
+  });
 
- 
   game.settings.register("weave_of_echoes", "groupMembers", {
     name: "Group Members",
     hint: "Stores the current members of the synergy group.",
@@ -131,17 +145,6 @@ Hooks.on("renderActorDirectory", (app, html) => {
   });
 
   html.find(".directory-header").append(button);
-});
-
-Hooks.on("updateActor", async (actor, changes, options, userId) => {
-  if (!game.weaveOfEchoes.groupsTracker) return;
-
-
-  // Recharger les données du tracker
-  game.weaveOfEchoes.groupsTracker.groups = game.weaveOfEchoes.groupsTracker.getValidGroups();
-  
-  // Rafraîchir l'affichage du tracker
-  game.weaveOfEchoes.groupsTracker.render(false); 
 });
 
 
@@ -374,19 +377,25 @@ function rollItemMacro(itemUuid) {
   
 }
 
-Hooks.on("updateActor", async (actor, changes, options, userId) => {
-  if (!actor.system.relationships) return;
-
-  // Vérifier si les relations ou la composition du groupe ont changé
-  const hasGroupChanged = changes["system.relationships.characterGroup.members"];
-  const hasRelationshipsChanged = changes["system.relationships.connections"];
-
-  if (hasGroupChanged || hasRelationshipsChanged) {
-
-    await actor.updateBaseGroupSynergy();
-    actor.render(false); // Rafraîchit la fiche si elle est ouverte
+Hooks.on('updateActor', async (actor, changes, options, userId) => {
+  if (changes.system?.relationships) {
+    // Déclenche le recalcul et la propagation de la synergie si l'acteur est du type WoeActor
+    if (typeof actor.recalcAndPropagateGroupSynergy === "function") {
+      await actor.recalcAndPropagateGroupSynergy();
+    }
+    
+    // Rafraîchir le Focus Tracker (si nécessaire)
+    if (game.weaveOfEchoes.focusTracker) {
+      game.weaveOfEchoes.focusTracker.render();
+    }
+    
   }
+
+
+  
 });
+
+
 
 
 // Ajout d'un bouton personnalisé dans la barre latérale de Foundry VTT pour ouvrir les trackers

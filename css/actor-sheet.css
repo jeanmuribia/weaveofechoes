@@ -271,10 +271,7 @@
   color: #2d572c; /* Couleur spécifique pour le label Synergy */
 }
 
-.synergy-values {
-  display: flex;
-  flex-direction: column;
-}
+
 
 .center-value.not-in-group-text {
   font-style: italic;
@@ -288,17 +285,17 @@
 }
 
 .synergy-base-value{
-  color: #666;
-  text-align: center;
+    margin-bottom: 10px;
+    cursor: pointer;
+    padding: 2px 4px;
+    border-radius: 4px;
+    transition: background-color 0.2s ease;
 }
 
 .resource-controls.synergy {
   visibility: hidden;
 }
-  
-.synergy-center-value {
 
-}
   /* Identity section */
   .identity-section {
     background: #f5f5dc;
@@ -838,7 +835,7 @@ label {
   transition: transform 0.2s ease;
 }
 .profile-image:hover {
-  transform: scale(1.05);
+
 }
 
 .injury-label {
